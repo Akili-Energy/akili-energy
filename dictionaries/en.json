@@ -1,0 +1,204 @@
+{
+    "lang": {
+        "fr": "Français",
+        "en": "English"
+    },
+    "common": {
+        "regions": {
+            "north_africa": "North Africa",
+            "east_africa": "East Africa",
+            "west_africa": "West Africa",
+            "central_africa": "Central Africa",
+            "southern_africa": "Southern Africa"
+        },
+        "countries": {
+            "DZ": "Algeria",
+            "AO": "Angola",
+            "BJ": "Benin",
+            "BW": "Botswana",
+            "BF": "Burkina Faso",
+            "BI": "Burundi",
+            "CM": "Cameroon",
+            "CV": "Cabo Verde",
+            "CF": "Central African Republic",
+            "TD": "Chad",
+            "KM": "Comoros",
+            "CG": "Congo (Republic)",
+            "CD": "Congo (Democratic Republic)",
+            "CI": "Côte d'Ivoire",
+            "DJ": "Djibouti",
+            "EG": "Egypt",
+            "GQ": "Equatorial Guinea",
+            "ER": "Eritrea",
+            "ET": "Ethiopia",
+            "GA": "Gabon",
+            "GM": "Gambia",
+            "GH": "Ghana",
+            "GN": "Guinea",
+            "GW": "Guinea-Bissau",
+            "KE": "Kenya",
+            "LS": "Lesotho",
+            "LR": "Liberia",
+            "LY": "Libya",
+            "MG": "Madagascar",
+            "ML": "Mali",
+            "MW": "Malawi",
+            "MR": "Mauritania",
+            "MU": "Mauritius",
+            "YT": "Mayotte",
+            "MA": "Morocco",
+            "MZ": "Mozambique",
+            "NA": "Namibia",
+            "NE": "Niger",
+            "NG": "Nigeria",
+            "RE": "Réunion",
+            "RW": "Rwanda",
+            "ST": "Sao Tome and Principe",
+            "SN": "Senegal",
+            "SC": "Seychelles",
+            "SL": "Sierra Leone",
+            "SO": "Somalia",
+            "ZA": "South Africa",
+            "SS": "South Sudan",
+            "SD": "Sudan",
+            "SZ": "Eswatini",
+            "TZ": "Tanzania",
+            "TG": "Togo",
+            "TN": "Tunisia",
+            "UG": "Uganda",
+            "EH": "Western Sahara",
+            "ZM": "Zambia",
+            "ZW": "Zimbabwe"
+        },
+        "sectors": {
+            "solar": "Solar",
+            "wind": "Wind",
+            "hydro": "Hydroelectric",
+            "battery": "Battery",
+            "hydrogen": "Hydrogen",
+            "biomass": "Biomass",
+            "geothermal": "Geothermal",
+            "nuclear": "Nuclear",
+            "oil_gas": "Oil & Gas",
+            "renewables": "Renewables",
+            "non_renewables": "Non-Renewables",
+            "utilities": "Utilities",
+            "telecom": "Telecommunications",
+            "transport": "Transportation",
+            "mining": "Mining",
+            "real_estate": "Hospitality & Real Estate",
+            "industrial": "Industrial",
+            "other": "Other"
+        },
+        "technologies": {
+            "photovoltaic": "Photovoltaic (PV)",
+            "concentrated_solar_power": "Concentrated Solar Power (CSP)",
+            "solar_home_systems": "Solar Home Systems (SHS)",
+            "concentrated_photovoltaic": "Concentrated Photovoltaic (CPV)",
+            "onshore_wind": "Onshore Wind",
+            "offshore_wind": "Offshore Wind",
+            "small_hydro": "Small-Scale Hydro",
+            "large_hydro": "Large-Scale Hydro",
+            "bess": "Battery Energy Storage System (BESS)",
+            "lithium_ion": "Lithium-ion",
+            "biogas": "Biogas",
+            "waste": "Waste",
+            "oil": "Oil",
+            "gas": "Gas",
+            "coal": "Coal",
+            "mini_grid": "Mini-Grid",
+            "decentralised": "Decentralised",
+            "high_voltage_transmission_lines": "High Voltage Transmission Lines",
+            "hydrogen": "Hydrogen",
+            "geothermal": "Geothermal",
+            "nuclear": "Nuclear"
+        },
+        "subSectors": {
+            "utility_scale": "Utility-Scale",
+            "commercial_industrial": "Commercial & Industrial",
+            "residential": "Residential",
+            "offshore": "Offshore",
+            "onshore": "Onshore",
+            "cleantech": "CleanTech",
+            "telecom": "Telecom"
+        },
+        "segments": {
+            "generation": "Generation",
+            "storage": "Storage",
+            "transmission": "Transmission",
+            "distribution": "Distribution"
+        }
+    },
+    "deals": {
+        "types": {
+            "merger_acquisition": "M&A",
+            "financing": "Financing",
+            "power_purchase_agreement": "PPA",
+            "project_update": "Project Update",
+            "joint_venture": "Joint Venture"
+        },
+        "subtypes": {
+            "asset": "Asset",
+            "ma_corporate": "Corporate",
+            "debt": "Debt",
+            "equity": "Equity",
+            "grant": "Grant",
+            "utility": "Utility",
+            "ppa_corporate": "Corporate",
+            "joint_venture": "Joint Venture",
+            "strategic_partnership_agreement": "Strategic Partnership",
+            "strategic_collaboration": "Strategic Collaboration",
+            "early_stage": "Early-Stage",
+            "late_stage": "Late-Stage",
+            "ready_to_build": "Ready-to-Build",
+            "in_construction": "In Construction",
+            "operational": "Operational",
+            "proposal": "Proposal",
+            "completed": "Completed"
+        }
+    },
+    "projects": {
+        "stages": {
+            "proposal": "Proposal",
+            "announced": "Announced",
+            "completed": "Completed",
+            "early_stage": "Early-Stage",
+            "late_stage": "Late-Stage",
+            "ready_to_build": "Ready-to-Build",
+            "not_to_proceed": "Not to Proceed",
+            "in_development": "In Development",
+            "in_construction": "In Construction",
+            "operational": "Operational",
+            "revived": "Revived",
+            "suspended": "Suspended",
+            "cancelled": "Cancelled"
+        }
+    },
+    "nav": {
+        "platform": "Platform",
+        "research": "News & Research",
+        "blog": "Blog",
+        "contact": "Contact",
+        "login": "Login",
+        "signup": "Sign Up"
+    },
+    "home": {
+        "hero": {
+            "title": "Intelligence for green energy transactions in Africa",
+            "subtitle": "Transform scattered energy data into actionable insights. Access the most comprehensive market intelligence for the African energy sector.",
+            "cta": {
+                "primary": "Explore Transactions",
+                "secondary": "Request Demo"
+            }
+        },
+        "stats": {
+            "transactions": "Transactions Tracked",
+            "countries": "Countries Covered",
+            "projects": "Active Projects"
+        },
+        "features": {
+            "title": "Advanced Features",
+            "subtitle": "Powerful tools to analyze, understand and act on the African energy market"
+        }
+    }
+}
