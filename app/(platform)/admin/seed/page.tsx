@@ -592,9 +592,9 @@ export default function BulkUploadPage() {
                 companyId: companyId,
                 companyName: target,
                 role: "acquisition_target",
-                // equityTransactedPercentage:
-                //   parseCommaSeparatedWithNumbers(row["Equity transacted"])
-                //     ?.numbers[i] || null,
+                equityTransactedPercentage:
+                  parseCommaSeparatedWithNumbers(row["Equity transacted"])
+                    ?.numbers[i] || null,
               });
 
               // Add to companies table if not exists
@@ -968,7 +968,7 @@ export default function BulkUploadPage() {
         },
         {
           key: "colocatedStorageCapacity",
-          label: "Co-located Storage (MW)",
+          label: "Co-located Storage Capacity (MW/MWh)",
           type: "number",
         },
         { key: "onOffGrid", label: "On Grid", type: "boolean" },
@@ -1472,7 +1472,7 @@ export default function BulkUploadPage() {
           },
           {
             key: "colocatedStorageCapacity",
-            label: "Co-located Storage (MW)",
+            label: "Co-located Storage Capacity (MW/MWh)",
             type: "number",
           },
           { key: "onOffGrid", label: "On Grid", type: "boolean" },
@@ -2436,7 +2436,7 @@ export default function BulkUploadPage() {
         ),
         status: row["Project status"]?.toLowerCase() === "active",
         revenueModel: parseEnum(
-          row["Revenue Model (Years)"]
+          row["Revenue Model (Year)"]
             ?.toLowerCase()
             .replace(/\s*\([^)]*\)/, "")
             .replaceAll(/\s+/g, "_")
@@ -2447,7 +2447,7 @@ export default function BulkUploadPage() {
         ),
         revenueModelDuration: parseNumber(
           parseInt(
-            row["Revenue Model (Years)"]?.match(/\((\d+)[^)]*\)/)?.[1] || ""
+            row["Revenue Model (Year)"]?.match(/\((\d+)[^)]*\)/)?.[1] || ""
           )
         ),
         onOffGrid,
@@ -2681,7 +2681,7 @@ export default function BulkUploadPage() {
           },
           {
             key: "colocatedStorageCapacity",
-            label: "Co-located Storage (MW)",
+            label: "Co-located Storage Capacity (MW/MWh)",
             type: "number",
           },
           {
@@ -2908,7 +2908,12 @@ export default function BulkUploadPage() {
             s
               .trim()
               .toLowerCase()
+              .replace("solar pv", "photovoltaic")
+              .replace("wind onshore", "onshore_wind")
+              .replace("wind offshore", "offshore_wind")
+              .replace("small", "offshore_wind")
               .replaceAll(/\s+/g, "_")
+              .replaceAll("-", "_")
               .replace("pv", "photovoltaic")
               .replace("csp", "concentrated_solar_power")
               .replace("shs", "solar_home_systems")
@@ -2923,7 +2928,7 @@ export default function BulkUploadPage() {
               s
                 .trim()
                 .toLowerCase()
-                .replaceAll("C&I", "commercial_industrial")
+                .replaceAll("c&i", "commercial_industrial")
                 .replaceAll("dre", "distributed_renewable")
                 .replaceAll("-", "_")
                 .replaceAll(/\s+/g, "_")
@@ -2953,7 +2958,7 @@ export default function BulkUploadPage() {
         ),
         status: row["Project status"]?.toLowerCase() === "active",
         revenueModel: parseEnum(
-          row["Revenue Model (Years)"]
+          row["Revenue Model (Year)"]
             ?.toLowerCase()
             .replace(/\s*\([^)]*\)/, "")
             .replaceAll(/\s+/g, "_")
@@ -2964,7 +2969,7 @@ export default function BulkUploadPage() {
         ),
         revenueModelDuration: parseNumber(
           parseInt(
-            row["Revenue Model (Years)"]?.match(/\((\d+)[^)]*\)/)?.[1] || ""
+            row["Revenue Model (Year)"]?.match(/\((\d+)[^)]*\)/)?.[1] || ""
           )
         ),
         onOffGrid:
@@ -3181,7 +3186,7 @@ export default function BulkUploadPage() {
           },
           {
             key: "colocatedStorageCapacity",
-            label: "Co-located Storage (MW)",
+            label: "Co-located Storage Capacity (MW/MWh)",
             type: "number",
           },
           {

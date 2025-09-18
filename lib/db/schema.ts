@@ -1008,10 +1008,10 @@ export const dealsCompanies = pgTable(
       precision: 10,
       scale: 2,
     }).$type<number>(),
-    // equityTransactedPercentage: decimal("equity_transacted_percentage", {
-    //   precision: 5,
-    //   scale: 2,
-    // }).$type<number>(),
+    equityTransactedPercentage: decimal("equity_transacted_percentage", {
+      precision: 5,
+      scale: 2,
+    }).$type<number>(),
   },
   (table) => [
     primaryKey({ columns: [table.dealId, table.companyId, table.role] }),
