@@ -63,9 +63,9 @@ import {
   countryCode,
   dealType,
   geographicRegion,
-  sector as sectorEnum,
+  projectSector as sectorEnum,
   segment,
-  subSector,
+  projectSubSector,
   technology,
 } from "@/lib/db/schema";
 import {
@@ -465,7 +465,7 @@ export function DealForm({ companyOptions, projectOptions }: DealFormProps) {
                         subSectors: selected as SubSector[],
                       })
                     }
-                    options={subSector.enumValues.map((ss) => ({
+                    options={projectSubSector.enumValues.map((ss) => ({
                       label: ss,
                       value: ss,
                     }))}
@@ -663,7 +663,7 @@ export function DealForm({ companyOptions, projectOptions }: DealFormProps) {
                   <div className="flex gap-2">
                     <div className="flex-1">
                       <SearchableSelect
-                      options={companyOptions.filter(
+                        options={companyOptions.filter(
                           (p) => !companyEntries.some((a) => a.id === p.value)
                         )}
                         value={selectedCompanyForDeal}
