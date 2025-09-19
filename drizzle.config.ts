@@ -1,3 +1,4 @@
+import './envConfig.ts';
 import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
@@ -6,6 +7,6 @@ export default defineConfig({
   out: "./lib/db/drizzle",
   extensionsFilters: ["postgis"],
   dbCredentials: {
-    url: "postgresql://postgres:jJp1784%40x@localhost:5433/akili_energy",
+    url: process.env.POSTGRES_URL!,
   },
 });
