@@ -151,7 +151,7 @@ export default function ProjectAnalyticsPage() {
                 ])
               )}
             >
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={analytics?.projectsByMonthAndStage}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />

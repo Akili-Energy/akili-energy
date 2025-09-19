@@ -2,7 +2,7 @@ import { getProjectsAnalytics } from "@/app/actions/actions";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import type { Layer } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css";
+// import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css";
 import "leaflet-defaulticon-compatibility";
 import africanCountries from "@/lib/africa.geo.json";
 import type { FeatureCollection, Feature } from "geojson";
@@ -40,7 +40,7 @@ export default function InteractiveMap({
   const minCapacity = Math.min(...capacities);
   const maxCapacity = Math.max(...capacities);
 
-  const financing = data.map((d) => d.totalFinancing);
+  const financing = data.map((d) => d.financing);
   const minFinancing = Math.min(...financing);
   const maxFinancing = Math.max(...financing);
 
@@ -51,7 +51,7 @@ export default function InteractiveMap({
     return {
       fillColor: country?.totalCapacity
         ? getColor(country?.totalCapacity, minCapacity, maxCapacity)
-        : getColor(country?.totalFinancing ?? 0, minFinancing, maxFinancing),
+        : getColor(country?.financing ?? 0, minFinancing, maxFinancing),
       weight: 1,
       opacity: 1,
       color: "#ccc",
@@ -67,7 +67,7 @@ export default function InteractiveMap({
         <div>
           <strong>${feature.properties?.admin}</strong>
           <br/>Capacity: ${country.totalCapacity ?? 0} MW
-          <br/>Financing: $${country.totalFinancing ?? 0}M
+          <br/>Financing: $${country.financing ?? 0}M
           <br/>Projects: ${country.projectCount ?? "-"}
         </div>
       `;
@@ -86,7 +86,7 @@ export default function InteractiveMap({
       maxZoom={3}
       zoom={2.5}
       touchZoom={false}
-      style={{ height: 400, width: "100%", backgroundColor: "#FFFFFF" }}
+      style={{ height: 400, width: "100%", backgroundColor: "#F0F0F0" }}
       scrollWheelZoom={false}
       dragging={false}
       // zoomControl={false}

@@ -2115,7 +2115,6 @@ export const topCountriesByDealValue = pgMaterializedView(
       rank: sql<number>`RANK() OVER (ORDER BY COALESCE(${countryDeals.dealValue}, 0) DESC)`.as(
         "rank"
       ),
-      month: countryDeals.month,
     })
     .from(countryDeals)
     .leftJoin(
@@ -2252,9 +2251,9 @@ export const countriesByCapacityAndFinancing = pgMaterializedView(
     .with(countryFinancing, countryProjects)
     .select({
       countryCode: countryFinancing.countryCode,
-      totalFinancing:
+      financing:
         sql<number>`GREATEST(${countryFinancing.dealValue}, ${countryProjects.investments})`.as(
-          "total_financing"
+          "financing"
         ),
       totalCapacity: countryProjects.totalCapacity,
       projectCount: countryProjects.projectCount,
