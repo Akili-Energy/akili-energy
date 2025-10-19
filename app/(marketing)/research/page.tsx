@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Filter, Calendar, User, ArrowRight, Download, FileText } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { UnifiedHeader } from "@/components/unified-header"
 
 const newsArticles = [
   {
@@ -102,16 +101,14 @@ const featuredReport = {
 
 export default function NewsPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <UnifiedHeader />
-
+    <>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
         <div className="text-center space-y-4 mb-12">
           <h1 className="text-4xl lg:text-5xl font-bold text-gray-900">📰 Insights that Power Your Energy Decisions</h1>
           <p className="text-xl text-gray-600 max-w-4xl mx-auto">
             Follow the latest news, market analysis, and sector reports on renewable energy and energy infrastructure in
-            Africa and beyond. Akili Green connects you to the most relevant intelligence to anticipate, decide and
+            Africa and beyond. Akili Energy connects you to the most relevant intelligence to anticipate, decide and
             invest with confidence.
           </p>
         </div>
@@ -359,6 +356,6 @@ export default function NewsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </>
   )
 }

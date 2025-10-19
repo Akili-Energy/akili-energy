@@ -1,3 +1,6 @@
+@import '../styles/_variables.scss';
+@import '../styles/_keyframe-animations.scss';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -122,6 +125,8 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --highlight: oklch(0.852 0.199 91.936);
+    --brand: oklch(0.623 0.214 259.815);
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -156,6 +161,8 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --highlight: oklch(0.852 0.199 91.936);
+    --brand: oklch(0.707 0.165 254.624);
   }
 }
 
@@ -195,4 +202,16 @@ body {
 
 .dark .carousel-dot.active {
   background-color: #12b99a; /* Akili Green */
+}
+
+img[data-align='left'] {
+  text-align: left;
+}
+
+img[data-align='center'] {
+  text-align: center;
+}
+
+img[data-align='right'] {
+  text-align: right;
 }

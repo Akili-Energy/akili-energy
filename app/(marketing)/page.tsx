@@ -29,7 +29,6 @@ import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useState, useRef } from "react"
 import { useLanguage } from "@/components/language-context"
-import { UnifiedHeader } from "@/components/unified-header"
 import { TypewriterEffect } from "@/components/typewriter-effect"
 import { AkiliLogo } from "@/components/akili-logo";
 import { WaveAnimation } from "@/components/wave-animation"
@@ -295,9 +294,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <UnifiedHeader />
+    <div className="bg-background">
 
       {/* Hero Section */}
       <section ref={heroRef} className="relative overflow-hidden bg-gradient-akili min-h-[90vh] flex items-center">
@@ -312,7 +309,7 @@ export default function LandingPage() {
             <div className="space-y-8 text-white">
               <div className="space-y-6 pb-6">
                 <Badge className="bg-akili-green/20 text-akili-green border border-akili-green/30 hover:bg-akili-green/30 text-sm px-4 py-2 animate-bounce">
-                  Intelligence Stratégique pour l'Énergie
+                  {t("home.chip")}
                 </Badge>
                 <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
                   {showTypewriter ? (
@@ -322,8 +319,7 @@ export default function LandingPage() {
                   )}
                 </h1>
                 <p className="text-xl text-gray-300 leading-relaxed max-w-2xl animate-fade-in-up delay-500">
-                  Transformez les données énergétiques dispersées en insights exploitables. Accédez à l'intelligence de
-                  marché la plus complète pour le secteur énergétique africain.
+                  {t("home.hero.subtitle")}
                 </p>
               </div>
 
@@ -353,7 +349,7 @@ export default function LandingPage() {
                   asChild
                 >
                   <Link href="/platform">
-                    Explorer les transactions <ArrowRight className="ml-2 w-5 h-5" />
+                    {t("home.hero.cta.primary")} <ArrowRight className="ml-2 w-5 h-5" />
                   </Link>
                 </Button>
                 <Button
@@ -362,7 +358,7 @@ export default function LandingPage() {
                   className="bg-white text-akili-blue border-2 border-white hover:bg-akili-blue hover:text-white font-semibold text-lg px-8 py-4 shadow-lg hover:scale-105 transition-all duration-300"
                   asChild
                 >
-                  <Link href="/contact">Demander une démo</Link>
+                  <Link href="/contact">{t("home.hero.cta.secondary")}</Link>
                 </Button>
               </div>
             </div>
@@ -380,20 +376,20 @@ export default function LandingPage() {
                 >
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-900 dark:text-white">Analyse des Transactions</h3>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">{t("home.hero.cards.deal_analysis")}</h3>
                       <Badge className="bg-akili-green/10 text-akili-green animate-pulse">Live</Badge>
                     </div>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center p-3 bg-gradient-to-r from-akili-blue/5 to-akili-green/5 rounded-lg hover:from-akili-blue/10 hover:to-akili-green/10 transition-all duration-300">
                         <div>
-                          <p className="font-medium text-sm">M&A Solaire</p>
+                          <p className="font-medium text-sm">{t("home.hero.cards.ma_solar")}</p>
                           <p className="text-xs text-gray-600 dark:text-gray-400">Afrique du Sud</p>
                         </div>
                         <span className="font-bold text-akili-green">$38.4M</span>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-gradient-to-r from-akili-blue/5 to-akili-green/5 rounded-lg hover:from-akili-blue/10 hover:to-akili-green/10 transition-all duration-300">
                         <div>
-                          <p className="font-medium text-sm">Financement Hydro</p>
+                          <p className="font-medium text-sm">{t("home.hero.cards.hydro_financing")}</p>
                           <p className="text-xs text-gray-600 dark:text-gray-400">Madagascar</p>
                         </div>
                         <span className="font-bold text-akili-green">$600M</span>
@@ -411,10 +407,10 @@ export default function LandingPage() {
                   }`}
                 >
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Pipeline de Projets</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{t("home.hero.cards.project_pipeline")}</h3>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">En construction</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{t("projects.stages.in_construction")}</span>
                         <div className="flex items-center space-x-2">
                           <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                             <div className="bg-akili-green h-2 rounded-full w-3/4 animate-pulse"></div>
@@ -423,7 +419,7 @@ export default function LandingPage() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Opérationel</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{t("projects.stages.operational")}</span>
                         <div className="flex items-center space-x-2">
                           <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                             <div className="bg-akili-orange h-2 rounded-full w-1/2 animate-pulse delay-300"></div>
@@ -432,7 +428,7 @@ export default function LandingPage() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">En développement</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{t("projects.stages.in_development")}</span>
                         <div className="flex items-center space-x-2">
                           <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                             <div className="bg-akili-blue h-2 rounded-full w-2/3 animate-pulse delay-500"></div>
@@ -453,17 +449,17 @@ export default function LandingPage() {
                   }`}
                 >
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Intelligence Marché</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{t("home.hero.cards.market_intelligence")}</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="text-center p-3 bg-akili-blue/10 rounded-lg hover:bg-akili-blue/20 transition-all duration-300">
                         <div className="text-lg font-bold text-akili-blue">42%</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400">Croissance YoY</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">{t("home.hero.cards.yoy_growth")}</div>
                       </div>
                       <div className="text-center p-3 bg-akili-green/10 rounded-lg hover:bg-akili-green/20 transition-all duration-300">
                         <div className="text-lg font-bold text-akili-green">
                           $12.5B
                         </div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400">Investissements</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">{t("home.hero.cards.investments")}</div>
                       </div>
                     </div>
                   </div>
@@ -479,10 +475,10 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-akili-blue dark:text-akili-green">
-              Conçu pour les Professionnels de l'Énergie
+              {t("home.carousel.title")}
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Des solutions adaptées à chaque acteur de l'écosystème énergétique africain
+              {t("home.carousel.subtitle")}
             </p>
           </div>
 
@@ -511,6 +507,7 @@ export default function LandingPage() {
                 style={{
                   transform: `translateX(-${currentSlide * 33}%)`,
                   width: "100%",
+                  height: "300%"
                 }}
                 onMouseEnter={() => setIsAutoPlaying(false)}
                 onMouseLeave={() => setIsAutoPlaying(true)}

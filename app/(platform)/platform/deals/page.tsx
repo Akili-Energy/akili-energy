@@ -26,14 +26,7 @@ import {
   TableHead,
   TableBody,
   TableCell,
-  TableFooter,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   SECTORS,
   REGIONS_COUNTRIES,
@@ -384,13 +377,17 @@ export default function DealsPage() {
                         <SectorsIconsTooltip sectors={sectors} />
                       </TableCell>
                       <TableCell>
-                        <TooltipText values={regions.map(r => t(`common.regions.${r}`))} />
+                        <TooltipText
+                          values={regions.map((r) => t(`common.regions.${r}`))}
+                        />
                       </TableCell>
                       <TableCell className="truncate">
                         <Countries countries={countries} max={3} />
                       </TableCell>
-                      <TableCell>
-                        <Badge className={DEAL_TYPE_COLORS[type]}>{t(`deals.types.${type}`)}</Badge>
+                      <TableCell className="truncate">
+                        <Badge className={DEAL_TYPE_COLORS[type]}>
+                          {t(`deals.types.${type}`)}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-gray-600 dark:text-gray-400">
                         {t(`deals.subtypes.${subtype}`)}

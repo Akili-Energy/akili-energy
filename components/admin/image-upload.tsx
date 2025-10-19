@@ -50,7 +50,7 @@ export default function ImageUpload({ value, onChange, onRemove, placeholder }: 
 
   return (
     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+      <input title="image" ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
       <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
       <p className="text-gray-600 mb-4">{placeholder || "Upload an image"}</p>
       <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>

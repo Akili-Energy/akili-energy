@@ -39,6 +39,8 @@ export default function DealDetailPage() {
 
   const router = useRouter();
 
+  const { t } = useLanguage();
+
   const [deal, setDeal] = useState<FetchDealResult>(null);
   const [, startTransition] = useTransition();
 
@@ -104,7 +106,7 @@ export default function DealDetailPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{deal.update}</h1>
             <div className="flex items-center space-x-2 mt-1">
-              <Badge variant="secondary">{deal.type}</Badge>
+              <Badge variant="secondary">{t(`deals.types.${deal.type}`)}</Badge>
               {/* <Badge variant="outline">{deal.dealStatus}</Badge> */}
             </div>
           </div>
@@ -163,7 +165,9 @@ function MergerAcquisitionContent({
                   Region of Target
                 </label>
                 <div>
-                  <TooltipText values={deal.regions.map(r => t(`common.regions.${r}`))} />
+                  <TooltipText
+                    values={deal.regions.map((r) => t(`common.regions.${r}`))}
+                  />
                 </div>
               </div>
               <div>
@@ -180,7 +184,11 @@ function MergerAcquisitionContent({
                 </label>
                 <p className="font-medium">
                   {deal.technologies.length
-                    ? deal.technologies.join(", ")
+                    ? deal.technologies
+                        .map((tech) => {
+                          t(`common.technologies.${tech}`);
+                        })
+                        .join(", ")
                     : "-"}
                 </p>
               </div>
@@ -189,7 +197,13 @@ function MergerAcquisitionContent({
                   Sub-sector
                 </label>
                 <p className="font-medium">
-                  {deal.subSectors.length ? deal.subSectors.join(", ") : "-"}
+                  {deal.subSectors.length
+                    ? deal.subSectors
+                        .map((s) => {
+                          t(`common.subSectors.${s}`);
+                        })
+                        .join(", ")
+                    : "-"}
                 </p>
               </div>
               <div>
@@ -197,7 +211,13 @@ function MergerAcquisitionContent({
                   Segment
                 </label>
                 <p className="font-medium">
-                  {deal.segments.length ? deal.segments.join(", ") : "-"}
+                  {deal.segments.length
+                    ? deal.segments
+                        .map((s) => {
+                          t(`common.segments.${s}`);
+                        })
+                        .join(", ")
+                    : "-"}
                 </p>
               </div>
             </div>
@@ -281,7 +301,11 @@ function MergerAcquisitionContent({
                               Category
                             </label>
                             <p className="font-medium">
-                              {classification ?? "-"}
+                              {classification
+                                ? t(
+                                    `companies.classification.${classification}`
+                                  )
+                                : "-"}
                             </p>
                           </div>
                           <div>
@@ -331,8 +355,10 @@ function MergerAcquisitionContent({
                   On-/Off-Grid
                 </label>
                 <p className="font-medium">
-                  {deal.onOffGrid != null
+                  {deal.onOffGrid !== null
                     ? `${deal.onOffGrid ? "On" : "Off"}-grid`
+                    : deal.onOffGrid === null
+                    ? "On-grid/Off-grid"
                     : "-"}
                 </p>
               </div>
@@ -370,20 +396,26 @@ function MergerAcquisitionContent({
                 <label className="text-sm font-medium text-gray-500">
                   M&A Type
                 </label>
-                <p className="font-medium">{deal.subtype}</p>
+                <p className="font-medium">
+                  {t(`deals.subtypes.${deal.subtype}`)}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">
                   Structure
                 </label>
-                <p className="font-medium">{mergerAcquisition?.structure}</p>
+                <p className="font-medium">
+                  {t(`deals.ma.structures.${mergerAcquisition?.structure}`)}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">
                   Deal Specifics
                 </label>
                 <p className="font-medium">
-                  {mergerAcquisition.specifics?.join(", ")}
+                  {mergerAcquisition.specifics
+                    ?.map((s) => t(`deals.ma.specifics.${s}`))
+                    .join(", ")}
                 </p>
               </div>
               <div>
@@ -414,7 +446,9 @@ function MergerAcquisitionContent({
                   Financing Strategy
                 </label>
                 <p className="font-medium">
-                  {mergerAcquisition.financingStrategy?.join(", ")}
+                  {mergerAcquisition.financingStrategy
+                    ?.map((s) => t(`deals.financing.types.${s}`))
+                    .join(", ")}
                 </p>
               </div>
             </div>
@@ -763,7 +797,9 @@ function FinancingContent({
                 </label>
                 <p className="font-medium">
                   {deal.technologies.length
-                    ? deal.technologies.join(", ")
+                    ? deal.technologies
+                        .map((tech) => t(`common.technologies.${tech}`))
+                        .join(", ")
                     : "-"}
                 </p>
               </div>
@@ -772,7 +808,13 @@ function FinancingContent({
                   Sub-sector
                 </label>
                 <p className="font-medium">
-                  {deal.subSectors.length ? deal.subSectors.join(", ") : "-"}
+                  {deal.subSectors.length
+                    ? deal.subSectors
+                        .map((s) => {
+                          t(`common.subSectors.${s}`);
+                        })
+                        .join(", ")
+                    : "-"}
                 </p>
               </div>
               <div>
@@ -863,14 +905,18 @@ function FinancingContent({
                 <label className="text-sm font-medium text-gray-500">
                   Financing Objective
                 </label>
-                <p className="font-medium">{financing.objective}</p>
+                <p className="font-medium">
+                  {t(`deals.financing.objectives.${financing.objective}`)}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">
                   Financing Type
                 </label>
                 <p className="font-medium">
-                  {financing.financingType?.join(", ")}
+                  {financing.financingType
+                    ?.map((type) => t(`deals.financing.types.${type}`))
+                    .join(", ")}
                 </p>
               </div>
               <div>
@@ -878,7 +924,9 @@ function FinancingContent({
                   Financing Subtype
                 </label>
                 <p className="font-medium">
-                  {financing.financingSubtype?.join(", ")}
+                  {financing.financingSubtype
+                    ?.map((s) => t(`deals.financing.subtypes.${s}`))
+                    .join(", ")}
                 </p>
               </div>
               <div>

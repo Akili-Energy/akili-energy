@@ -1,262 +1,178 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Search, Download, Eye, Building2, List, Grid3X3, Sun, Wind, Droplets, Battery, Leaf, Zap } from "lucide-react"
-import Link from "next/link"
-import type { JSX } from "react"
+import { useState, useEffect, useTransition, useRef, useCallback } from "react";
+import Link from "next/link";
+import { useLanguage } from "@/components/language-context";
+import { getCompanies } from "@/app/actions/companies";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search, Eye, List, Grid3X3, FilterX, Loader2 } from "lucide-react";
+import {
+  companyClassification,
+  companyOperatingStatus,
+  companySector,
+  countryCode,
+} from "@/lib/db/schema";
+import {
+  FetchCompaniesResults,
+  CompanyFilters,
+  CompanyClassification,
+  CompanySector,
+  Country,
+  CompanyOperatingStatus,
+  Pagination,
+  Cursor,
+} from "@/lib/types";
+import { Countries } from "@/components/countries-flags";
+import { SectorsIconsTooltip } from "@/components/sector-icon";
 
-const companies = [
-  {
-    id: 1,
-    name: "Serengeti Energy",
-    description:
-      "Developer and operator of renewable energy projects across East Africa, specializing in small to medium-sized hydro and solar installations.",
-    classification: "PE Backed",
-    sectors: ["Hydro", "Wind", "Solar"],
-    technologies: ["Solar PV", "Wind Onshore", "Small Hydro"],
-    hqCountry: "Kenya",
-    operatingCountries: ["Kenya", "Tanzania", "Uganda", "Rwanda"],
-    operatingStatus: "Active",
-    founded: "2018",
-    size: "51-200",
-    mainActivities: ["Project Development", "EPC", "O&M"],
-  },
-  {
-    id: 2,
-    name: "Mulilo",
-    description:
-      "Leading South African renewable energy developer with a strong focus on utility-scale solar PV and wind projects, as well as energy storage solutions.",
-    classification: "Private",
-    sectors: ["Battery", "Wind", "Solar"],
-    technologies: ["Solar PV", "Wind Onshore", "Battery Storage"],
-    hqCountry: "South Africa",
-    operatingCountries: ["South Africa", "Botswana"],
-    operatingStatus: "Active",
-    founded: "2012",
-    size: "201-500",
-    mainActivities: ["Project Development", "IPP", "O&M"],
-  },
-  {
-    id: 3,
-    name: "AMEA Power",
-    description:
-      "Global developer, owner, and operator of renewable energy projects with a significant portfolio across Africa and the Middle East.",
-    classification: "Private",
-    sectors: ["Solar", "Wind"],
-    technologies: ["Solar PV", "Wind Onshore"],
-    hqCountry: "UAE",
-    operatingCountries: ["Egypt", "Jordan", "UAE"],
-    operatingStatus: "Active",
-    founded: "2015",
-    size: "101-200",
-    mainActivities: ["Project Development", "IPP"],
-  },
-]
-
-// Helper functions with tooltips
-const getSectorIcons = (sectors: string[]) => {
-  const iconMap: { [key: string]: JSX.Element } = {
-    Solar: <Sun className="w-4 h-4 text-yellow-500" />,
-    Wind: <Wind className="w-4 h-4 text-blue-500" />,
-    Hydro: <Droplets className="w-4 h-4 text-blue-600" />,
-    Battery: <Battery className="w-4 h-4 text-green-500" />,
-    Bioenergy: <Leaf className="w-4 h-4 text-green-600" />,
-    Nuclear: <Zap className="w-4 h-4 text-purple-500" />,
-  }
-
-  if (sectors.length > 3) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger>
-            <span className="text-xs text-gray-600 cursor-help">Multiple</span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="space-y-1">
-              {sectors.map((sector, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  {iconMap[sector]}
-                  <span>{sector}</span>
-                </div>
-              ))}
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    )
-  }
-
-  return (
-    <div className="flex gap-1">
-      {sectors.map((sector, index) => (
-        <TooltipProvider key={index}>
-          <Tooltip>
-            <TooltipTrigger>{iconMap[sector] || <span className="text-xs">{sector}</span>}</TooltipTrigger>
-            <TooltipContent>
-              <span>{sector}</span>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      ))}
-    </div>
-  )
-}
-
-const getCountryFlags = (countries: string[]) => {
-  const flagMap: { [key: string]: string } = {
-    Kenya: "🇰🇪",
-    Tanzania: "🇹🇿",
-    Uganda: "🇺🇬",
-    Rwanda: "🇷🇼",
-    "South Africa": "🇿🇦",
-    Botswana: "🇧🇼",
-    UAE: "🇦🇪",
-    Egypt: "🇪🇬",
-    Jordan: "🇯🇴",
-  }
-
-  if (countries.length > 3) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger>
-            <span className="text-xs text-gray-600 cursor-help">Multiple</span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="space-y-1">
-              {countries.map((country, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <span className="text-lg">{flagMap[country] || "🏳️"}</span>
-                  <span>{country}</span>
-                </div>
-              ))}
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    )
-  }
-
-  return (
-    <div className="flex gap-1">
-      {countries.map((country, index) => (
-        <TooltipProvider key={index}>
-          <Tooltip>
-            <TooltipTrigger>
-              <span className="text-lg cursor-help" title={country}>
-                {flagMap[country] || "🏳️"}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <span>{country}</span>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      ))}
-    </div>
-  )
-}
+const PAGE_SIZE = 12; // divisible by 3 for card view
 
 export default function CompaniesPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedClassification, setSelectedClassification] = useState("all")
-  const [selectedSector, setSelectedSector] = useState("all")
-  const [selectedCountry, setSelectedCountry] = useState("all")
-  const [selectedActivity, setSelectedActivity] = useState("all")
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards")
+  const { t } = useLanguage();
+  const [isPending, startTransition] = useTransition();
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
 
-  const filteredCompanies = companies.filter((company) => {
-    const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesClassification = selectedClassification === "all" || company.classification === selectedClassification
-    const matchesSector =
-      selectedSector === "all" ||
-      company.sectors.some((sector) => sector.toLowerCase() === selectedSector.toLowerCase())
-    const matchesCountry = selectedCountry === "all" || company.hqCountry === selectedCountry
-    const matchesActivity = selectedActivity === "all" || company.mainActivities.includes(selectedActivity)
+  const [companies, setCompanies] = useState<FetchCompaniesResults>([]);
+  const [total, setTotal] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<CompanyFilters>({});
+  const [cursors, setCursors] = useState<{ next?: Cursor; previous?: Cursor }>(
+    {}
+  );
 
-    return matchesSearch && matchesClassification && matchesSector && matchesCountry && matchesActivity
-  })
+  // Ref for the observer target element
+  const observerRef = useRef<HTMLDivElement>(null);
+
+  const fetchCompanies = useCallback(
+    (order?: Pagination, append = false) => {
+      startTransition(async () => {
+        // Determine the cursor to use based on the fetch order
+        const cursor =
+          order && companies.length > 0 ? cursors[order] : undefined;
+
+        const {
+          companies: fetchedCompanies,
+          total: totalCount,
+          nextCursor,
+          prevCursor,
+        } = await getCompanies(filters, order, cursor, searchTerm, PAGE_SIZE);
+
+        // Append new data or replace existing data
+        if (append && order === "next") {
+          setCompanies((prev) => [...prev, ...fetchedCompanies]);
+        } else {
+          setCompanies(fetchedCompanies);
+        }
+
+        setTotal(totalCount);
+        setCursors({ next: nextCursor, previous: prevCursor });
+      });
+    },
+    [searchTerm, filters, companies, cursors]
+  );
+
+  // Effect for initial load and when filters/search change
+  useEffect(() => {
+    // This fetches the first page and resets the list
+    fetchCompanies();
+  }, [filters, searchTerm]);
+
+  // Effect for infinite scrolling
+  useEffect(() => {
+    if (viewMode !== "cards" || isPending || !cursors.next) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // If the observer target is visible, fetch more data
+        if (entries[0].isIntersecting) {
+          fetchCompanies("next", true);
+        }
+      },
+      { threshold: 1.0 } // Trigger when the element is fully visible
+    );
+
+    const currentObserverRef = observerRef.current;
+    if (currentObserverRef) {
+      observer.observe(currentObserverRef);
+    }
+
+    // Cleanup observer on component unmount or dependency change
+    return () => {
+      if (currentObserverRef) {
+        observer.unobserve(currentObserverRef);
+      }
+    };
+  }, [viewMode, companies, cursors.next, isPending, fetchCompanies]);
+
+  const handleFilterChange = <K extends keyof CompanyFilters>(
+    key: K,
+    value: CompanyFilters[K] | "all"
+  ) => {
+    setFilters((prev) => {
+      const newFilters = { ...prev };
+      if (value === "all") {
+        delete newFilters[key];
+      } else {
+        newFilters[key] = value;
+      }
+      return newFilters;
+    });
+  };
+
+  const resetFilters = () => {
+    setFilters({});
+    setSearchTerm("");
+  };
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Companies</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Explore energy companies and their portfolios across Africa
-          </p>
-        </div>
-        <Button>
-          <Download className="w-4 h-4 mr-2" />
-          Export Data
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{companies.length}</div>
-            <p className="text-xs text-muted-foreground">Active companies tracked</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">PE Backed</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{companies.filter((c) => c.classification === "PE Backed").length}</div>
-            <p className="text-xs text-muted-foreground">Private equity backed</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Countries</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{new Set(companies.map((c) => c.hqCountry)).size}</div>
-            <p className="text-xs text-muted-foreground">HQ locations</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sectors</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{new Set(companies.flatMap((c) => c.sectors)).size}</div>
-            <p className="text-xs text-muted-foreground">Technology sectors</p>
-          </CardContent>
-        </Card>
+      <div>
+        <h1 className="text-3xl font-bold text-akili-blue">Companies</h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Explore energy companies and their portfolios across Africa
+        </p>
       </div>
 
       {/* Filters */}
       <Card>
         <CardHeader>
           <CardTitle>Filters</CardTitle>
-          <CardDescription>Refine your search to find specific companies</CardDescription>
+          <CardDescription>
+            Refine your search to find specific companies
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div className="relative xl:col-span-2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 placeholder="Search companies..."
                 value={searchTerm}
@@ -264,66 +180,81 @@ export default function CompaniesPage() {
                 className="pl-10"
               />
             </div>
-            <Select value={selectedClassification} onValueChange={setSelectedClassification}>
+            <Select
+              value={filters.classification || "all"}
+              onValueChange={(v) =>
+                handleFilterChange(
+                  "classification",
+                  v as CompanyClassification | "all"
+                )
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Classification" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Classifications</SelectItem>
-                <SelectItem value="PE Firm">PE Firm</SelectItem>
-                <SelectItem value="PE Backed">PE Backed</SelectItem>
-                <SelectItem value="Private">Private</SelectItem>
-                <SelectItem value="Public">Public</SelectItem>
-                <SelectItem value="DFI">DFI</SelectItem>
+                {companyClassification.enumValues.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {t(`companies.classification.${c}`)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Select value={selectedSector} onValueChange={setSelectedSector}>
+            <Select
+              value={filters.sector || "all"}
+              onValueChange={(v) =>
+                handleFilterChange("sector", v as CompanySector | "all")
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Sector" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Sectors</SelectItem>
-                <SelectItem value="solar">Solar</SelectItem>
-                <SelectItem value="wind">Wind</SelectItem>
-                <SelectItem value="hydro">Hydro</SelectItem>
-                <SelectItem value="battery">Battery</SelectItem>
-                <SelectItem value="storage">Storage</SelectItem>
+                {companySector.enumValues.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {t(`common.sectors.${s}`)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+            <Select
+              value={filters.country || "all"}
+              onValueChange={(v) =>
+                handleFilterChange("country", v as Country | "all")
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="HQ Country" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Countries</SelectItem>
-                <SelectItem value="Kenya">Kenya</SelectItem>
-                <SelectItem value="South Africa">South Africa</SelectItem>
-                <SelectItem value="Nigeria">Nigeria</SelectItem>
-                <SelectItem value="UAE">UAE</SelectItem>
+                <SelectItem value="all">All HQ Countries</SelectItem>
+                {countryCode.enumValues.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {t(`common.countries.${c}`)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Select value={selectedActivity} onValueChange={setSelectedActivity}>
-              <SelectTrigger>
-                <SelectValue placeholder="Main Activity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Activities</SelectItem>
-                <SelectItem value="Project Development">Project Development</SelectItem>
-                <SelectItem value="EPC">EPC</SelectItem>
-                <SelectItem value="O&M">O&M</SelectItem>
-                <SelectItem value="IPP">IPP</SelectItem>
-              </SelectContent>
-            </Select>
+            <Button
+              variant="outline"
+              onClick={resetFilters}
+              className="border-akili-orange text-akili-orange hover:bg-akili-orange hover:text-white"
+            >
+              <FilterX className="w-4 h-4 mr-2" />
+              Reset Filters
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Companies with View Toggle */}
+      {/* Companies Grid/Table */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Companies ({filteredCompanies.length})</CardTitle>
+              <CardTitle>Companies ({total})</CardTitle>
               <CardDescription>Energy companies and developers</CardDescription>
             </div>
             <div className="flex items-center border rounded-lg p-1">
@@ -347,101 +278,208 @@ export default function CompaniesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {viewMode === "cards" && (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCompanies.map((company) => (
-                <Card key={company.id} className="hover:shadow-lg transition-shadow duration-300">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <Link
-                        href={`/platform/companies/${company.id}`}
-                        className="hover:text-akili-blue transition-colors"
-                      >
-                        <CardTitle className="cursor-pointer">{company.name}</CardTitle>
-                      </Link>
-                      <Badge variant="outline">{company.classification}</Badge>
-                    </div>
-                    <CardDescription>{company.hqCountry}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{company.description}</p>
-                    <div>
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {company.sectors.map((sector, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {sector}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-500 dark:text-gray-400">Founded</p>
-                        <p className="font-medium">{company.founded}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 dark:text-gray-400">Size</p>
-                        <p className="font-medium">{company.size}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 dark:text-gray-400">Operating Countries</p>
-                        <div>{getCountryFlags(company.operatingCountries)}</div>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 dark:text-gray-400">Status</p>
-                        <Badge variant={company.operatingStatus === "Active" ? "default" : "secondary"}>
-                          {company.operatingStatus}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-end pt-4 border-t">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/platform/companies/${company.id}`}>
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+          {isPending && companies.length === 0 && (
+            <div className="text-center py-10">Loading companies...</div>
+          )}
+          {!isPending && companies.length === 0 && (
+            <div className="text-center py-10">No companies found.</div>
           )}
 
+          {/* Card View */}
+          {viewMode === "cards" && (
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {companies.map((company) => (
+                  <Card
+                    key={company.id}
+                    className="hover:shadow-lg transition-shadow duration-300"
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <Link
+                          href={`/platform/companies/${company.id}`}
+                          className="hover:text-akili-blue transition-colors"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage
+                                src={company.logoUrl || ""}
+                                alt={company.name}
+                                className="h-10 w-10 object-contain bg-muted"
+                              />
+                              <AvatarFallback>
+                                {company.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <CardTitle className="cursor-pointer">
+                              {company.name}
+                            </CardTitle>
+                          </div>
+                        </Link>
+                        {company.classification &&
+                          company.classification.length > 0 && (
+                            <Badge variant="outline">
+                              {company.classification[0]}
+                            </Badge>
+                          )}
+                      </div>
+                      <CardDescription>
+                        {company.hqCountry &&
+                          t(`common.countries.${company.hqCountry}`)}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                        {company.description}
+                      </p>
+                      <div>
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {company.sectors.map((sector, index) => (
+                            <Badge
+                              key={index}
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              {t(`common.sectors.${sector}`)}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-500 dark:text-gray-400">
+                            Founded
+                          </p>
+                          <p className="font-medium">
+                            {company.foundingDate?.getFullYear() || "N/A"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 dark:text-gray-400">
+                            Size
+                          </p>
+                          <p className="font-medium">{company.size || "N/A"}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 dark:text-gray-400">
+                            Operating Countries
+                          </p>
+                          <Countries
+                            countries={company.operatingCountries}
+                            max={5}
+                          />
+                        </div>
+                        <div>
+                          <p className="text-gray-500 dark:text-gray-400">
+                            Status
+                          </p>
+                          {company.operatingStatus &&
+                            company.operatingStatus.length > 0 && (
+                              <Badge
+                                variant={
+                                  company.operatingStatus[0] === "active"
+                                    ? "default"
+                                    : "secondary"
+                                }
+                              >
+                                {company.operatingStatus[0]}
+                              </Badge>
+                            )}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-end pt-4 border-t">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/platform/companies/${company.id}`}>
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              {/* Observer Target and Loading Indicator for Card View */}
+              <div
+                ref={observerRef}
+                className="h-10 flex items-center justify-center"
+              >
+                {isPending && companies.length > 0 && (
+                  <Loader2 className="h-8 w-8 animate-spin text-akili-blue" />
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Table View */}
           {viewMode === "table" && (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Company Name</TableHead>
-                    <TableHead>Classification</TableHead>
                     <TableHead>Sectors</TableHead>
                     <TableHead>HQ Country</TableHead>
-                    <TableHead>Operating Countries</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Founded</TableHead>
-                    <TableHead>Size</TableHead>
+                    <TableHead>Operating In</TableHead>
+                    <TableHead>Classification</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="text-xs">
-                  {filteredCompanies.map((company) => (
+                  {companies.map((company) => (
                     <TableRow key={company.id}>
-                      <TableCell className="font-medium">{company.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{company.classification}</Badge>
+                      <TableCell className="font-medium">
+                        <Link
+                          href={`/platform/companies/${company.id}`}
+                          className="hover:text-akili-blue transition-colors"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage
+                                src={company.logoUrl || ""}
+                                alt={company.name}
+                                className="h-8 w-8 object-contain bg-muted"
+                              />
+                              <AvatarFallback>
+                                {company.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="cursor-pointer">
+                              {company.name}
+                            </span>
+                          </div>
+                        </Link>
                       </TableCell>
                       <TableCell>
-                        {getSectorIcons(company.sectors)}
+                        <SectorsIconsTooltip sectors={company.sectors} />
                       </TableCell>
-                      <TableCell>{company.hqCountry}</TableCell>
-                      <TableCell>{getCountryFlags(company.operatingCountries)}</TableCell>
                       <TableCell>
-                        <Badge variant={company.operatingStatus === "Active" ? "default" : "secondary"}>
-                          {company.operatingStatus}
-                        </Badge>
+                        <Countries
+                          countries={
+                            company.hqCountry ? [company.hqCountry] : []
+                          }
+                        />
                       </TableCell>
-                      <TableCell>{company.founded}</TableCell>
-                      <TableCell>{company.size}</TableCell>
+                      <TableCell>
+                        <Countries
+                          countries={company.operatingCountries}
+                          max={3}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {company.classification?.map((c) => (
+                          <Badge key={c} variant="outline" className="mr-1">
+                            {t(`companies.classification.${c}`)}
+                          </Badge>
+                        ))}
+                      </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" asChild>
                           <Link href={`/platform/companies/${company.id}`}>
@@ -455,8 +493,36 @@ export default function CompaniesPage() {
               </Table>
             </div>
           )}
+
+          {/* Pagination Controls for Table View */}
+          {viewMode === "table" && !isPending && companies.length > 0 && (
+            <div className="flex items-center justify-between border-t px-4 py-3 mt-6">
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{companies.length}</span>{" "}
+                of <span className="font-medium">{total}</span> results
+              </p>
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchCompanies("previous")}
+                  disabled={isPending || !cursors.previous}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchCompanies("next")}
+                  disabled={isPending || !cursors.next}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

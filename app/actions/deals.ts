@@ -18,6 +18,7 @@ import {
   financing,
 } from "@/lib/db/schema";
 import { PgSelectBase, PgSelectWithout } from "drizzle-orm/pg-core";
+import { parseLocation } from "@/lib/utils";
 
 function getSectors(sectors: { sector: Sector }[]) {
   return sectors.map((s) => s.sector);
@@ -27,16 +28,6 @@ function getTechnologies(technologies: { technology: Technology }[]) {
   return technologies.map((t) => t.technology);
 }
 
-function parseLocation(location: string | null) {
-  let parsedLocation: [number, number] | null = null;
-  if (location) {
-    const match = location.match(/POINT\(([-\d.]+) ([-\d.]+)\)/);
-    if (match) {
-      parsedLocation = [parseFloat(match[2]), parseFloat(match[1])];
-    }
-  }
-  return parsedLocation;
-}
 
 export async function getDeals(
   filters?: DealFilters,
@@ -195,7 +186,7 @@ export async function getDealById(id: string) {
         announcementDate: true,
         completionDate: true,
         pressReleaseUrl: true,
-        onOffGrid: true,
+        // onOffGrid: true,
       },
       with: {
         dealsCountries: {
@@ -336,9 +327,17 @@ export async function getDealById(id: string) {
         result?.subtype === "ma_corporate") ||
       result?.type === "financing";
 
+    const onOffGrids = result?.dealsAssets.map((a) => a.asset.onOffGrid);
+
     return result
       ? {
           ...result,
+          onOffGrid: onOffGrids?.every((v) => v === false)
+            ? true
+            : onOffGrids?.every((v) => v === false)
+            ? false : onOffGrids != null && onOffGrids.length > 0
+            ? null
+            : undefined,
           regions: [
             ...new Set(
               result?.dealsCountries.map(({ country: { region } }) => region)

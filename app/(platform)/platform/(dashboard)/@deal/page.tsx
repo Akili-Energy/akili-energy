@@ -26,6 +26,9 @@ import {
   ComposedChart,
   Line,
   Tooltip,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import {
   ArrowUpRight,
@@ -41,10 +44,10 @@ import {
 import Link from "next/link";
 import { getDealsAnalytics } from "@/app/actions/actions";
 import { useLanguage } from "@/components/language-context";
-import { getCountryFlag } from "@/lib/utils";
+import { formatMonth, getCountryFlag } from "@/lib/utils";
 
 export default function DealAnalyticsPage() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
 
   const [analytics, setAnalytics] =
     useState<Awaited<ReturnType<typeof getDealsAnalytics>>>();
@@ -87,11 +90,19 @@ export default function DealAnalyticsPage() {
               }}
             >
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analytics?.dealsByMonthAndType}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                <BarChart
+                  data={analytics?.dealsByMonthAndType
+                    .filter((d) => d?.month.startsWith("2025"))
+                    .map((d) => ({
+                      ...d,
+                      month: formatMonth(language, d?.month),
+                    }))}
+                >
+                  <CartesianGrid strokeDasharray="4 1 2" />
                   <XAxis dataKey="month" />
                   <YAxis
                     yAxisId="left"
+                    dataKey="dealCount"
                     label={{
                       value: "Deal Count",
                       angle: -90,
@@ -151,7 +162,12 @@ export default function DealAnalyticsPage() {
               }}
             >
               <ResponsiveContainer width="100%" height={300}>
-                <ComposedChart data={analytics?.financingDealsByMonthAndType}>
+                <ComposedChart
+                  data={analytics?.financingDealsByMonthAndType.map((d) => ({
+                    ...d,
+                    month: formatMonth(language, d?.month),
+                  }))}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis
@@ -217,7 +233,7 @@ export default function DealAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -254,7 +270,7 @@ export default function DealAnalyticsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-akili-blue" />
@@ -288,7 +304,7 @@ export default function DealAnalyticsPage() {
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
-          </Card>
+          </Card> */}
 
           <Card>
             <CardHeader>
@@ -329,6 +345,83 @@ export default function DealAnalyticsPage() {
                   <Bar dataKey="dealCount" fill="#f59e0b" />
                 </BarChart>
               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-akili-blue" />
+                PPA by Subtype
+              </CardTitle>
+              <CardDescription>
+                PPA deal volume distribution by subtype
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* <div className="grid grid-cols-2 gap-4"> */}
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={analytics?.ppaDealsBySubtype.map((d) => ({
+                      ...d,
+                      subtype: t(`deals.subtypes.${d.subtype}`),
+                    }))}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={80}
+                    paddingAngle={2}
+                    dataKey="dealCount"
+                    nameKey="subtype"
+                  >
+                    {analytics?.ppaDealsBySubtype.map(({ color }, i) => {
+                      console.log(color);
+                      return <Cell key={`cell-${i}`} fill={color} />;
+                    })}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+              {/* <div className="space-y-6 flex justify-center flex-col">
+                  {analytics?.ppaDealsBySubtype.map(
+                    ({ subtype, color, dealCount }, i, arr) => (
+                      <div
+                        key={subtype}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: color }}
+                          />
+                          <span className="font-medium">
+                            {t(`deals.subtypes.${subtype}`)}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">
+                            {(
+                              (dealCount /
+                                arr
+                                  .map((d) => d.dealCount)
+                                  .reduce((acc, val) => acc + val, 0)) *
+                              100
+                            ).toFixed(2)}
+                            %
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {dealCount} Deals
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div> */}
             </CardContent>
           </Card>
         </div>

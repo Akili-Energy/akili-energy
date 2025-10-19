@@ -1,5 +1,5 @@
 import { getDeals, getDealById } from "@/app/actions/deals";
-import { getProjects } from "@/app/actions/projects";
+import { getProjectById, getProjects } from "@/app/actions/projects";
 import {
   companySector,
   projectSector,
@@ -35,7 +35,14 @@ import {
   projectDetails,
   proposals,
   projectCompanyRole,
+  companyClassification,
+  companyOperatingStatus,
+  contentStatus,
+  contentCategory,
+  contentType,
 } from "./db/schema";
+import { getCompanies, getCompanyById } from "@/app/actions/companies";
+import { getContent } from "@/app/actions/content";
 
 export type Cursor = { id: string; createdAt: Date };
 export type Pagination = "next" | "previous";
@@ -47,6 +54,25 @@ export type DealFilters = {
   type?: DealType;
   subtype?: DealSubtype;
   dateRange?: { from?: Date; to?: Date };
+};
+
+export type ProjectFilters = {
+  region?: Region;
+  country?: Country;
+  sector?: ProjectSector;
+  stage?: ProjectStage;
+};
+
+export type CompanyClassification =
+  (typeof companyClassification.enumValues)[number];
+export type CompanyOperatingStatus =
+  (typeof companyOperatingStatus.enumValues)[number];
+
+export type CompanyFilters = {
+  classification?: CompanyClassification;
+  sector?: CompanySector;
+  country?: Country; // For HQ Country
+  status?: CompanyOperatingStatus;
 };
 
 export type RequiredKeys<T> = {
@@ -99,9 +125,17 @@ export type FinancingObjective = (typeof financingObjective.enumValues)[number];
 export type FetchDealsResults = Awaited<ReturnType<typeof getDeals>>["deals"];
 export type FetchDealResult = Awaited<ReturnType<typeof getDealById>>;
 
-export type FetchProjectsResults = Awaited<ReturnType<typeof getProjects>>;
+export type FetchProjectsResults = Awaited<ReturnType<typeof getProjects>>["projects"];
+export type FetchProjectResult = Awaited<ReturnType<typeof getProjectById>>;
+
+export type FetchCompaniesResults = Awaited<
+  ReturnType<typeof getCompanies>
+>["companies"];
+export type FetchCompanyResult = Awaited<ReturnType<typeof getCompanyById>>;
+
 
 export type Deal = NonNullable<FetchDealResult>;
+export type Company = NonNullable<FetchCompanyResult>;
 export interface MergerAcquisition
   extends Omit<Deal, "financing" | "powerPurchaseAgreement" | "jointVenture"> {
   mergerAcquisition: NonNullable<Deal["mergerAcquisition"]>;
@@ -141,95 +175,11 @@ export type ProposalEvaluationCriteria = Partial<
 
 export type ProjectCompanyRole = (typeof projectCompanyRole.enumValues)[number];
 
-export interface Project extends BaseModel {
-  country: Country;
-  capacity?: number;
-  investment?: number;
-  sectors: string[];
-  technologies: string[];
-  subSectors: string[];
-  segments: string[];
-  stage?:
-    | "proposal"
-    | "awarded"
-    | "announced"
-    | "completed"
-    | "early_stage"
-    | "late_stage"
-    | "ready_to_build"
-    | "not_to_proceed"
-    | "in_development"
-    | "in_construction"
-    | "operational"
-    | "cancelled";
-  status?: boolean;
-  milestone?: string;
-  companies: (BaseModel & {
-    role:
-      | "special_purpose_vehicle"
-      | "sponsor"
-      | "contractor"
-      | "operations_maintenance"
-      | "equipment_supplier"
-      | "lender"
-      | "advisor"
-      | "grid_operator"
-      | "procurement_officer"
-      | "tender_winner";
-  })[];
-  onOffGrid?: boolean;
-  onOffShore?: boolean;
-  revenueModel?: RevenueModelDetails;
-  colocatedStorage?: boolean;
-  colocatedStorageCapacity?: number;
-  contractType: (
-    | "operate"
-    | "build"
-    | "own"
-    | "transfer"
-    | "maintain"
-    | "design"
-    | "finance"
-    | "lease"
-    | "rehabilitate"
-  )[];
-  features?: string;
-  financingStrategy?: {
-    equity?: number;
-    debt?: number;
-    grant?: number;
-  };
-  constructionStart?: Date;
-  constructionEnd?: Date;
-  operationalDate?: Date;
-  transmissionInfrastructure?: string;
-  ppaSigned?: boolean;
-  financialClosing?: Date;
-  eiaApproved?: boolean;
-  gridConnection?: boolean;
-  bidSubmissionDeadline?: Date;
-  tenderObjective?:
-    | "engineering_procurement_construction"
-    | "operations_maintenance"
-    | "finance"
-    | "commissioning"
-    | "design"
-    | "installation"
-    | "supply"
-    | "testing"
-    | "transfer";
-  evaluationCriteria?: {
-    technical: number;
-    financial: number;
-  };
-  bidsReceived?: number;
-  winningBid?: number;
-  impact?: string;
-  insights?: string;
-  description?: string;
-  address?: string;
-  location?: [number, number];
-}
+export type ContentCategory = (typeof contentCategory.enumValues)[number];
+export type ContentStatus = (typeof contentStatus.enumValues)[number];
+export type ContentType = (typeof contentType.enumValues)[number];
+
+export type Content = Awaited<ReturnType<typeof getContent>>["content"][number];
 
 export interface AssetEntry {
   id: string;
@@ -277,3 +227,9 @@ export type NewProjectUpdateDetail = NewInsertModel<
 export type NewProjectProposal = NewInsertModel<typeof proposals.$inferInsert>;
 
 export type NewCompany = NewInsertModel<typeof companies.$inferInsert>;
+
+export type ActionState = {
+  success: boolean;
+  message: string;
+  errors?: Record<string, string[]>;
+}

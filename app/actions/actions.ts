@@ -454,6 +454,7 @@ export async function seedDatabase(payload: {
     await db.refreshMaterializedView(projectsBySector).concurrently();
     await db.refreshMaterializedView(projectsByMonthAndStage).concurrently();
     await db.refreshMaterializedView(topCountriesByDealValue).concurrently();
+    await db.refreshMaterializedView(topCompaniesByFinancingAndCapacity).concurrently();
     await db
       .refreshMaterializedView(countriesByCapacityAndFinancing)
       .concurrently();
@@ -620,8 +621,9 @@ export async function getDealsAnalytics() {
               acc[month] = { month };
             }
             acc[month][dealType] = dealCount;
+            acc[month].dealCount = (acc[month].dealCount || 0) + dealCount;
             return acc;
-          }, {} as Partial<Record<string, Partial<Record<DealType, number>> & { month: string }>>)
+          }, {} as Partial<Record<string, Partial<Record<DealType, number>> & { month: string; dealCount?: number }>>)
       ),
       financingDealsByMonthAndType: Object.values(
         (await db.select().from(financingDealsByMonthAndType))
@@ -639,12 +641,21 @@ export async function getDealsAnalytics() {
       ppaDealsByOfftakerSector: await db
         .select()
         .from(ppaDealsByOfftakerSector),
-      ppaDealsBySubtype: await db.select().from(ppaDealsBySubtype),
+      ppaDealsBySubtype: (await db.select().from(ppaDealsBySubtype)).map(
+        (data) => ({
+          ...data,
+          color: `#${Math.floor(Math.random() * 16777215)
+            .toString(16)
+            .padStart(6, "0")}`,
+        })
+      ),
       ppaDealsByDuration: (await db.select().from(ppaDealsByDuration)).toSorted(
         ({ duration: a }, { duration: b }) => (a ?? Infinity) - (b ?? Infinity)
       ),
       topCountriesByDealValue: await db.select().from(topCountriesByDealValue),
-      topCompaniesByFinancingAndCapacity: await db.select().from(topCompaniesByFinancingAndCapacity),
+      topCompaniesByFinancingAndCapacity: await db
+        .select()
+        .from(topCompaniesByFinancingAndCapacity),
       latestDeals: await getLatestDeals(),
     };
   } catch (error) {

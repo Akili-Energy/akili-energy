@@ -9,9 +9,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // experimental: {
-  //   ppr: "incremental",
-  // },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+    // ppr: "incremental",
+  },
 };
 
 export default nextConfig

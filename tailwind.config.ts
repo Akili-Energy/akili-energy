@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss"
+import scrollbarHide from "tailwind-scrollbar-hide";
 
 const config: Config = {
   darkMode: ["class"],
@@ -20,10 +21,10 @@ const config: Config = {
     },
     extend: {
       fontSize: {
-        'tiny': '0.625rem'
+        tiny: "0.625rem",
       },
       lineHeight: {
-        'tight': '1rem',
+        tight: "1rem",
       },
       colors: {
         border: "hsl(var(--border))",
@@ -111,11 +112,16 @@ const config: Config = {
       },
       backgroundImage: {
         "gradient-akili": "linear-gradient(135deg, #021455 0%, #12B99A 100%)",
-        "gradient-akili-soft": "linear-gradient(135deg, #f0f4ff 0%, #f0fdfa 100%)",
+        "gradient-akili-soft":
+          "linear-gradient(135deg, #f0f4ff 0%, #f0fdfa 100%)",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
-} satisfies Config
+  plugins: [
+    require("tailwindcss-animate"),
+    scrollbarHide,
+    require("@tailwindcss/typography"),
+  ],
+} satisfies Config;
 
 export default config

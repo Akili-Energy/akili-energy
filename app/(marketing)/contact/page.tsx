@@ -5,13 +5,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Mail, Phone, MapPin, Clock, Send } from "lucide-react"
 import Link from "next/link"
-import { UnifiedHeader } from "@/components/unified-header"
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <UnifiedHeader />
+    <>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Hero Section */}
@@ -19,7 +16,7 @@ export default function ContactPage() {
           <h1 className="text-4xl lg:text-5xl font-bold text-gray-900">Get in Touch</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Ready to transform your energy intelligence? Contact our team for demos, partnerships, or any questions
-            about Akili Green.
+            about Akili Energy.
           </p>
         </div>
 
@@ -205,6 +202,6 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

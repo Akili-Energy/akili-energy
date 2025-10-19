@@ -118,6 +118,13 @@ export const companySubSector = pgEnum("company_sub_sector", [
   "prison",
   "mobility",
   "road_bridges",
+  "hybrid",
+  "marine",
+  "bioenergy",
+  "wave",
+  "waste-to-energy",
+  "warehousing",
+  "logistics",
 ]);
 export const projectSubSector = pgEnum("project_sub_sector", [
   "utility_scale",
@@ -152,6 +159,10 @@ export const technology = pgEnum("technology", [
   "hydrogen",
   "geothermal",
   "nuclear",
+  "hybrid",
+  "green_hydrogen",
+  "wave_onshore",
+  "wave_nearshore",
 ]);
 export const revenueModel = pgEnum("revenue_model", [
   "power_purchase_agreement",
@@ -230,16 +241,63 @@ export const countryCode = pgEnum("country_code", [
 export const companySize = pgEnum("company_size", [
   "1-10",
   "11-50",
-  "51-250",
-  "251-1000",
+  "51-200",
+  "201-500",
+  "501-1000",
   "1001-5000",
   "5001-10000",
-  "10000+",
+  "10001+",
+]);
+export const companyOperatingStatus = pgEnum("company_operating_status", [
+  "active",
+  "operating",
+  "in_development",
+  "closed",
 ]);
 export const companyActivity = pgEnum("company_activity", [
   "merger_acquisition",
   "financing",
   "offtaker",
+  "development",
+  "construction",
+  "operation",
+  "maintenance",
+  "design",
+  "engineering",
+  "ownership",
+  "energy_trading",
+  "wind",
+  "procurement",
+  "investment",
+  "asset_management",
+  "transmission",
+  "hybrid",
+  "distribution",
+  "research_development",
+  "exploration",
+  "installation",
+  "origination",
+  "commissioning",
+  "generation",
+  "management",
+  "renewables",
+  "storage",
+  "oil",
+  "gas",
+  "petrochemicals",
+  "structuring",
+  "epc",
+  "manufacturing",
+  "services",
+  "infrastructure",
+  "production",
+  "wave_energy",
+  "geothermal",
+  "logistics",
+  "waste-to-energy",
+  "warehousing",
+  "industrial",
+  "other",
 ]);
 export const companyClassification = pgEnum("company_classification", [
   "private_equity",
@@ -257,6 +315,12 @@ export const companyClassification = pgEnum("company_classification", [
   "small_cap",
   "mid_cap",
   "big_cap",
+  "developer",
+  "investment",
+  "operator",
+  "manufacturer",
+  "asset_manager",
+  "energy_trader",
 ]);
 export const projectCompanyRole = pgEnum("project_company_role", [
   "special_purpose_vehicle",
@@ -269,6 +333,11 @@ export const projectCompanyRole = pgEnum("project_company_role", [
   "grid_operator",
   "procurement_officer",
   "tender_winner",
+]);
+export const projectStatus = pgEnum("project_status", [
+  "active",
+  "ongoing",
+  "cancelled",
 ]);
 export const projectStage = pgEnum("project_stage", [
   "proposal",
@@ -287,36 +356,34 @@ export const projectStage = pgEnum("project_stage", [
 ]);
 export const projectMilestone = pgEnum("project_milestone", [
   "financial_closing",
-  "operational",
   "commissioning",
+  "project_awarded",
+  "operational",
   "construction_started",
-  "awarded",
   "in_construction",
-  "call_for_tender",
-  "pre_qualification_launched",
+  "tendering_procedure_launched",
   "epc_selection",
-  "initial_approval",
-  "project_update",
-  "1st_tranche",
-  "project_approved",
-  "construction_agreement",
-  "construction_restarted",
-  "development_capital_secured",
-  "funding_agreement",
-  "government_support",
-  "grant_approval",
-  "grid_connection_approved",
-  "implementation_agreement_signed",
-  "land_transfer",
+  "agreement_signed",
+  "pre_qualification_launched",
+  "initial_approvals",
+  "ppa_signed",
+  "om_partner_appointed",
+  "development_agreement_signed",
   "licenses_agreement",
-  "eia_approval",
-  "mou_signed",
-  "partnership_agreement_signed",
+  "implementation_agreement_signed",
+  "1st_tranche_payment",
+  "project_update",
+  "construction_restarted",
   "power_purchase_agreement",
-  "project_unveiled",
-  "site_visit",
   "pre_feasibility_study_completed",
-  "supply_agreement",
+  "grid_connection_approved",
+  "land_transfer_decree",
+  "project_unveiled",
+  "government_support_agreement_signed",
+  "call_for_tender",
+  "commercial_operation_started",
+  "mou_signed",
+  "project_announced",
 ]);
 export const projectContractType = pgEnum("project_contract_type", [
   "operate",
@@ -474,7 +541,7 @@ const geography = customType<{ data: [number, number]; driverData: string }>({
     return `SRID=4326;POINT(${lng} ${lat})`;
   },
   fromDriver(value: string): [number, number] {
-    console.log(value);
+    // console.log(value);
     const match = value
       .replace(/^SRID=\d+;/, "")
       .trim()
@@ -605,8 +672,12 @@ export const companies = pgTable(
       .array()
       .default(sql`ARRAY[]::company_activity[]`),
     size: companySize("size"),
-    operatingStatus: boolean("operating_status"),
-    classification: companyClassification("classification"),
+    operatingStatus: companyOperatingStatus("operating_status")
+      .array()
+      .default(sql`ARRAY[]::company_operating_status[]`),
+    classification: companyClassification("classification")
+      .array()
+      .default(sql`ARRAY[]::company_classification[]`),
     subSectors: companySubSector("sub_sectors")
       .array()
       .default(sql`ARRAY[]::company_sub_sector[]`),
@@ -619,12 +690,12 @@ export const companies = pgTable(
   },
   (table) => [
     index().on(table.hqCountry),
-    index().on(table.classification),
-    index().on(table.operatingStatus),
     index("companies_tsvector_name_gin_idx").using(
       "gin",
       sql`to_tsvector('franglais', ${table.name})`
     ),
+    index().using("gin", table.classification),
+    index().using("gin", table.operatingStatus),
     index().using("gin", table.activities),
     index().using("gin", table.subSectors),
     index().using("gist", table.hqLocation),
@@ -646,7 +717,6 @@ export const companiesOperatingCountries = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.companyId, table.countryCode] }),
-    index().on(table.companyId),
     index().on(table.countryCode),
   ]
 );
@@ -666,7 +736,6 @@ export const companiesSectors = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.companyId, table.sector] }),
-    index().on(table.companyId),
     index().on(table.sector),
   ]
 );
@@ -686,7 +755,6 @@ export const companiesTechnologies = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.companyId, table.technology] }),
-    index().on(table.companyId),
     index().on(table.technology),
   ]
 );
@@ -714,7 +782,6 @@ export const companiesEmployees = pgTable(
   (table) => [
     primaryKey({ columns: [table.companyId, table.employeeId] }),
     unique().on(table.companyId, table.role),
-    index().on(table.companyId),
     index().on(table.employeeId),
   ]
 );
@@ -743,8 +810,9 @@ export const projects = pgTable(
       scale: 2,
     }).$type<number>(),
     stage: projectStage("stage"),
-    milestone: projectMilestone("milestone"),
-    status: boolean("status"),
+    // milestone: projectMilestone("milestone"),
+    milestone: varchar("milestone", { length: 255 }),
+    status: projectStatus("status"),
     onOffGrid: boolean("on_off_grid"),
     onOffShore: boolean("on_off_shore"),
     segments: segment("segments")
@@ -753,10 +821,13 @@ export const projects = pgTable(
     revenueModel: revenueModel("revenue_model"),
     revenueModelDuration: integer("revenue_model_duration"),
     colocatedStorage: boolean("colocated_storage"),
-    colocatedStorageCapacity: decimal("colocated_storage_capacity", {
-      precision: 10,
-      scale: 2,
-    }).$type<number>(),
+    // colocatedStorageCapacity: decimal("colocated_storage_capacity", {
+    //   precision: 10,
+    //   scale: 2,
+    // }).$type<number>(),
+    colocatedStorageCapacity: varchar("colocated_storage_capacity", {
+      length: 32,
+    }),
     contractType: projectContractType("contract_type")
       .array()
       .default(sql`ARRAY[]::project_contract_type[]`),
@@ -799,7 +870,6 @@ export const projectsSectors = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.projectId, table.sector] }),
-    index().on(table.projectId),
     index().on(table.sector),
   ]
 );
@@ -819,7 +889,6 @@ export const projectsTechnologies = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.projectId, table.technology] }),
-    index().on(table.projectId),
     index().on(table.technology),
   ]
 );
@@ -895,7 +964,6 @@ export const projectsCompanies = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.projectId, table.companyId, table.role] }),
-    index().on(table.projectId),
     index().on(table.companyId),
     index().on(table.role),
   ]
@@ -924,10 +992,10 @@ export const deals = pgTable(
     description: text("description"),
     impacts: text("impacts"),
     insights: text("insights"),
-    pressReleaseUrl: varchar("press_release_url", { length: 255 }).unique(),
+    pressReleaseUrl: varchar("press_release_url", { length: 255 }),
     announcementDate: date("announcement_date", { mode: "date" }),
     completionDate: date("completion_date", { mode: "date" }),
-    onOffGrid: boolean("on_off_grid"),
+    // onOffGrid: boolean("on_off_grid"),
     ...timestamps,
   },
   (table) => [
@@ -939,7 +1007,6 @@ export const deals = pgTable(
       .onUpdate("cascade"),
     index().on(table.type),
     index().on(table.subtype),
-    index().on(table.subtype, table.type),
     index().on(table.date),
     index().on(table.announcementDate),
     index().on(table.completionDate),
@@ -965,7 +1032,6 @@ export const dealsCountries = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.dealId, table.countryCode] }),
-    index().on(table.dealId),
     index().on(table.countryCode),
   ]
 );
@@ -987,7 +1053,6 @@ export const dealsAssets = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.dealId, table.assetId] }),
-    index().on(table.dealId),
     index().on(table.assetId),
   ]
 );
@@ -1015,7 +1080,6 @@ export const dealsCompanies = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.dealId, table.companyId, table.role] }),
-    index().on(table.dealId),
     index().on(table.companyId),
     index().on(table.role),
   ]
@@ -1222,7 +1286,6 @@ export const contentTags = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.contentSlug, table.tagId] }),
-    index().on(table.contentSlug),
     index().on(table.tagId),
   ]
 );
@@ -1486,7 +1549,7 @@ export const projectsRelations = relations(projects, ({ many, one }) => ({
   details: one(projectDetails),
   proposal: one(proposals),
   // opportunity: one(opportunities),
-  dealAssets: many(dealsAssets),
+  dealsAssets: many(dealsAssets),
   documents: many(documents),
 }));
 
@@ -1733,25 +1796,31 @@ export const companyPortfolios = pgView("company_portfolios").as((qb) =>
       companyName: aliasedColumn(companies.name, "company_name"),
       dealsCount: count(deals.id).as("deals_count"),
       dealsValue: sum(deals.amount).as("deals_value"),
-      totalPortfolio: sum(projects.plantCapacity).as("total_portfolio"),
+      totalPortfolio: sum(projects.plantCapacity).mapWith(Number).as("total_portfolio"),
       inDevelopmentPortfolio: sum(
         sql<number>`case when ${projects.stage} = 'in_development' then ${projects.plantCapacity} else 0 end`
-      ).as("in_development_portfolio"),
+      )
+        .mapWith(Number)
+        .as("in_development_portfolio"),
       inConstructionPortfolio: sum(
         sql<number>`case when ${projects.stage} = 'in_construction' then ${projects.plantCapacity} else 0 end`
-      ).as("in_construction_portfolio"),
+      )
+        .mapWith(Number)
+        .as("in_construction_portfolio"),
       operationalPortfolio: sum(
         sql<number>`case when ${projects.stage} = 'operational' then ${projects.plantCapacity} else 0 end`
-      ).as("operational_portfolio"),
+      )
+        .mapWith(Number)
+        .as("operational_portfolio"),
     })
     .from(companies)
     .leftJoin(projectsCompanies, eq(companies.id, projectsCompanies.companyId))
     .leftJoin(projects, eq(projectsCompanies.projectId, projects.id))
     .leftJoin(dealsCompanies, eq(companies.id, dealsCompanies.companyId))
     .leftJoin(deals, eq(dealsCompanies.dealId, deals.id))
-    .where(
-      sql`extract(year from ${deals.date}) = extract(year from current_date)`
-    )
+    // .where(
+    //   sql`extract(year from ${deals.date}) = extract(year from current_date)`
+    // )
     .groupBy(companies.id)
 );
 
@@ -1774,9 +1843,9 @@ export const dealDetails = pgView("deal_details").as((qb) => {
         >`array_agg(distinct y.segment) filter (where y.segment is not null)`.as(
           "assets_segments"
         ),
-        totalColocatedStorageCapacity: sum(
-          projects.colocatedStorageCapacity
-        ).as("total_colocated_storage_capacity"),
+        // totalColocatedStorageCapacity: sum(
+        //   projects.colocatedStorageCapacity
+        // ).as("total_colocated_storage_capacity"),
         lifecycle: sql<
           Record<string, (typeof projectStage.enumValues)[number]>
         >`jsonb_object_agg(${projects.name}, ${projects.stage})`.as(
@@ -1823,10 +1892,10 @@ export const dealDetails = pgView("deal_details").as((qb) => {
       totalCapacity: assetsDetails.totalCapacity,
       subSectors: aliasedColumn(assetsDetails.subSectors, "sub_sectors"),
       segments: aliasedColumn(assetsDetails.segments, "segments"),
-      colocatedStorageCapacity: aliasedColumn(
-        assetsDetails.totalColocatedStorageCapacity,
-        "colocated_storage_capacity"
-      ),
+      // colocatedStorageCapacity: aliasedColumn(
+      //   assetsDetails.totalColocatedStorageCapacity,
+      //   "colocated_storage_capacity"
+      // ),
       assetLifecycle: aliasedColumn(assetsDetails.lifecycle, "asset_lifecycle"),
       involvedCompanies: aliasedColumn(
         companiesDetails.companiesNames,
@@ -2135,7 +2204,7 @@ export const topCompaniesByFinancingAndCapacity = pgMaterializedView(
         totalFundraising: sql`sum(${deals.amount})`
           .mapWith(Number)
           .as("total_fundraising"),
-        dealCount: countDistinct(deals.id).as('deal_count')
+        dealCount: countDistinct(deals.id).as("deal_count"),
       })
       .from(dealsCompanies)
       .innerJoin(

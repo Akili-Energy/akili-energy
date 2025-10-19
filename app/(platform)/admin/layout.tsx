@@ -11,8 +11,8 @@ export default function AdminLayout({
     <div className="min-h-screen bg-gray-50">
       <div className="flex h-screen">
         <AdminSidebar />
-        <main className="flex-1 overflow-auto">
-          <div className="p-8">{children}</div>
+        <main className="flex-1 overflow-auto p-6">
+          <div>{children}</div>
           <Toaster />
         </main>
       </div>

@@ -88,6 +88,8 @@
             "mining": "Mines",
             "real_estate": "Hôtellerie & Immobilier",
             "industrial": "Industriel",
+            "water": "Eau",
+            "infrastructure": "Infrastructure",
             "other": "Autre"
         },
         "technologies": {
@@ -114,13 +116,36 @@
             "nuclear": "Nucléaire"
         },
         "subSectors": {
+            "solar": "Solaire",
+            "wind": "Éolien",
+            "hydro": "Hydroélectrique",
+            "battery": "Batterie",
+            "hydrogen": "Hydrogène",
+            "biomass": "Biomasse",
+            "geothermal": "Géothermie",
+            "nuclear": "Nucléaire",
+            "oil": "Pétrole",
+            "gas": "Gaz",
+            "coal": "Charbon",
             "utility_scale": "Echelle industrielle",
             "commercial_industrial": "Commercial & Industriel",
             "residential": "Résidentiel",
             "offshore": "Offshore",
             "onshore": "Onshore",
             "cleantech": "CleanTech",
-            "telecom": "Télécom"
+            "telecom": "Télécom",
+            "university": "Université",
+            "hospital": "Hôpital",
+            "prison": "Prison",
+            "mobility": "Mobilité",
+            "road_bridges": "Routes & Ponts",
+            "hybrid": "Hybride",
+            "marine": "Marin",
+            "bioenergy": "Bioénergie",
+            "wave": "Vagues",
+            "waste-to-energy": "Valorisation énergétique des déchets",
+            "warehousing": "Entreposage",
+            "logistics": "Logistique"
         },
         "segments": {
             "generation": "Production",
@@ -155,6 +180,45 @@
             "operational": "Opérationnel",
             "proposal": "Proposition",
             "completed": "Terminé"
+        },
+        "ma": {
+            "structures": {
+                "acquisition": "Acquisition",
+                "merger": "Fusion",
+                "divestment": "Désinvestissement",
+                "ownership_transfer": "Transfert de propriété"
+            },
+            "status": {
+                "announced": "Annoncé",
+                "completed": "Terminé"
+            },
+            "specifics": {
+                "majority_stake": "Participation majoritaire",
+                "minority_stake": "Participation minoritaire",
+                "economic_interest": "Intérêt économique"
+            }
+        },
+        "financing": {
+            "types": {
+                "debt": "Dette",
+                "equity": "Fonds propres",
+                "grant": "Subvention",
+                "green_bond": "Obligation verte"
+            },
+            "subtypes": {
+                "project_finance": "Financement de projet",
+                "loan": "Prêt",
+                "grant": "Subvention",
+                "equity": "Fonds propres",
+                "private": "Privé",
+                "senior_debt": "Dette senior"
+            },
+            "objectives": {
+                "asset": "Actif",
+                "corporate": "Corporate",
+                "government": "Gouvernement",
+                "cleantech": "CleanTech"
+            }
         }
     },
     "projects": {
@@ -174,6 +238,31 @@
             "cancelled": "Annulé"
         }
     },
+    "companies": {
+        "classification": {
+            "private_equity": "Private Equity",
+            "pe_backed": "Financé par PE",
+            "private": "Privé",
+            "public": "Public",
+            "government": "Gouvernement",
+            "non_profit": "À but non lucratif",
+            "development_finance_institution": "Institution Financière de Développement (IFD)",
+            "advisor": "Conseiller",
+            "independent_power_producer": "Producteur Indépendant d'Électricité (IPP)",
+            "epc_om": "EPC/O&M",
+            "utility": "Service public",
+            "micro_cap": "Micro-capitalisation",
+            "small_cap": "Petite capitalisation",
+            "mid_cap": "Moyenne capitalisation",
+            "big_cap": "Grande capitalisation",
+            "developer": "Développeur",
+            "investment": "Investissement",
+            "operator": "Opérateur",
+            "manufacturer": "Fabricant",
+            "asset_manager": "Gestionnaire d'actifs",
+            "energy_trader": "Négociant en énergie"
+        }
+    },
     "nav": {
         "platform": "Plateforme",
         "research": "Actualités & Recherche",
@@ -183,12 +272,22 @@
         "signup": "S'inscrire"
     },
     "home": {
+        "chip": "Intelligence Stratégique pour l'Énergie",
         "hero": {
             "title": "L'intelligence pour les transactions d'énergie verte en Afrique",
             "subtitle": "Transformez les données énergétiques dispersées en insights exploitables. Accédez à l'intelligence de marché la plus complète pour le secteur énergétique africain.",
             "cta": {
                 "primary": "Explorer les transactions",
                 "secondary": "Demander une démo"
+            },
+            "cards": {
+                "deal_analysis": "Analyse des Transactions",
+                "ma_solar": "M&A Solaire",
+                "hydro_financing": "Financement Hydro",
+                "project_pipeline": "Pipeline de Projets",
+                "market_intelligence": "Intelligence de Marché",
+                "yoy_growth": "Croissance YoY",
+                "investments": "Investissements"
             }
         },
         "stats": {
@@ -199,6 +298,10 @@
         "features": {
             "title": "Fonctionnalités Avancées",
             "subtitle": "Des outils puissants pour analyser, comprendre et agir sur le marché énergétique africain"
+        },
+        "carousel": {
+            "title": "Conçu pour les Professionnels de l'Énergie",
+            "subtitle": "Des solutions adaptées à chaque acteur de l'écosystème énergétique africain"
         }
     }
 }

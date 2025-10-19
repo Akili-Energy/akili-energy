@@ -41,7 +41,7 @@ export default function DashboardLayout({
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-akili-blue">
-                Akili Green Dashboard
+                Akili Energy Dashboard
               </h1>
               <p className="text-gray-600">
                 Comprehensive insights into African energy markets and deal flow

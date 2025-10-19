@@ -78,6 +78,8 @@ import {
   projectSubSector,
   companySubSector,
   technology,
+  projectStatus,
+  companyOperatingStatus,
 } from "@/lib/db/schema";
 import {
   fetchProjects,
@@ -112,10 +114,13 @@ import {
   type SubSector,
   type Technology,
   type DealType,
+  ProjectSector,
+  CompanySector,
 } from "@/lib/types";
 import { isValidUrl } from "@/lib/utils";
 import { COUNTRIES_ISO_3166_CODE } from "@/lib/constants";
 import { useLanguage } from "@/components/language-context";
+import { PgEnum } from "drizzle-orm/pg-core";
 
 /**
  * Converts a full country name (in English, French, or common variations) to its ISO 3166-1 alpha-2 code.
@@ -213,6 +218,7 @@ interface FieldConfig<T extends string> {
     | "multiselect"
     | "geography"
     | "json"
+    | "image"
     | "link";
   required?: boolean;
   tooltip?: string;
@@ -263,6 +269,17 @@ const INVALID_VALUES = [
   "-",
   "#NAME?",
 ];
+
+function toArray(data: string) {
+  return (
+    data
+      ?.trim()
+      .toLowerCase()
+      .split(";")
+      .map((s) => s.trim().replaceAll(/\s+/g, "_").replaceAll(/[/-]/g, "_")) ||
+    []
+  );
+}
 
 export default function BulkUploadPage() {
   const { t } = useLanguage();
@@ -338,6 +355,107 @@ export default function BulkUploadPage() {
     return isNaN(date.valueOf()) ? undefined : date;
   }
 
+  function parseTechnologies(row: Record<string, string>) {
+    return filterArray(
+      row.Technology?.split(";").map((s: string) =>
+        s
+          .trim()
+          .toLowerCase()
+          .replace("solar pv", "photovoltaic")
+          .replace("wind onshore", "onshore_wind")
+          .replace("wind offshore", "offshore_wind")
+          .replace("small", "offshore_wind")
+          .replaceAll(/\s+/g, "_")
+          .replaceAll("-", "_")
+          .replace("pv", "photovoltaic")
+          .replace("csp", "concentrated_solar_power")
+          .replace("shs", "solar_home_systems")
+      ) || [],
+      technology.enumValues
+    );
+  }
+
+  function parseSectors(
+    row: Record<string, string>,
+    sectors: Sector[] = companySector.enumValues,
+    fieldName = "Sector"
+  ) {
+    return filterArray(
+      row[fieldName]
+        ?.trim()
+        .toLowerCase()
+        .split(";")
+        .map((s: string) =>
+          s
+            .trim()
+            .replaceAll(/\s*&\s*/g, "")
+            .replaceAll(/\s+/g, "_")
+            .replaceAll("utility", "utilities")
+            .replaceAll("hospitality", "real_estate")
+            .replaceAll("telco", "telecom")
+        ) || [],
+      sectors
+    );
+  }
+
+  function parseSubSectors(
+    row: Record<string, string>,
+    subSectors: SubSector[] = projectSubSector.enumValues,
+    fieldName = "Sub-sector"
+  ) {
+    return filterArray(
+      row[fieldName]
+        ?.trim()
+        .toLowerCase()
+        .split(";")
+        .map((s: string) =>
+          s
+            .trim()
+            .replaceAll("c&i", "commercial_industrial")
+            .replaceAll("dre", "distributed_renewable")
+            .replaceAll("-", "_")
+            .replaceAll(/\s+/g, "_")
+        ) || [],
+      subSectors
+    );
+  }
+
+  function parseSegments(row: Record<string, string>) {
+    return filterArray(toArray(row.Segment), segment.enumValues);
+  }
+
+  function parseRevenueModel(
+    row: Record<string, string>,
+    fieldName = "Revenue Model (Year)"
+  ) {
+    return {
+      revenueModel: parseEnum(
+        row[fieldName]
+          ?.toLowerCase()
+          .replace(/\s*\([^)]*\)/, "")
+          .replaceAll(/\s+/g, "_")
+          .replaceAll("-", "_")
+          .replace("ppa", "power_purchase_agreement")
+          .trim(),
+        revenueModel.enumValues
+      ),
+      revenueModelDuration: parseNumber(
+        parseInt(row[fieldName]?.match(/\((\d+)[^)]*\)/)?.[1] || "")
+      ),
+    };
+  }
+
+  function parseProjectMilestone(row: Record<string, string>) {
+    return row["Project milestone"];
+    // return parseEnum(
+    //   row["Project milestone"]
+    //     ?.toLowerCase()
+    //     .replaceAll(/[-/]/g, "_")
+    //     .replaceAll(/\s+/g, "_"),
+    //   projectMilestone.enumValues
+    // );
+  }
+
   // Generate kebab-case ID from name
   const generateId = (name: string, prefix = "") => {
     const kebab = name
@@ -396,7 +514,7 @@ export default function BulkUploadPage() {
       );
       if (comboMatch) {
         sponsor.equityAmount = parseFloat(comboMatch[1].replace(/,/g, ""));
-        sponsor.percentageOwnership = parseFloat(comboMatch[2]);
+        sponsor.percentageOwnership = Math.round(parseFloat(comboMatch[2]));
         continue;
       }
 
@@ -410,7 +528,7 @@ export default function BulkUploadPage() {
       // Percentage only: "50%" or "/25%" or "%100"
       const percMatch = cleaned.match(/(\d+(?:\.\d+)?)\s*%/);
       if (percMatch) {
-        sponsor.percentageOwnership = parseFloat(percMatch[1]);
+        sponsor.percentageOwnership = Math.round(parseFloat(percMatch[1]));
         continue;
       }
 
@@ -460,53 +578,26 @@ export default function BulkUploadPage() {
     data.forEach((row, index) => {
       const dealId = generateId(row["Deal update"] || `deal-${index}`, "deal");
 
-      const subtype = row["Deal Type"].toLowerCase() === "corporate"
-        ? "ma_corporate"
-        : "asset";
+      const subtype =
+        row["Deal Type"].toLowerCase() === "corporate"
+          ? "ma_corporate"
+          : "asset";
       const isCorporateMA = subtype === "ma_corporate";
 
       const countries = convertCountriesToCodes(
         row.Country?.split(";").map((s: string) => s.trim()) || []
       );
-      const sectors = filterArray(
-        row.Sector?.trim()
-          .split(";")
-          .map((s: string) =>
-            s
-              .trim()
-              .toLowerCase()
-              .replaceAll(/\s*&\s*/g, "")
-              .replaceAll(/\s+/g, "_")
-          ) || [],
+      const sectors = parseSectors(
+        row,
         (isCorporateMA ? companySector : projectSector).enumValues
       );
-      const subSectors = filterArray(
-        row["Sub-sector"]
-          ?.trim()
-          .split(";")
-          .map((s: string) =>
-            s
-              .trim()
-              .toLowerCase()
-              .replaceAll("C&I", "commercial_industrial")
-              .replaceAll("dre", "distributed_renewable")
-              .replaceAll("-", "_")
-              .replaceAll(/\s+/g, "_")
-          ) || [],
-        (isCorporateMA ? companySubSector : projectSubSector).enumValues
+      const subSectors = parseSubSectors(
+        row,
+        isCorporateMA
+          ? companySubSector.enumValues
+          : projectSubSector.enumValues
       );
-      const technologies = filterArray(
-        row.Technology?.split(";").map((s: string) =>
-          s
-            .trim()
-            .toLowerCase()
-            .replaceAll(/\s+/g, "_")
-            .replace("pv", "photovoltaic")
-            .replace("csp", "concentrated_solar_power")
-            .replace("shs", "solar_home_systems")
-        ) || [],
-        technology.enumValues
-      );
+      const technologies = parseTechnologies(row);
       const location: [number, number] | undefined =
         row.Latitude && row.Longitude
           ? [parseFloat(row.Longitude), parseFloat(row.Latitude)]
@@ -528,14 +619,10 @@ export default function BulkUploadPage() {
         completionDate: row["Completed Date"]
           ? parseDate(new Date(row["Completed Date"]))
           : null,
-        onOffGrid: row["On-grid/Off-grid"]?.toLowerCase().includes("on-grid"),
+        // onOffGrid: row["On-grid/Off-grid"]?.toLowerCase().includes("on-grid"),
         countries,
         specifics: filterArray(
-          row["Deal Specifics"]
-            ?.split(";")
-            .map((s: string) =>
-              s.trim().toLowerCase().replaceAll(/\s+/g, "_")
-            ) || [],
+          toArray(row["Deal Specifics"]),
           maSpecifics.enumValues
         ),
         insights: row.Insights,
@@ -548,29 +635,11 @@ export default function BulkUploadPage() {
           maStructure.enumValues
         ),
         financingStrategy: filterArray(
-          row["Financing strategy"]
-            ?.split(";")
-            .map((s: string) =>
-              s.trim().toLowerCase().replaceAll(/\s+/g, "_")
-            ) || [],
+          toArray(row["Financing strategy"]),
           dealFinancingType.enumValues
         ),
         strategyRationale: row["Strategy Rationale"],
-        revenueModel: parseEnum(
-          row["Revenue Model (Years)"]
-            ?.toLowerCase()
-            .replace(/\s*\([^)]*\)/, "")
-            .replaceAll(/\s+/g, "_")
-            .replaceAll("-", "_")
-            .replace("ppa", "power_purchase_agreement")
-            .trim(),
-          revenueModel.enumValues
-        ),
-        revenueModelDuration: parseNumber(
-          parseInt(
-            row["Revenue Model (Years)"]?.match(/\((\d+)[^)]*\)/)?.[1] || ""
-          )
-        ),
+        ...parseRevenueModel(row, "Revenue Model (Years)"),
       });
 
       // Parse acquisition targets (deals_assets)
@@ -600,7 +669,7 @@ export default function BulkUploadPage() {
               // Add to companies table if not exists
               if (
                 ![...companiesData, ...initialData.companies].find(
-                  ({ id, name }) => id === companyId || name === target
+                  ({ id, name }) => id === companyId || name.toLowerCase() === target.toLowerCase()
                 )
               ) {
                 companiesData.push({
@@ -609,7 +678,7 @@ export default function BulkUploadPage() {
                   hqCountry: countries[i],
                   countries,
                   hqLocation: location,
-                  sectors,
+                  sectors: sectors as CompanySector[],
                   technologies,
                   subSectors: subSectors as CompanySubSector[],
                 });
@@ -624,17 +693,17 @@ export default function BulkUploadPage() {
               parseCommaSeparatedWithNumbers(row["Equity transacted"]);
             const lifecycle = filterArray(
               row["Asset Lifecycle"]
-                ?.split(";")
+                ?.toLowerCase()
+                .split(";")
                 .map((s: string) =>
                   s
                     .trim()
-                    .toLowerCase()
                     .replace("rtb", "ready_to_build")
                     .replaceAll(/\s+/g, "_")
                 ) || [],
               projectStage.enumValues
             );
-            const { numbers: storageCapacities } =
+            const { names: storageCapacities } =
               parseCommaSeparatedWithNumbers(
                 row["Co-located storage capacity"]
               );
@@ -652,14 +721,16 @@ export default function BulkUploadPage() {
                 dealName: row["Deal update"],
                 assetId: projectId,
                 assetName: target,
-                maturity: maturities[i] || null,
+                maturity: Math.round(maturities[i]) || null,
                 equityTransactedPercentage: equityPercentages[i] || null,
               });
 
               // Add to projects table if not exists
               if (
                 ![...projectsData, ...initialData.projects].find(
-                  ({ id, name }) => id === projectId || name === target
+                  ({ id, name }) =>
+                    id === projectId ||
+                    name.toLowerCase() === target.toLowerCase()
                 )
               ) {
                 const stage = lifecycle[i]
@@ -676,12 +747,7 @@ export default function BulkUploadPage() {
                   sectors,
                   technologies,
                   subSectors: subSectors as ProjectSubSector[],
-                  segments: filterArray(
-                    row.Segment?.split(";").map((s: string) =>
-                      s.trim().toLowerCase().replaceAll(/\s+/g, "_")
-                    ) || [],
-                    segment.enumValues
-                  ),
+                  segments: parseSegments(row),
                   plantCapacity: assetCapacities[i],
                   onOffGrid: row["On-grid/Off-grid"]
                     ?.split(";")
@@ -739,19 +805,20 @@ export default function BulkUploadPage() {
               companiesData.push({
                 id: companyId,
                 name: companyName,
-                classification: filterArray(
+                classification: category && category.length ? [filterArray(
                   category
-                    ?.split(";")
+                    .trim()
+                    .toLowerCase()
+                    .split(";")
                     .map((s: string) =>
                       s
                         .trim()
-                        .toLowerCase()
                         .replace("ipp", "independent_power_producer")
                         .replace("dfi", "development_finance_institution")
                         .replaceAll(/\s+/g, "_")
                     ) ?? [],
                   companyClassification.enumValues
-                )[i],
+                )[i]].filter(Boolean) : [],
                 countries,
               });
             }
@@ -969,7 +1036,8 @@ export default function BulkUploadPage() {
         {
           key: "colocatedStorageCapacity",
           label: "Co-located Storage Capacity (MW/MWh)",
-          type: "number",
+          type: "text",
+          // type: "number",
         },
         { key: "onOffGrid", label: "On Grid", type: "boolean" },
         { key: "plantCapacity", label: "Plant Capacity (MW)", type: "number" },
@@ -1039,7 +1107,7 @@ export default function BulkUploadPage() {
         {
           key: "classification",
           label: "Classification",
-          type: "select",
+          type: "multiselect",
           options: companyClassification.enumValues,
         },
         {
@@ -1120,31 +1188,16 @@ export default function BulkUploadPage() {
           financingObjective.enumValues
         ),
         financingType: filterArray(
-          row["Financing type"]
-            ?.split(";")
-            .map((s: string) => s.trim().toLowerCase().replaceAll(/\s+/g, "_")),
+          toArray(row["Financing type"]),
           dealFinancingType.enumValues
         ),
         financingSubtype: filterArray(
-          row["Financing Subtype"]
-            ?.split(";")
-            .map((s: string) => s.trim().toLowerCase().replaceAll(/\s+/g, "_")),
+          toArray(row["Financing Subtype"]),
           financingSubtype.enumValues
         ),
       });
 
-      const technologies = filterArray(
-        row.Technology?.split(";").map((s: string) =>
-          s
-            .trim()
-            .toLowerCase()
-            .replaceAll(/\s+/g, "_")
-            .replace("pv", "photovoltaic")
-            .replace("csp", "concentrated_solar_power")
-            .replace("shs", "solar_home_systems")
-        ) || [],
-        technology.enumValues
-      );
+      const technologies = parseTechnologies(row);
 
       // Link deal to project if it's an asset financing
       if (row["Project name"]) {
@@ -1159,21 +1212,16 @@ export default function BulkUploadPage() {
         });
         if (
           ![...projectsData, ...initialData.projects].find(
-            (p) => p.id === projectId || p.name === row["Project name"]
+            (p) =>
+              p.id === projectId ||
+              p.name.toLowerCase() === row["Project name"].toLowerCase()
           )
         ) {
           projectsData.push({
             id: projectId,
             name: row["Project name"],
             technologies,
-            segments: filterArray(
-              row["Segment"]
-                ?.split(";")
-                .map((s: string) =>
-                  s.trim().toLowerCase().replaceAll(/\s+/g, "_")
-                ) || [],
-              segment.enumValues
-            ),
+            segments: parseSegments(row),
             plantCapacity: parseNumber(parseFloat(row["Asset capacity (MW)"])),
             stage: parseEnum(
               row["Project lifecycle"]
@@ -1187,9 +1235,10 @@ export default function BulkUploadPage() {
                 ?.toLowerCase()
                 .replace("-", " ")
                 .trim() === "on grid",
-            colocatedStorageCapacity: parseNumber(
-              parseFloat(row["Co-located storage capacity"])
-            ),
+            // colocatedStorageCapacity: parseNumber(
+            //   parseFloat(row["Co-located storage capacity"])
+            // ),
+            colocatedStorageCapacity: row["Co-located storage capacity"],
           });
         }
       }
@@ -1206,7 +1255,7 @@ export default function BulkUploadPage() {
         });
         if (
           ![...companiesData, ...initialData.companies].find(
-            (c) => c.id === companyId || c.name === row["Company"]
+            (c) => c.id === companyId || c.name.toLowerCase() === row["Company"].toLowerCase()
           )
         ) {
           companiesData.push({
@@ -1218,36 +1267,16 @@ export default function BulkUploadPage() {
               row.Latitude && row.Longitude
                 ? [parseFloat(row.Longitude), parseFloat(row.Latitude)]
                 : undefined,
-            sectors: filterArray(
-              row["Main sector"]
-                ?.split(";")
-                .map((s: string) =>
-                  s
-                    .trim()
-                    .toLowerCase()
-                    .replaceAll(/\s+/g, "_")
-                    .replaceAll("utility", "utilities")
-                    .replaceAll("hospitality", "real_estate")
-                    .replaceAll("telco", "telecom")
-                ) || [],
-              companySector.enumValues
-            ),
+            sectors: parseSectors(
+              row,
+              companySector.enumValues,
+              "Main sector"
+            ) as CompanySector[],
             technologies,
-            subSectors: filterArray(
-              row["Sub-sector"]
-                ?.trim()
-                .split(";")
-                .map((s: string) =>
-                  s
-                    .trim()
-                    .toLowerCase()
-                    .replaceAll("C&I", "commercial_industrial")
-                    .replaceAll("dre", "distributed_renewable")
-                    .replaceAll("-", "_")
-                    .replaceAll(/\s+/g, "_")
-                ) || [],
+            subSectors: parseSubSectors(
+              row,
               companySubSector.enumValues
-            ),
+            ) as CompanySubSector[],
           });
         }
       }
@@ -1276,7 +1305,9 @@ export default function BulkUploadPage() {
             });
             if (
               ![...companiesData, ...initialData.companies].find(
-                (c) => c.id === investorId || c.name === investorName.trim()
+                (c) =>
+                  c.id === investorId ||
+                  c.name.toLowerCase() === investorName.trim().toLowerCase()
               )
             ) {
               companiesData.push({ id: investorId, name: investorName.trim() });
@@ -1298,7 +1329,9 @@ export default function BulkUploadPage() {
           });
           if (
             ![...companiesData, ...initialData.companies].find(
-              (c) => c.id === advisorId || c.name === advisorName.trim()
+              (c) =>
+                c.id === advisorId ||
+                c.name.toLowerCase() === advisorName.trim().toLowerCase()
             )
           ) {
             companiesData.push({ id: advisorId, name: advisorName.trim() });
@@ -1473,7 +1506,8 @@ export default function BulkUploadPage() {
           {
             key: "colocatedStorageCapacity",
             label: "Co-located Storage Capacity (MW/MWh)",
-            type: "number",
+            type: "text",
+            // type: "number",
           },
           { key: "onOffGrid", label: "On Grid", type: "boolean" },
         ],
@@ -1536,7 +1570,7 @@ export default function BulkUploadPage() {
           {
             key: "classification",
             label: "Classification",
-            type: "select",
+            type: "multiselect",
             options: companyClassification.enumValues,
           },
           {
@@ -1635,7 +1669,9 @@ export default function BulkUploadPage() {
         });
         if (
           ![...projectsData, ...initialData.projects].find(
-            (p) => p.id === projectId || p.name === row["Asset Name Involved"]
+            (p) =>
+              p.id === projectId ||
+              p.name.toLowerCase() === row["Asset Name Involved"].toLowerCase()
           )
         ) {
           projectsData.push({
@@ -1645,18 +1681,7 @@ export default function BulkUploadPage() {
               row["Asset Life-Cycle"]?.toLowerCase().replaceAll(/\s+/g, "_"),
               projectStage.enumValues
             ),
-            technologies: filterArray(
-              row.Technology?.split(";").map((s: string) =>
-                s
-                  .trim()
-                  .toLowerCase()
-                  .replaceAll(/\s+/g, "_")
-                  .replace("pv", "photovoltaic")
-                  .replace("csp", "concentrated_solar_power")
-                  .replace("shs", "solar_home_systems")
-              ) || [],
-              technology.enumValues
-            ),
+            technologies: parseTechnologies(row),
             country: countries.length ? countries[0] : undefined,
             location,
           });
@@ -1675,27 +1700,19 @@ export default function BulkUploadPage() {
         });
         if (
           ![...companiesData, ...initialData.companies].find(
-            (c) => c.id === companyId || c.name === row["Offtaker"].trim()
+            (c) =>
+              c.id === companyId ||
+              c.name.toLowerCase() === row["Offtaker"].trim().toLowerCase()
           )
         )
           companiesData.push({
             id: companyId,
             name: row["Offtaker"].trim(),
-            sectors: filterArray(
-              row["Offtaker sector"]
-                ?.trim()
-                .split(";")
-                .map((s: string) =>
-                  s
-                    .trim()
-                    .toLowerCase()
-                    .replaceAll(/\s+/g, "_")
-                    .replaceAll("utility", "utilities")
-                    .replaceAll("hospitality", "real_estate")
-                    .replaceAll("telco", "telecom")
-                ) || [],
-              companySector.enumValues
-            ),
+            sectors: parseSectors(
+              row,
+              companySector.enumValues,
+              "Offtaker sector"
+            ) as CompanySector[],
             countries,
           });
       }
@@ -1713,7 +1730,9 @@ export default function BulkUploadPage() {
           });
           if (
             ![...companiesData, ...initialData.companies].find(
-              (c) => c.id === companyId || c.name === name.trim()
+              (c) =>
+                c.id === companyId ||
+                c.name.toLowerCase() === name.trim().toLowerCase()
             )
           )
             companiesData.push({ id: companyId, name: name.trim(), countries });
@@ -1733,7 +1752,9 @@ export default function BulkUploadPage() {
           });
           if (
             ![...companiesData, ...initialData.companies].find(
-              (c) => c.id === companyId || c.name === name.trim()
+              (c) =>
+                c.id === companyId ||
+                c.name.toLowerCase() === name.trim().toLowerCase()
             )
           )
             companiesData.push({ id: companyId, name: name.trim(), countries });
@@ -1753,7 +1774,9 @@ export default function BulkUploadPage() {
           });
           if (
             ![...companiesData, ...initialData.companies].find(
-              (c) => c.id === companyId || c.name === name.trim()
+              (c) =>
+                c.id === companyId ||
+                c.name.toLowerCase() === name.trim().toLowerCase()
             )
           )
             companiesData.push({ id: companyId, name: name.trim(), countries });
@@ -1921,7 +1944,10 @@ export default function BulkUploadPage() {
             key: "countries",
             label: "Operating Countries",
             type: "multiselect",
-            options: countryCode.enumValues,
+            options: countryCode.enumValues.map((c) => ({
+              label: t(`common.countries.${c}`),
+              value: c,
+            })),
             dictionary: "common",
           },
           {
@@ -1988,12 +2014,10 @@ export default function BulkUploadPage() {
           : undefined,
         description: row["Deals summary"],
         partnershipObjectives: filterArray(
-          row["Partnership objective"]
-            ?.split(";")
-            .map((s: string) => s.trim().toLowerCase()),
+          toArray(row["Partnership objective"]),
           partnershipObjective.enumValues
         ),
-        onOffGrid,
+        // onOffGrid,
         pressReleaseUrl: row["Press Release"]
           ? row["Press Release"]
           : undefined,
@@ -2010,45 +2034,20 @@ export default function BulkUploadPage() {
         });
         if (
           ![...projectsData, ...initialData.projects].find(
-            (p) => p.id === projectId || p.name === row["Assets name"]
+            (p) =>
+              p.id === projectId ||
+              p.name.toLowerCase() === row["Assets name"].toLowerCase()
           )
         ) {
           projectsData.push({
             id: projectId,
             name: row["Assets name"],
-            sectors: filterArray(
-              row.Sector?.trim()
-                .split(";")
-                .map((s: string) =>
-                  s
-                    .trim()
-                    .toLowerCase()
-                    .replaceAll(/\s*&\s*/g, "")
-                    .replaceAll(/\s+/g, "_")
-                    .replaceAll("utility", "utilities")
-                    .replaceAll("hospitality", "real_estate")
-                    .replaceAll("telco", "telecom")
-                ) || [],
+            sectors: parseSectors(
+              row,
               projectSector.enumValues
-            ),
-            technologies: filterArray(
-              row.Technology?.split(";").map((s: string) =>
-                s
-                  .trim()
-                  .toLowerCase()
-                  .replaceAll(/\s+/g, "_")
-                  .replace("pv", "photovoltaic")
-                  .replace("csp", "concentrated_solar_power")
-                  .replace("shs", "solar_home_systems")
-              ) || [],
-              technology.enumValues
-            ),
-            segments: filterArray(
-              row.Segment?.split(";").map((s: string) =>
-                s.trim().toLowerCase().replaceAll(/\s+/g, "_")
-              ) || [],
-              segment.enumValues
-            ),
+            ) as ProjectSector[],
+            technologies: parseTechnologies(row),
+            segments: parseSegments(row),
             plantCapacity: parseNumber(parseFloat(row["Asset Capacity (MW)"])),
             stage: parseEnum(
               (row["Asset life-cycle"]
@@ -2082,7 +2081,9 @@ export default function BulkUploadPage() {
             });
             if (
               ![...companiesData, ...initialData.companies].find(
-                (c) => c.id === companyId || c.name === name.trim()
+                (c) =>
+                  c.id === companyId ||
+                  c.name.toLowerCase() === name.trim().toLowerCase()
               )
             ) {
               companiesData.push({
@@ -2288,7 +2289,7 @@ export default function BulkUploadPage() {
           {
             key: "classification",
             label: "Classification",
-            type: "select",
+            type: "multiselect",
             options: companyClassification.enumValues,
           },
           {
@@ -2352,7 +2353,7 @@ export default function BulkUploadPage() {
         date: row.Date ? parseDate(new Date(row.Date)) : undefined,
         insights: row["Insights/Comments"],
         impacts: row.Impacts,
-        onOffGrid,
+        // onOffGrid,
         pressReleaseUrl: row["Press Release"]
           ? row["Press Release"]
           : undefined,
@@ -2371,54 +2372,10 @@ export default function BulkUploadPage() {
         id: projectId,
         name: row["Project Name"],
         country: countries.length ? countries[0] : undefined,
-        sectors: filterArray(
-          row.Sector?.trim()
-            .split(";")
-            .map((s: string) =>
-              s
-                .trim()
-                .toLowerCase()
-                .replaceAll(/\s*&\s*/g, "")
-                .replaceAll(/\s+/g, "_")
-                .replaceAll("utility", "utilities")
-                .replaceAll("hospitality", "real_estate")
-                .replaceAll("telco", "telecom")
-            ) || [],
-          projectSector.enumValues
-        ),
-        technologies: filterArray(
-          row.Technology?.split(";").map((s: string) =>
-            s
-              .trim()
-              .toLowerCase()
-              .replaceAll(/\s+/g, "_")
-              .replace("pv", "photovoltaic")
-              .replace("csp", "concentrated_solar_power")
-              .replace("shs", "solar_home_systems")
-          ) || [],
-          technology.enumValues
-        ),
-        subSectors: filterArray(
-          row["Sub-sector"]
-            ?.trim()
-            .split(";")
-            .map((s: string) =>
-              s
-                .trim()
-                .toLowerCase()
-                .replaceAll("C&I", "commercial_industrial")
-                .replaceAll("dre", "distributed_renewable")
-                .replaceAll("-", "_")
-                .replaceAll(/\s+/g, "_")
-            ) || [],
-          projectSubSector.enumValues
-        ),
-        segments: filterArray(
-          row.Segment?.split(";").map((s: string) =>
-            s.trim().toLowerCase().replaceAll(/\s+/g, "_")
-          ) || [],
-          segment.enumValues
-        ),
+        sectors: parseSectors(row, projectSector.enumValues) as ProjectSector[],
+        technologies: parseTechnologies(row),
+        subSectors: parseSubSectors(row) as ProjectSubSector[],
+        segments: parseSegments(row),
         investmentCosts: parseNumber(
           parseFloat(row["Project Investment ($ million)"])
         ),
@@ -2430,26 +2387,12 @@ export default function BulkUploadPage() {
             .replaceAll(/\s+/g, "_"),
           projectStage.enumValues
         ),
-        milestone: parseEnum(
-          row["Project milestone"]?.toLowerCase().replaceAll(/\s+/g, "_"),
-          projectMilestone.enumValues
+        milestone: parseProjectMilestone(row),
+        status: parseEnum(
+          row["Project status"]?.toLowerCase().replaceAll(/\s+/g, "_"),
+          projectStatus.enumValues
         ),
-        status: row["Project status"]?.toLowerCase() === "active",
-        revenueModel: parseEnum(
-          row["Revenue Model (Year)"]
-            ?.toLowerCase()
-            .replace(/\s*\([^)]*\)/, "")
-            .replaceAll(/\s+/g, "_")
-            .replaceAll("-", "_")
-            .replace("ppa", "power_purchase_agreement")
-            .trim(),
-          revenueModel.enumValues
-        ),
-        revenueModelDuration: parseNumber(
-          parseInt(
-            row["Revenue Model (Year)"]?.match(/\((\d+)[^)]*\)/)?.[1] || ""
-          )
-        ),
+        ...parseRevenueModel(row),
         onOffGrid,
         onOffShore: row["Onshore/Offshore"]?.toLowerCase().includes("onshore"),
         financingStrategy: financingStrategyNames.reduce((acc, key, i) => {
@@ -2462,15 +2405,14 @@ export default function BulkUploadPage() {
           return acc;
         }, {} as ProjectFinancingStrategy),
         contractType: filterArray(
-          row["Contract type"]
-            ?.split(";")
-            .map((s) => s.trim().toLowerCase().replaceAll(/\s+/g, "_")) ?? [],
+          toArray(row["Contract type"]),
           projectContractType.enumValues
         ),
         colocatedStorage: row["Co-located storage"]?.toLowerCase() === "yes",
-        colocatedStorageCapacity: parseNumber(
-          parseFloat(row["Co-located storage capacity"])
-        ),
+        colocatedStorageCapacity: row["Co-located storage capacity"],
+        // colocatedStorageCapacity: parseNumber(
+        //   parseFloat(row["Co-located storage capacity"])
+        // ),
         fundingSecured: row["Financing secured"]?.toLowerCase() === "yes",
         impacts: row.Impacts,
         insights: row["Insights/Comments"],
@@ -2555,8 +2497,8 @@ export default function BulkUploadPage() {
               ![...companiesData, ...initialData.companies].find(
                 (c) =>
                   c.id === companyId ||
-                  c.name === name.trim() ||
-                  c.name === companyName
+                  c.name.toLowerCase() === name.trim().toLowerCase() ||
+                  c.name.toLowerCase() === companyName.toLowerCase()
               )
             ) {
               let company: BaseModel<NewCompany> = {
@@ -2651,10 +2593,16 @@ export default function BulkUploadPage() {
           {
             key: "milestone",
             label: "Project Milestone",
-            type: "select",
-            options: projectMilestone.enumValues,
+            type: "text",
+            // type: "select",
+            // options: projectMilestone.enumValues,
           },
-          { key: "status", label: "Active Status", type: "boolean" },
+          {
+            key: "status",
+            label: "Status",
+            type: "select",
+            options: projectStatus.enumValues,
+          },
           {
             key: "revenueModel",
             label: "Revenue Model",
@@ -2682,7 +2630,8 @@ export default function BulkUploadPage() {
           {
             key: "colocatedStorageCapacity",
             label: "Co-located Storage Capacity (MW/MWh)",
-            type: "number",
+            type: "text",
+            // type: "number",
           },
           {
             key: "financingStrategy",
@@ -2848,7 +2797,7 @@ export default function BulkUploadPage() {
           {
             key: "classification",
             label: "Classification",
-            type: "select",
+            type: "multiselect",
             options: companyClassification.enumValues,
           },
         ],
@@ -2888,59 +2837,10 @@ export default function BulkUploadPage() {
         id: projectId,
         name: row["Project Name"],
         country: countries.length ? countries[0] : undefined,
-        sectors: filterArray(
-          row.Sector?.trim()
-            .split(";")
-            .map((s: string) =>
-              s
-                .trim()
-                .toLowerCase()
-                .replaceAll(/\s*&\s*/g, "")
-                .replaceAll(/\s+/g, "_")
-                .replaceAll("utility", "utilities")
-                .replaceAll("hospitality", "real_estate")
-                .replaceAll("telco", "telecom")
-            ) || [],
-          projectSector.enumValues
-        ),
-        technologies: filterArray(
-          row.Technology?.split(";").map((s: string) =>
-            s
-              .trim()
-              .toLowerCase()
-              .replace("solar pv", "photovoltaic")
-              .replace("wind onshore", "onshore_wind")
-              .replace("wind offshore", "offshore_wind")
-              .replace("small", "offshore_wind")
-              .replaceAll(/\s+/g, "_")
-              .replaceAll("-", "_")
-              .replace("pv", "photovoltaic")
-              .replace("csp", "concentrated_solar_power")
-              .replace("shs", "solar_home_systems")
-          ) || [],
-          technology.enumValues
-        ),
-        subSectors: filterArray(
-          row["Sub-sector"]
-            ?.trim()
-            .split(";")
-            .map((s: string) =>
-              s
-                .trim()
-                .toLowerCase()
-                .replaceAll("c&i", "commercial_industrial")
-                .replaceAll("dre", "distributed_renewable")
-                .replaceAll("-", "_")
-                .replaceAll(/\s+/g, "_")
-            ) || [],
-          projectSubSector.enumValues
-        ),
-        segments: filterArray(
-          row.Segment?.split(";").map((s: string) =>
-            s.trim().toLowerCase().replaceAll(/\s+/g, "_")
-          ) || [],
-          segment.enumValues
-        ),
+        sectors: parseSectors(row, projectSector.enumValues) as ProjectSector[],
+        technologies: parseTechnologies(row),
+        subSectors: parseSubSectors(row) as ProjectSubSector[],
+        segments: parseSegments(row),
         investmentCosts: parseNumber(
           parseFloat(row["Project Investment ($ million)"])
         ),
@@ -2952,26 +2852,12 @@ export default function BulkUploadPage() {
             .replaceAll(/\s+/g, "_"),
           projectStage.enumValues
         ),
-        milestone: parseEnum(
-          row["Project milestone"]?.toLowerCase().replaceAll(/\s+/g, "_"),
-          projectMilestone.enumValues
+        milestone: parseProjectMilestone(row),
+        status: parseEnum(
+          row["Project status"]?.toLowerCase().replaceAll(/\s+/g, "_"),
+          projectStatus.enumValues
         ),
-        status: row["Project status"]?.toLowerCase() === "active",
-        revenueModel: parseEnum(
-          row["Revenue Model (Year)"]
-            ?.toLowerCase()
-            .replace(/\s*\([^)]*\)/, "")
-            .replaceAll(/\s+/g, "_")
-            .replaceAll("-", "_")
-            .replace("ppa", "power_purchase_agreement")
-            .trim(),
-          revenueModel.enumValues
-        ),
-        revenueModelDuration: parseNumber(
-          parseInt(
-            row["Revenue Model (Year)"]?.match(/\((\d+)[^)]*\)/)?.[1] || ""
-          )
-        ),
+        ...parseRevenueModel(row),
         onOffGrid:
           row["On grid/Off grid"]?.toLowerCase().replace("-", " ").trim() ===
           "on grid",
@@ -2986,15 +2872,14 @@ export default function BulkUploadPage() {
           return acc;
         }, {} as ProjectFinancingStrategy),
         contractType: filterArray(
-          row["Contract type"]
-            ?.split(";")
-            .map((s) => s.trim().toLowerCase().replaceAll(/\s+/g, "_")),
+          toArray(row["Contract type"]),
           projectContractType.enumValues
         ),
         colocatedStorage: row["Co-located storage"]?.toLowerCase() === "yes",
-        colocatedStorageCapacity: parseNumber(
-          parseFloat(row["Co-located storage capacity"])
-        ),
+        colocatedStorageCapacity: row["Co-located storage capacity"],
+        // colocatedStorageCapacity: parseNumber(
+        //   parseFloat(row["Co-located storage capacity"])
+        // ),
         fundingSecured: row["Financing secured"]?.toLowerCase() === "yes",
         impacts: row.Impacts,
         insights: row.Comments,
@@ -3071,8 +2956,8 @@ export default function BulkUploadPage() {
               ![...companiesData, ...initialData.companies].find(
                 (c) =>
                   c.id === companyId ||
-                  c.name === name.trim() ||
-                  c.name === companyName
+                  c.name.toLowerCase() === name.trim().toLowerCase() ||
+                  c.name.toLowerCase() === companyName.toLowerCase()
               )
             ) {
               let company: BaseModel<NewCompany> = {
@@ -3156,10 +3041,16 @@ export default function BulkUploadPage() {
           {
             key: "milestone",
             label: "Project Milestone",
-            type: "select",
-            options: projectMilestone.enumValues,
+            type: "text",
+            // type: "select",
+            // options: projectMilestone.enumValues,
           },
-          { key: "status", label: "Active Status", type: "boolean" },
+          {
+            key: "status",
+            label: "Status",
+            type: "select",
+            options: projectStatus.enumValues,
+          },
           {
             key: "revenueModel",
             label: "Revenue Model",
@@ -3187,7 +3078,8 @@ export default function BulkUploadPage() {
           {
             key: "colocatedStorageCapacity",
             label: "Co-located Storage Capacity (MW/MWh)",
-            type: "number",
+            type: "text",
+            // type: "number",
           },
           {
             key: "financingStrategy",
@@ -3329,7 +3221,7 @@ export default function BulkUploadPage() {
           {
             key: "classification",
             label: "Classification",
-            type: "select",
+            type: "multiselect",
             options: companyClassification.enumValues,
           },
         ],
@@ -3349,53 +3241,33 @@ export default function BulkUploadPage() {
       return {
         id: companyId,
         name: row["Company Name"],
-        operatingStatus: row["Operating status"]?.toLowerCase() === "active",
-        classification: parseEnum(
-          row["Classification"]
-            ?.toLowerCase()
-            .replaceAll(/\s+/g, "_")
-            .replace("ipp", "independent_power_producer")
-            .replace("dfi", "development_finance_institution"),
+        operatingStatus: filterArray(
+          toArray(row["Operating status"]),
+          companyOperatingStatus.enumValues
+        ),
+        classification: filterArray(
+          row.Classification?.trim()
+            .toLowerCase()
+            .split(";")
+            .map((s) =>
+              s
+                .trim()
+                .replaceAll(/\s+/g, "_")
+                .replaceAll(/[/-]/g, "_")
+                .replace("ipp", "independent_power_producer")
+                .replace("dfi", "development_finance_institution")
+            ) || [],
           companyClassification.enumValues
         ),
-        sectors: filterArray(
-          row.Sector?.split(";").map((s: string) =>
-            s
-              .trim()
-              .toLowerCase()
-              .replaceAll(/\s+/g, "_")
-              .replaceAll("utility", "utilities")
-              .replaceAll("hospitality", "real_estate")
-              .replaceAll("telco", "telecom")
-          ) || [],
-          companySector.enumValues
-        ),
-        subSectors: filterArray(
-          row.Subsector?.split(";").map((s: string) =>
-            s
-              .trim()
-              .toLowerCase()
-              .replaceAll("C&I", "commercial_industrial")
-              .replaceAll("dre", "distributed_renewable")
-              .replaceAll("-", "_")
-              .replaceAll(/\s+/g, "_")
-          ) || [],
-          companySubSector.enumValues
-        ),
-        technologies: filterArray(
-          row.Technology?.split(";").map((s: string) =>
-            s
-              .trim()
-              .toLowerCase()
-              .replaceAll(/\s+/g, "_")
-              .replace("pv", "photovoltaic")
-              .replace("csp", "concentrated_solar_power")
-              .replace("shs", "solar_home_systems")
-          ) || [],
-          technology.enumValues
-        ),
+        sectors: parseSectors(row, companySector.enumValues) as CompanySector[],
+        subSectors: parseSubSectors(
+          row,
+          companySubSector.enumValues,
+          "Subsector"
+        ) as CompanySubSector[],
+        technologies: parseTechnologies(row),
         hqCountry: convertCountryToCode(row["HQ Country"]),
-        hqAddress: parseEnum(row["HQ Address"], countryCode.enumValues),
+        hqAddress: row["HQ Address"],
         countries: convertCountriesToCodes(
           row["Operating Countries"]?.split(";").map((s: string) => s.trim()) ||
             []
@@ -3405,11 +3277,7 @@ export default function BulkUploadPage() {
           ? parseDate(new Date(row["Founded date"]))
           : undefined,
         activities: filterArray(
-          row["Main Activities"]
-            ?.split(";")
-            .map((s: string) =>
-              s.trim().toLowerCase().replaceAll(/\s+/g, "_")
-            ) || [],
+          toArray(row["Main Activities"]),
           companyActivity.enumValues
         ),
         size: parseEnum(row["Company size"], companySize.enumValues),
@@ -3440,11 +3308,16 @@ export default function BulkUploadPage() {
             id: true,
           },
           { key: "description", label: "About", type: "textarea" },
-          { key: "operatingStatus", label: "Active Status", type: "boolean" },
+          {
+            key: "operatingStatus",
+            label: "Operating Status",
+            type: "multiselect",
+            options: companyOperatingStatus.enumValues,
+          },
           {
             key: "classification",
             label: "Classification",
-            type: "select",
+            type: "multiselect",
             options: companyClassification.enumValues,
           },
           {
@@ -3511,7 +3384,7 @@ export default function BulkUploadPage() {
             label: "HQ Location (Latitude, Longitude)",
             type: "geography",
           },
-          { key: "logoUrl", label: "Icon/Logo URL", type: "url" },
+          { key: "logoUrl", label: "Icon/Logo URL", type: "image" },
         ],
         primaryKey: "id",
       },
@@ -3719,6 +3592,7 @@ export default function BulkUploadPage() {
               }
               break;
             case "url":
+            case "image":
               if (typeof value === "string" && !isValidUrl(value)) {
                 errors.push({
                   table: table.name,
@@ -4022,6 +3896,7 @@ export default function BulkUploadPage() {
               />
             );
           case "url":
+          case "image":
             return (
               <Input
                 type="url"
@@ -4144,6 +4019,16 @@ export default function BulkUploadPage() {
                   +{value.length - 3} more
                 </Badge>
               )}
+            </div>
+          );
+        } else if (field.type === "image" && value) {
+          return (
+            <div className="flex items-center justify-center p-1">
+              <img
+                src={value}
+                alt={`${row["name"] ?? row.id} Logo`}
+                className="max-h-6 w-auto object-contain" // max-h-10 is 40px. Use max-h-5 for 20px.
+              />
             </div>
           );
         } else if (field.type === "url" && value) {

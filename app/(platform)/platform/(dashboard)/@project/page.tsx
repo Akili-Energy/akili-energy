@@ -33,9 +33,10 @@ import { getProjectsAnalytics } from "@/app/actions/actions";
 import { useLanguage } from "@/components/language-context";
 import { projectSector, projectStage } from "@/lib/db/schema";
 import dynamic from "next/dynamic";
+import { formatMonth } from "@/lib/utils";
 
 export default function ProjectAnalyticsPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const [analytics, setAnalytics] =
     useState<Awaited<ReturnType<typeof getProjectsAnalytics>>>();
@@ -82,7 +83,12 @@ export default function ProjectAnalyticsPage() {
               )}
             >
               <ResponsiveContainer width="100%" height={300}>
-                <ComposedChart data={analytics?.projectsByMonthAndSector}>
+                <ComposedChart
+                  data={analytics?.projectsByMonthAndSector.map((p) => ({
+                    ...p,
+                    month: formatMonth(language, p?.month),
+                  }))}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis
@@ -152,7 +158,12 @@ export default function ProjectAnalyticsPage() {
               )}
             >
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analytics?.projectsByMonthAndStage}>
+                <BarChart
+                  data={analytics?.projectsByMonthAndStage.map((p) => ({
+                    ...p,
+                    month: formatMonth(language, p?.month),
+                  }))}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis
@@ -234,7 +245,7 @@ export default function ProjectAnalyticsPage() {
                           <div
                             className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: color }}
-                          ></div>
+                          />
                           <span className="font-medium">{sector}</span>
                         </div>
                         <div className="text-right">

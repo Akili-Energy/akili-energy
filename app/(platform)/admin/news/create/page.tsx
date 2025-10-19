@@ -16,7 +16,7 @@ import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import ImageUpload from "@/components/admin/image-upload"
-import EnhancedRichTextEditor from "@/components/admin/enhanced-rich-text-editor"
+import EnhancedRichTextEditor from "@/components/admin/wysiwyg-rich-text-editor"
 
 export default function CreateNewsPage() {
   const router = useRouter()

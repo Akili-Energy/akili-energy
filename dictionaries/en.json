@@ -88,6 +88,8 @@
             "mining": "Mining",
             "real_estate": "Hospitality & Real Estate",
             "industrial": "Industrial",
+            "water": "Water",
+            "infrastructure": "Infrastructure",
             "other": "Other"
         },
         "technologies": {
@@ -114,13 +116,36 @@
             "nuclear": "Nuclear"
         },
         "subSectors": {
+            "solar": "Solar",
+            "wind": "Wind",
+            "hydro": "Hydroelectric",
+            "battery": "Battery",
+            "hydrogen": "Hydrogen",
+            "biomass": "Biomass",
+            "geothermal": "Geothermal",
+            "nuclear": "Nuclear",
+            "oil": "Oil",
+            "gas": "Gas",
+            "coal": "Coal",
             "utility_scale": "Utility-Scale",
             "commercial_industrial": "Commercial & Industrial",
             "residential": "Residential",
             "offshore": "Offshore",
             "onshore": "Onshore",
             "cleantech": "CleanTech",
-            "telecom": "Telecom"
+            "telecom": "Telecom",
+            "university": "University",
+            "hospital": "Hospital",
+            "prison": "Prison",
+            "mobility": "Mobility",
+            "road_bridges": "Roads & Bridges",
+            "hybrid": "Hybrid",
+            "marine": "Marine",
+            "bioenergy": "Bioenergy",
+            "wave": "Waves",
+            "waste-to-energy": "Waste-to-Energy",
+            "warehousing": "Warehousing",
+            "logistics": "Logistics"
         },
         "segments": {
             "generation": "Generation",
@@ -155,6 +180,45 @@
             "operational": "Operational",
             "proposal": "Proposal",
             "completed": "Completed"
+        },
+        "ma": {
+            "structures": {
+                "acquisition": "Acquisition",
+                "merger": "Merger",
+                "divestment": "Divestment",
+                "ownership_transfer": "Ownership Transfer"
+            },
+            "status": {
+                "announced": "Announced",
+                "completed": "Completed"
+            },
+            "specifics": {
+                "majority_stake": "Majority Stake",
+                "minority_stake": "Minority Stake",
+                "economic_interest": "Economic Interest"
+            }
+        },
+        "financing": {
+            "types": {
+                "debt": "Debt",
+                "equity": "Equity",
+                "grant": "Grant",
+                "green_bond": "Green Bond"
+            },
+            "subtypes": {
+                "project_finance": "Project Finance",
+                "loan": "Loan",
+                "grant": "Grant",
+                "equity": "Equity",
+                "private": "Private",
+                "senior_debt": "Senior Debt"
+            },
+            "objectives": {
+                "asset": "Asset",
+                "corporate": "Corporate",
+                "government": "Government",
+                "cleantech": "CleanTech"
+            }
         }
     },
     "projects": {
@@ -174,6 +238,31 @@
             "cancelled": "Cancelled"
         }
     },
+    "companies": {
+        "classification": {
+            "private_equity": "Private Equity",
+            "pe_backed": "PE-Backed",
+            "private": "Private",
+            "public": "Public",
+            "government": "Government",
+            "non_profit": "Non-Profit",
+            "development_finance_institution": "DFI",
+            "advisor": "Advisor",
+            "independent_power_producer": "IPP",
+            "epc_om": "EPC/O&M",
+            "utility": "Utility",
+            "micro_cap": "Micro-Cap",
+            "small_cap": "Small-Cap",
+            "mid_cap": "Mid-Cap",
+            "big_cap": "Big-Cap",
+            "developer": "Developer",
+            "investment": "Investment",
+            "operator": "Operator",
+            "manufacturer": "Manufacturer",
+            "asset_manager": "Asset Manager",
+            "energy_trader": "Energy Trader"
+        }
+    },
     "nav": {
         "platform": "Platform",
         "research": "News & Research",
@@ -183,12 +272,22 @@
         "signup": "Sign Up"
     },
     "home": {
+        "chip": "Strategic Intelligence for Energy",
         "hero": {
             "title": "Intelligence for green energy transactions in Africa",
             "subtitle": "Transform scattered energy data into actionable insights. Access the most comprehensive market intelligence for the African energy sector.",
             "cta": {
                 "primary": "Explore Transactions",
                 "secondary": "Request Demo"
+            },
+            "cards": {
+                "deal_analysis": "Deals Analysis",
+                "ma_solar": "Solar M&A",
+                "hydro_financing": "Hydro Financing",
+                "project_pipeline": "Project Pipeline",
+                "market_intelligence": "Market Intelligence",
+                "yoy_growth": "YoY Growth",
+                "investments": "Investments"
             }
         },
         "stats": {
@@ -199,6 +298,10 @@
         "features": {
             "title": "Advanced Features",
             "subtitle": "Powerful tools to analyze, understand and act on the African energy market"
+        },
+        "carousel": {
+            "title": "Designed for Energy Professionals",
+            "subtitle": "Solutions tailored to each player in the African energy ecosystem"
         }
     }
 }

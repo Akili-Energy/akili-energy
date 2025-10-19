@@ -1,129 +1,218 @@
-"use client"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Eye } from "lucide-react"
-import Link from "next/link"
+"use client";
 
-interface NewsArticle {
-  id: string
-  title: string
-  excerpt: string
-  content: string
-  author: string
-  category: string
-  tags: string[]
-  publishDate: string
-  status: "draft" | "published" | "archived"
-  source: string
-  externalUrl?: string
-}
-
-const mockNews: NewsArticle[] = [
-  {
-    id: "1",
-    title: "AMEA Power Commissions 500 MW Abydos Solar Plant",
-    excerpt: "AMEA Power has successfully commissioned its 500 MW Abydos solar photovoltaic plant in Egypt.",
-    content: "Full article content here...",
-    author: "Energy News Team",
-    category: "Project Updates",
-    tags: ["solar", "egypt", "amea power"],
-    publishDate: "2024-12-14",
-    status: "published",
-    source: "Energy News Africa",
-  },
-]
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, Trash2, Eye, Loader2, Search } from "lucide-react";
+import Link from "next/link";
+import { getContent, deleteContent } from "@/app/actions/content";
+import { useDebounce } from "@/hooks/use-debounce"; // Assuming you have a debounce hook
+import { toast } from "sonner";
+import type { Content, ContentStatus } from "@/lib/types";
 
 export default function NewsAdmin() {
-  const [news, setNews] = useState<NewsArticle[]>(mockNews)
-  const [searchTerm, setSearchTerm] = useState("")
+  const [articles, setArticles] = useState<Content[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [cursor, setCursor] = useState<Date | undefined>(undefined);
 
-  const filteredNews = news.filter(
-    (article) =>
-      article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.category.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const loaderRef = useRef<HTMLDivElement>(null);
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const handleDelete = (id: string) => {
-    setNews(news.filter((article) => article.id !== id))
-  }
+  // Function to load articles, handling both initial/search loads and "load more"
+  const loadArticles = useCallback(
+    async (isNewSearch = false) => {
+      if (isLoading || (!hasMore && !isNewSearch)) return;
+      setIsLoading(true);
+
+      const currentCursor = isNewSearch ? undefined : cursor;
+
+      try {
+        // Get all statuses for the admin view by passing status: null
+        const result = await getContent({
+          type: "news",
+          query: debouncedSearchTerm,
+          cursor: currentCursor,
+          status: null,
+        });
+
+        if (isNewSearch) {
+          setArticles(result.content);
+        } else {
+          setArticles((prev) => [...prev, ...result.content]);
+        }
+
+        setHasMore(result.hasMore);
+        if (result.content.length > 0) {
+          setCursor(
+            result.content[result.content.length - 1].publicationDate ??
+              undefined
+          );
+        }
+      } catch (error) {
+        toast.error("Failed to fetch news articles.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [debouncedSearchTerm, cursor, hasMore, isLoading]
+  );
+
+  // Effect for debounced search: reset and fetch
+  useEffect(() => {
+    setArticles([]);
+    setCursor(undefined);
+    setHasMore(true);
+    loadArticles(true);
+  }, [debouncedSearchTerm]); // re-runs when debounced term changes
+
+  // Effect for intersection observer (infinite scroll)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          loadArticles();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    const loaderElement = loaderRef.current;
+    if (loaderElement) {
+      observer.observe(loaderElement);
+    }
+
+    return () => {
+      if (loaderElement) {
+        observer.unobserve(loaderElement);
+      }
+    };
+  }, [hasMore, isLoading, loadArticles]);
+
+  // Handler for deleting a article
+  const handleDelete = async (slug: string) => {
+    if (!window.confirm("Are you sure you want to delete this article?")) return;
+
+    const result = await deleteContent(slug, "news");
+    if (result.success) {
+      toast.success(result.message);
+      setArticles(articles.filter((article) => article.slug !== slug));
+    } else {
+      toast.error(result.message);
+    }
+  };
+
+  const getStatusVariant = (status: ContentStatus) => {
+    switch (status) {
+      case "published":
+        return "default";
+      case "draft":
+        return "secondary";
+      case "archived":
+        return "outline";
+    }
+  };
 
   return (
-    <div>
+    <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">News Articles</h1>
-          <p className="text-gray-600 mt-2">Manage news articles and industry updates</p>
+          <p className="text-gray-600 mt-2">
+            Manage news articles and industry updates
+          </p>
         </div>
         <Button asChild>
           <Link href="/admin/news/create">
             <Plus className="h-4 w-4 mr-2" />
-            Add Article
+            New Article
           </Link>
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search articles by title, author, or category..."
+          placeholder="Search articles by title or summary..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-md"
+          className="max-w-md pl-10"
         />
       </div>
 
-      {/* News List */}
       <div className="grid gap-4">
-        {filteredNews.map((article) => (
-          <Card key={article.id}>
+        {articles.map((article) => (
+          <Card key={article.slug}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-semibold">{article.title}</h3>
-                    <Badge
-                      variant={
-                        article.status === "published"
-                          ? "default"
-                          : article.status === "draft"
-                            ? "secondary"
-                            : "outline"
-                      }
-                    >
-                      {article.status}
-                    </Badge>
-                  </div>
-                  <p className="text-gray-600 mb-3">{article.excerpt}</p>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {article.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        {tag}
+                <div className="flex items-start space-x-4 mr-4">
+                  <img
+                    src={article.imageUrl || "/placeholder.svg"}
+                    alt={article.title}
+                    width={128}
+                    height={80}
+                    className="w-32 h-20 rounded-lg object-cover border"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-xl font-semibold line-clamp-1">
+                        {article.title}
+                      </h3>
+                      <Badge
+                        variant={getStatusVariant(article.status)}
+                        className="capitalize"
+                      >
+                        {article.status}
                       </Badge>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span>✍️ {article.author}</span>
-                    <span>📂 {article.category}</span>
-                    <span>📅 {new Date(article.publishDate).toLocaleDateString()}</span>
-                    <span>📰 {article.source}</span>
+                      {article.featured && (
+                        <Badge variant="secondary" className="text-xs">
+                          Featured
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-gray-600 mb-3 text-sm line-clamp-2">
+                      {article.summary}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {article.tags?.map((tag) => (
+                        <Badge key={tag} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <span>✍️ {article.author.name}</span>
+                      <span className="capitalize">
+                        📂 {article.category.replace("-", " ")}
+                      </span>
+                      <span>
+                        📅{" "}
+                        {new Date(
+                          article.publicationDate!
+                        ).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/news-research/${article.id}`}>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button variant="outline" size="icon" asChild>
+                    <Link href={`/news/${article.slug}`} target="_blank">
                       <Eye className="h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/news/${article.id}/edit`}>
+                  <Button variant="outline" size="icon" asChild>
+                    <Link href={`/admin/news/${article.slug}/edit`}>
                       <Edit className="h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDelete(article.id)}>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => handleDelete(article.slug)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -133,11 +222,20 @@ export default function NewsAdmin() {
         ))}
       </div>
 
-      {filteredNews.length === 0 && (
+      <div ref={loaderRef} className="h-10 text-center">
+        {isLoading && (
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+        )}
+        {!hasMore && articles.length > 0 && (
+          <p className="text-muted-foreground">You've reached the end.</p>
+        )}
+      </div>
+
+      {!isLoading && articles.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500">No news articles found matching your search criteria.</p>
+          <p className="text-gray-500">No news articles found.</p>
         </div>
       )}
     </div>
-  )
+  );
 }

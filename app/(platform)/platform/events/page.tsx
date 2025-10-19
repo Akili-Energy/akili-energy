@@ -265,7 +265,7 @@ export default function EventsPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <CardTitle className="text-lg">{event.title}</CardTitle>
+                      <CardTitle className="text-lg"><Link href={`/platform/events/${event.id}`}>{event.title}</Link></CardTitle>
                       <Badge variant="outline">{event.type}</Badge>
                     </div>
                     <Badge variant="default" className="bg-green-100 text-green-800">
@@ -326,7 +326,7 @@ export default function EventsPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <CardTitle className="text-lg">{event.title}</CardTitle>
+                      <CardTitle className="text-lg"><Link href={`/platform/events/${event.id}`}>{event.title}</Link></CardTitle>
                       <Badge variant="outline">{event.type}</Badge>
                     </div>
                     <Badge variant="secondary">{event.status}</Badge>

@@ -19,8 +19,8 @@ export default function Map({ locations, height }: MapProps) {
   return (
     <MapContainer
       center={[(north + south) / 2, (east + west) / 2]}
-      minZoom={5}
-      zoom={5}
+      minZoom={6}
+      zoom={15}
       //   touchZoom={false}
       style={{ height: "100%", width: "100%", backgroundColor: "#FFFFFF" }}
       //   scrollWheelZoom={false}
