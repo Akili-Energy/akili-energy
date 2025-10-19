@@ -2,7 +2,7 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "material-symbols";
-import "./globals.css";
+import "./globals.scss";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/components/language-context";
 import { Toaster } from "@/components/ui/toaster";
