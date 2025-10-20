@@ -21,29 +21,26 @@ import { toast } from "sonner";
 import Link from "next/link";
 import ImageUpload from "@/components/admin/image-upload";
 import WYSIWYGRichTextEditor from "@/components/admin/wysiwyg-rich-text-editor";
-import { saveBlogPost } from "@/app/actions/content";
-import { getBlogPost } from "@/app/actions/content"; // Fetch action
+import { ContentActionState, saveContent } from "@/app/actions/content";
+import { getContentBySlug } from "@/app/actions/content"; // Fetch action
 import { contentCategory, contentStatus } from "@/lib/db/schema";
 import TagsInput from "@/components/admin/tags-input";
-import { ActionState } from "@/lib/types";
+import { Editorial } from "@/lib/types";
 
-const initialState: ActionState = {
+const initialState: ContentActionState = {
   success: false,
   message: "",
 };
 
-// Define a type for the post data we'll be fetching
-type BlogPost = NonNullable<Awaited<ReturnType<typeof getBlogPost>>>;
-
 export default function EditBlogPage({ params }: { params: { slug: string } }) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(
-    saveBlogPost,
+    saveContent,
     initialState
   );
 
   // State to hold the post data
-  const [post, setPost] = useState<BlogPost | null>(null);
+  const [post, setPost] = useState<Editorial | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // States for controlled components
@@ -55,7 +52,7 @@ export default function EditBlogPage({ params }: { params: { slug: string } }) {
   useEffect(() => {
     const fetchPost = async () => {
       setIsLoading(true);
-      const fetchedPost = await getBlogPost(params.slug);
+      const fetchedPost = await getContentBySlug(params.slug, "blog");
       if (fetchedPost) {
         setPost(fetchedPost);
         setContent(fetchedPost.blogPost?.content || "");
@@ -75,6 +72,7 @@ export default function EditBlogPage({ params }: { params: { slug: string } }) {
     if (state.success) {
       toast.success(state.message);
       // Optional: refetch data or optimistically update state
+      router.push(state.status === "published" ? `/blog/${state.slug}` : "/admin/blog");
     } else if (state.message) {
       toast.error(state.message);
     }
@@ -125,6 +123,7 @@ export default function EditBlogPage({ params }: { params: { slug: string } }) {
             </CardHeader>
             <CardContent>
               <form action={formAction} className="space-y-6">
+                <input type="hidden" name="type" value="blog" />
                 {/* Hidden field to pass the original slug for the WHERE clause */}
                 <input type="hidden" name="originalSlug" value={params.slug} />
                 <div className="space-y-2">

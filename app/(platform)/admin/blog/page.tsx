@@ -155,12 +155,14 @@ export default function BlogAdmin() {
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-semibold line-clamp-1">{post.title}</h3>
+                      <h3 className="text-xl font-semibold line-clamp-1">
+                        {post.title}
+                      </h3>
                       <Badge
-                        variant={getStatusVariant(post.status)}
+                        variant={getStatusVariant((post as any).status)}
                         className="capitalize"
                       >
-                        {post.status}
+                        {(post as any).status}
                       </Badge>
                       {post.featured && (
                         <Badge variant="secondary" className="text-xs">
@@ -191,7 +193,12 @@ export default function BlogAdmin() {
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Button variant="outline" size="icon" asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    asChild
+                    disabled={(post as any).status !== "published"}
+                  >
                     <Link href={`/blog/${post.slug}`} target="_blank">
                       <Eye className="h-4 w-4" />
                     </Link>

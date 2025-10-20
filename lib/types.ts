@@ -42,7 +42,7 @@ import {
   contentType,
 } from "./db/schema";
 import { getCompanies, getCompanyById } from "@/app/actions/companies";
-import { getContent } from "@/app/actions/content";
+import { getContent, getContentBySlug } from "@/app/actions/content";
 
 export type Cursor = { id: string; createdAt: Date };
 export type Pagination = "next" | "previous";
@@ -180,6 +180,7 @@ export type ContentStatus = (typeof contentStatus.enumValues)[number];
 export type ContentType = (typeof contentType.enumValues)[number];
 
 export type Content = Awaited<ReturnType<typeof getContent>>["content"][number];
+export type Editorial = NonNullable<Awaited<ReturnType<typeof getContentBySlug>>>;
 
 export interface AssetEntry {
   id: string;

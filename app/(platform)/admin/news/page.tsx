@@ -162,10 +162,10 @@ export default function NewsAdmin() {
                         {article.title}
                       </h3>
                       <Badge
-                        variant={getStatusVariant(article.status)}
+                        variant={getStatusVariant((article as any).status)}
                         className="capitalize"
                       >
-                        {article.status}
+                        {(article as any).status}
                       </Badge>
                       {article.featured && (
                         <Badge variant="secondary" className="text-xs">
@@ -198,7 +198,7 @@ export default function NewsAdmin() {
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Button variant="outline" size="icon" asChild>
+                  <Button variant="outline" size="icon" asChild disabled={(article as any).status !== "published"}>
                     <Link href={`/news/${article.slug}`} target="_blank">
                       <Eye className="h-4 w-4" />
                     </Link>

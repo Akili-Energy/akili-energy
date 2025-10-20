@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { getBlogPost } from "@/app/actions/content";
+import { getContentBySlug } from "@/app/actions/content";
 import { notFound } from "next/navigation";
 
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
@@ -33,27 +33,20 @@ import "@/components/tiptap-templates/simple/simple-editor.scss";
 import "katex/dist/katex.min.css";
 import "@/components/tiptap-ui/table-dropdown-menu/table-dropdown-menu.scss";
 import { cache } from "react";
+import { formatDate } from "@/lib/utils";
+import { Content } from "@/lib/types";
 
-const formatDate = (date: Date | null) => {
-  if (!date) return "";
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(new Date(date));
-};
-
-const getBlogPostBySlug = cache(getBlogPost);
+const getBlogPost = cache(getContentBySlug);
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const post = await getBlogPostBySlug((await params).slug);
+  const post = await getBlogPost((await params).slug, "blog");
   return {
-    title: `${post?.metaTitle} | Akili Energy - Blog`,
-    description: post?.metaDescription,
+    title: `${post?.metaTitle ?? post?.metaTitle} | Akili Energy - Blog`,
+    description: post?.metaDescription ?? post?.summary,
   };
 }
 
@@ -63,7 +56,7 @@ export default async function BlogPostPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const post = await getBlogPostBySlug((await params).slug);
+  const post = await getBlogPost((await params).slug, "blog");
 
   if (!post || !post.blogPost || !post.author) {
     notFound();
@@ -242,13 +235,13 @@ export default async function BlogPostPage({
           </div>
         </div>
 
-        {post.relatedPosts.length > 0 && (
+        {(post as any).related.length > 0 && (
           <section className="mt-16">
             <h2 className="text-2xl font-bold text-gray-900 mb-8">
               Related Posts
             </h2>
             <div className="grid md:grid-cols-2 gap-6">
-              {post.relatedPosts.map((relatedPost) => (
+              {(post as any).related.map((relatedPost: Content) => (
                 <Card
                   key={relatedPost.slug}
                   className="hover:shadow-lg transition-shadow"

@@ -3,7 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db/drizzle";
 import { z } from "zod";
-import { content, blogPosts, tags, contentTags } from "@/lib/db/schema";
+import {
+  content,
+  blogPosts,
+  tags,
+  contentTags,
+  contentStatus,
+  contentType,
+  newsArticles,
+} from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server"; // Assumes you have a server client utility
 import type {
   ActionState,
@@ -16,7 +24,7 @@ import { BLOG_PAGE_SIZE } from "@/lib/constants";
 
 const BUCKET_NAME = "images";
 
-export type ContentActionState = ActionState & { slug?: string };
+export type ContentActionState = ActionState & { slug?: string; status?: ContentStatus };
 
 /**
  * Calculates the estimated read time of a piece of content.
@@ -163,7 +171,7 @@ export async function getContent({
 /**
  * Fetches a single blog post by its slug, including related posts.
  */
-export async function getBlogPost(slug: string) {
+export async function getContentBySlug(slug: string, type: ContentType) {
   try {
     const supabase = createClient();
 
@@ -172,18 +180,36 @@ export async function getBlogPost(slug: string) {
       data: { user },
     } = await (await supabase).auth.getUser();
 
-    const post = await db.query.content.findFirst({
+    const result = await db.query.content.findFirst({
       where: and(eq(content.slug, slug), eq(content.status, "published")),
       with: {
         author: true,
-        blogPost: {
-          columns: { content: true },
-          //   extras: (blogPost, { sql }) => ({
-          //     readTime: sql<number>`calculate_read_time(${blogPost.content})`
-          //       .mapWith(Number)
-          //       .as("read_time"),
-          //   }),
-        },
+        blogPost:
+          type === "blog"
+            ? {
+                columns: {
+                  content: true,
+                },
+                //   extras: (blogPost, { sql }) => ({
+                //     readTime: sql<number>`calculate_read_time(${blogPost.content})`
+                //       .mapWith(Number)
+                //       .as("read_time"),
+                //   }),
+              }
+            : undefined,
+        newsArticle:
+          type === "news"
+            ? {
+                columns: {
+                  content: true,
+                },
+                //   extras: (newsArticle, { sql }) => ({
+                //     readTime: sql<number>`calculate_read_time(${newsArticle.content})`
+                //       .mapWith(Number)
+                //       .as("read_time"),
+                //   }),
+              }
+            : undefined,
         tags: {
           columns: {},
           with: {
@@ -193,57 +219,89 @@ export async function getBlogPost(slug: string) {
       },
     });
 
-    if (!post) {
+    if (!result) {
       return null;
     }
 
     // Fetch 3 related posts from the same category, excluding the current one
-    const relatedPosts = await db.query.content.findMany({
+    const related = await db.query.content.findMany({
       where: and(
-        eq(content.type, "blog"),
+        eq(content.type, type),
         eq(content.status, "published"),
-        eq(content.category, post.category),
+        eq(content.category, result.category),
         ne(content.slug, slug)
       ),
       limit: 2,
       orderBy: desc(content.publicationDate),
       with: {
         author: { columns: { name: true } },
-        blogPost: {
-          columns: { content: true },
-          //   extras: (blogPost, { sql }) => ({
-          //     readTime: sql<number>`calculate_read_time(${blogPost.content})`
-          //       .mapWith(Number)
-          //       .as("read_time"),
-          //   }),
-        },
+        blogPost:
+          type === "blog"
+            ? {
+                columns: {
+                  content: true,
+                },
+                //   extras: (blogPost, { sql }) => ({
+                //     readTime: sql<number>`calculate_read_time(${blogPost.content})`
+                //       .mapWith(Number)
+                //       .as("read_time"),
+                //   }),
+              }
+            : undefined,
+        newsArticle:
+          type === "news"
+            ? {
+                columns: {
+                  content: true,
+                },
+                //   extras: (newsArticle, { sql }) => ({
+                //     readTime: sql<number>`calculate_read_time(${newsArticle.content})`
+                //       .mapWith(Number)
+                //       .as("read_time"),
+                //   }),
+              }
+            : undefined,
       },
     });
 
-    const fullPost = {
-      ...post,
-      readTime: calculateReadTime(post.blogPost?.content ?? ""),
-      tags: post.tags.map(({ tag }) => tag),
+    const fullResult = {
+      ...result,
+      readTime: calculateReadTime(
+        result[type === "blog" ? "blogPost" : "newsArticle"]?.content ?? ""
+      ),
+      tags: result.tags.map(({ tag }) => tag),
     };
 
     if (!user && false) {
-      return fullPost;
+      return fullResult;
     }
 
-    const formattedRelatedPosts = relatedPosts.map((rp) => ({
-      ...rp,
-      readTime: calculateReadTime(rp.blogPost?.content ?? ""),
+    const formattedRelated = related.map((c) => ({
+      ...c,
+      readTime: calculateReadTime(
+        c[type === "blog" ? "blogPost" : "newsArticle"]?.content ?? ""
+      ),
     }));
 
-    return { ...fullPost, relatedPosts: formattedRelatedPosts };
+    return { ...fullResult, related: formattedRelated };
   } catch (error) {
-    console.error(`Failed to fetch blog post by slug "${slug}":`, error);
+    console.error(
+      `Failed to fetch ${
+        type === "blog"
+          ? "blog post"
+          : type === "news"
+          ? "news article"
+          : "research report"
+      } by slug "${slug}":`,
+      error
+    );
     return null;
   }
 }
 
 // 1. Zod schema for robust server-side validation
-const blogPostSchema = z.object({
+const contentSchema = z.object({
+  type: z.enum(contentType.enumValues),
   slug: z.string().min(3, "Slug is required").max(200),
   title: z.string().min(3, "Title must be at least 3 characters").max(72),
   summary: z.string().min(10, "Summary is required").max(500),
@@ -254,14 +312,14 @@ const blogPostSchema = z.object({
     if (Array.isArray(val)) return val;
     return [];
   }, z.array(z.string()).max(10, "You can add up to 10 tags")),
-  status: z.enum(["draft", "published", "archived"]),
+  status: z.enum(contentStatus.enumValues),
   featuredImage: z.string().min(1, "Featured image is required"),
   isFeatured: z.preprocess((val) => val === "on" || val === true, z.boolean()),
   metaTitle: z.string().max(72).optional(),
   metaDescription: z.string().max(160).optional(),
 });
 
-export async function saveBlogPost(
+export async function saveContent(
   prevState: ContentActionState,
   formData: FormData
 ): Promise<ContentActionState> {
@@ -289,7 +347,7 @@ export async function saveBlogPost(
 
   // 2. Validate form data using Zod
   const rawFormData = Object.fromEntries(formData.entries());
-  const validatedFields = blogPostSchema.safeParse(rawFormData);
+  const validatedFields = contentSchema.safeParse(rawFormData);
 
   if (!validatedFields.success) {
     return {
@@ -330,7 +388,7 @@ export async function saveBlogPost(
       // Upsert the content. Using slug as the primary key.
       let contentTransaction: any = tx.insert(content).values({
         slug: data.slug,
-        type: "blog",
+        type: data.type,
         title: data.title,
         summary: data.summary,
         imageUrl,
@@ -360,27 +418,55 @@ export async function saveBlogPost(
       }
       await contentTransaction;
 
-      // Upsert the blog post specific content
-      const blogData: typeof blogPosts.$inferInsert = {
-        slug: data.slug,
-        content: data.content,
-      };
-      if (isEditMode) {
-        blogData.editorId = author.id;
-        blogData.revisionDate = new Date();
-      }
-      let blogTransaction: any = tx.insert(blogPosts).values(blogData);
-      if (isEditMode) {
-        blogTransaction = blogTransaction.onConflictDoUpdate({
-          target: blogPosts.slug,
-          set: {
+      // Upsert the specific content
+      switch (data.type) {
+        case "blog":
+          const blogData: typeof blogPosts.$inferInsert = {
+            slug: data.slug,
             content: data.content,
-            editorId: author.id,
-            revisionDate: new Date(), // Always update the revision date on edit
-          },
-        });
+          };
+          if (isEditMode) {
+            blogData.editorId = author.id;
+            blogData.revisionDate = new Date();
+          }
+          let blogTransaction: any = tx.insert(blogPosts).values(blogData);
+          if (isEditMode) {
+            blogTransaction = blogTransaction.onConflictDoUpdate({
+              target: blogPosts.slug,
+              set: {
+                content: data.content,
+                editorId: author.id,
+                revisionDate: new Date(), // Always update the revision date on edit
+              },
+            });
+          }
+          await blogTransaction;
+          break;
+        case "news":
+          const newsData: typeof newsArticles.$inferInsert = {
+            slug: data.slug,
+            content: data.content,
+          };
+          // if (isEditMode) {
+          //   blogData.editorId = author.id;
+          //   blogData.revisionDate = new Date();
+          // }
+          let newsTransaction: any = tx.insert(newsArticles).values(newsData);
+          if (isEditMode) {
+            newsTransaction = newsTransaction.onConflictDoUpdate({
+              target: newsArticles.slug,
+              set: {
+                content: data.content,
+                // editorId: author.id,
+                // revisionDate: new Date(), // Always update the revision date on edit
+              },
+            });
+          }
+          await newsTransaction;
+          break;
+        default:
+          break;
       }
-      await blogTransaction;
 
       // Handle tags
       if (data.tags.length > 0) {
@@ -413,22 +499,37 @@ export async function saveBlogPost(
     });
 
     // 6. Revalidate paths to reflect new content
-    revalidatePath("/blog"); // Revalidate the public blog listing
-    revalidatePath(`/blog/${data.slug}`); // Revalidate the specific post page
-    revalidatePath("/admin/blog");
-    if (originalSlug) revalidatePath(`/blog/${originalSlug}`);
-    revalidatePath(`/admin/blog/${data.slug}`);
+    revalidatePath(data.type === "blog" ? "/blog" : "/news-research"); // Revalidate the public content listing
+    revalidatePath(`/${data.type}/${data.slug}`); // Revalidate the specific post page
+    revalidatePath(`/admin/${data.type}`);
+    if (originalSlug) revalidatePath(`/${data.type}/${originalSlug}`);
 
     return {
       success: true,
-      message: `Blog post "${data.title}" has been ${
+      message: `${
+        data.type === "blog"
+          ? "Blog post"
+          : data.type === "news"
+          ? "News article"
+          : "Research report"
+      } "${data.title}" has been ${
         isEditMode ? "updated" : "created"
       } successfully.`,
       slug: data.slug,
+      status: data.status,
     };
   } catch (error: any) {
     // 7. Handle any errors during the process
-    console.error("Failed to save blog post:", error);
+    console.error(
+      `Failed to save ${
+        data.type === "blog"
+          ? "blog post"
+          : data.type === "news"
+          ? "news article"
+          : "research report"
+      }:`,
+      error
+    );
     return {
       success: false,
       message: `Error: ${error.message || "An unknown error occurred."}`,

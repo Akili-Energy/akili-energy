@@ -296,13 +296,6 @@ export default function SimpleEditor({
     }
   }, [isMobile, mobileView]);
 
-  React.useEffect(() => {
-    console.log("isColorTextActive", editor?.isActive("color"));
-    console.log("isTextColorActive", editor?.isActive("color"), {
-      color: "#d34549",
-    });
-  }, [editor]);
-
   return (
     <div className="border shadow-cardHover rounded-lg bg-white overflow-hidden">
       <div className="w-full h-[70vh] md:h-124 overflow-hidden">

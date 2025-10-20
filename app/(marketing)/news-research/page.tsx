@@ -64,13 +64,11 @@ export default async function NewsResearchPage({
     { content: initialReports, hasMore: hasMoreResearch },
   ] = await Promise.all([news, research]);
 
-  const featuredArticle =
-    initialArticles.find((p) => p.featured) || initialArticles[0];
+  const featuredArticle = initialArticles.find((p) => p.featured);
   const otherArticles = initialArticles
     .filter((p) => p.slug !== featuredArticle?.slug)
     .slice(0, NEWS_PAGE_SIZE);
-  const featuredReport =
-    initialReports.find((p) => p.featured) || initialReports[0];
+  const featuredReport = initialReports.find((p) => p.featured);
   const otherReports = initialReports
     .filter((p) => p.slug !== featuredReport?.slug)
     .slice(0, RESEARCH_PAGE_SIZE);
@@ -101,28 +99,30 @@ export default async function NewsResearchPage({
           </div>
 
           {/* Breaking News Banner */}
-          <Card className="mb-8 border-l-4 border-l-red-500 bg-red-50">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <Badge className="bg-red-500 text-white animate-pulse">
-                  BREAKING
-                </Badge>
-                <p className="font-medium text-red-900">
-                  {featuredArticle?.title}
-                </p>
-                <Button
-                  asChild
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-700 hover:text-red-900"
-                >
-                  <Link href={`/news/${featuredArticle?.slug}`}>
-                    Read More →
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {featuredArticle && (
+            <Card className="mb-8 border-l-4 border-l-red-500 bg-red-50">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <Badge className="bg-red-500 text-white animate-pulse">
+                    BREAKING
+                  </Badge>
+                  <p className="font-medium text-red-900">
+                    {featuredArticle?.title}
+                  </p>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-700 hover:text-red-900"
+                  >
+                    <Link href={`/news/${featuredArticle?.slug}`}>
+                      Read More →
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* News Grid */}
           <News initialArticles={otherArticles} hasNext={hasMoreNews} />
@@ -134,62 +134,67 @@ export default async function NewsResearchPage({
             🔬 Featured Research
           </h2>
 
-          <Card className="mb-8">
-            <CardContent className="p-0">
-              <div className="grid lg:grid-cols-2 gap-0">
-                <div className="p-8 space-y-6">
-                  <div>
-                    <Badge className="mb-4 bg-akili-green text-white">
-                      Featured Report
-                    </Badge>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                      {featuredReport?.title}
-                    </h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      {featuredReport?.summary}
-                    </p>
+          {featuredReport && (
+            <Card className="mb-8">
+              <CardContent className="p-0">
+                <div className="grid lg:grid-cols-2 gap-0">
+                  <div className="p-8 space-y-6">
+                    <div>
+                      <Badge className="mb-4 bg-akili-green text-white">
+                        Featured Report
+                      </Badge>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                        {featuredReport?.title}
+                      </h3>
+                      <p className="text-gray-600 leading-relaxed">
+                        {featuredReport?.summary}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center space-x-1">
+                        <User className="w-4 h-4" />
+                        <span>{featuredReport?.author.name}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>
+                          {formatDate(featuredReport?.publicationDate)}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <FileText className="w-4 h-4" />
+                        <span>N pages</span>
+                      </div>
+                    </div>
+                    <div className="flex space-x-3">
+                      <Button
+                        asChild
+                        className="bg-akili-blue hover:bg-akili-blue/90"
+                      >
+                        <Link href={`/research/${featuredReport?.slug}`}>
+                          Read Full Report{" "}
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Link>
+                      </Button>
+                      <Button variant="outline">
+                        <Download className="w-4 h-4 mr-2" />
+                        Download PDF
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <div className="flex items-center space-x-1">
-                      <User className="w-4 h-4" />
-                      <span>{featuredReport?.author.name}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{formatDate(featuredReport?.publicationDate)}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <FileText className="w-4 h-4" />
-                      <span>N pages</span>
-                    </div>
-                  </div>
-                  <div className="flex space-x-3">
-                    <Button
-                      asChild
-                      className="bg-akili-blue hover:bg-akili-blue/90"
-                    >
-                      <Link href={`/research/${featuredReport?.slug}`}>
-                        Read Full Report <ArrowRight className="w-4 h-4 ml-2" />
-                      </Link>
-                    </Button>
-                    <Button variant="outline">
-                      <Download className="w-4 h-4 mr-2" />
-                      Download PDF
-                    </Button>
+                  <div className="relative">
+                    <Image
+                      src={featuredReport?.imageUrl || "/placeholder.svg"}
+                      alt={featuredReport?.title}
+                      width={600}
+                      height={400}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
-                <div className="relative">
-                  <Image
-                    src={featuredReport?.imageUrl || "/placeholder.svg"}
-                    alt={featuredReport?.title}
-                    width={600}
-                    height={400}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </section>
 
         {/* Filters */}
@@ -226,7 +231,7 @@ export default async function NewsResearchPage({
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="report">Reports</SelectItem>
-                  <SelectItem value="infographic">Infographics</SelectItem>
+                  <SelectItem value="infographic">Infographic</SelectItem>
                   <SelectItem value="brief">Policy Briefs</SelectItem>
                   <SelectItem value="analysis">Analysis</SelectItem>
                 </SelectContent>

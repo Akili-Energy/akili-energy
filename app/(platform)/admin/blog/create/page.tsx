@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import ImageUpload from "@/components/admin/image-upload";
 import WYSIWYGRichTextEditor from "@/components/admin/wysiwyg-rich-text-editor";
-import { saveBlogPost } from "@/app/actions/content"; // Import the server action
+import { saveContent } from "@/app/actions/content"; // Import the server action
 import { contentCategory, contentStatus } from "@/lib/db/schema";
 import TagsInput from "@/components/admin/tags-input";
 
@@ -38,7 +38,7 @@ export default function CreateBlogPage() {
 
   // useActionState hook manages form state and transitions
   const [state, formAction, isPending] = useActionState(
-    saveBlogPost,
+    saveContent,
     initialState
   );
 
@@ -60,7 +60,7 @@ export default function CreateBlogPage() {
     if (state.success) {
       toast.success(state.message);
       // Redirect to the edit page of the newly created post
-      router.push(`/blog/${state.slug}`);
+      router.push(state.status === "published" ? `/blog/${state.slug}` : "/admin/blog");
     } else if (state.message && !state.errors) {
       // Show general errors that are not field-specific
       toast.error(state.message);
@@ -114,6 +114,7 @@ export default function CreateBlogPage() {
             </CardHeader>
             <CardContent>
               <form action={formAction} className="space-y-6">
+                <input type="hidden" name="type" value="blog" />
                 <div className="space-y-2">
                   <Label htmlFor="title">Title *</Label>
                   <Input
