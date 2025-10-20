@@ -21,10 +21,14 @@ import type {
 } from "@/lib/types";
 import { and, desc, eq, lt, ne, sql } from "drizzle-orm";
 import { BLOG_PAGE_SIZE } from "@/lib/constants";
+import { headers } from "next/headers";
 
 const BUCKET_NAME = "images";
 
-export type ContentActionState = ActionState & { slug?: string; status?: ContentStatus };
+export type ContentActionState = ActionState & {
+  slug?: string;
+  status?: ContentStatus;
+};
 
 /**
  * Calculates the estimated read time of a piece of content.
@@ -57,7 +61,13 @@ export async function getContent({
   limit?: number;
   status?: ContentStatus | null;
 }) {
-  const isAdmin = status === null || status === undefined;
+  const referer = (await headers()).get("referer");
+  let isAdmin = status === null || status === undefined;
+  if (referer) {
+    const { pathname } = new URL(referer);
+    isAdmin = pathname.startsWith("/admin");
+  }
+
   const whereConditions = [eq(content.type, type)];
   if (!isAdmin) {
     whereConditions.push(eq(content.status, "published"));
@@ -173,13 +183,6 @@ export async function getContent({
  */
 export async function getContentBySlug(slug: string, type: ContentType) {
   try {
-    const supabase = createClient();
-
-    // Authenticate user and check permissions
-    const {
-      data: { user },
-    } = await (await supabase).auth.getUser();
-
     const result = await db.query.content.findFirst({
       where: and(eq(content.slug, slug), eq(content.status, "published")),
       with: {
@@ -223,6 +226,24 @@ export async function getContentBySlug(slug: string, type: ContentType) {
       return null;
     }
 
+    const fullResult = {
+      ...result,
+      readTime: calculateReadTime(
+        result[type === "blog" ? "blogPost" : "newsArticle"]?.content ?? ""
+      ),
+      tags: result.tags.map(({ tag }) => tag),
+    };
+
+    const referer = (await headers()).get("referer");
+    let isAdmin = false;
+    if (referer) {
+      const { pathname } = new URL(referer);
+      isAdmin = pathname.startsWith("/admin");
+    }
+    if (isAdmin) {
+      return fullResult;
+    }
+
     // Fetch 3 related posts from the same category, excluding the current one
     const related = await db.query.content.findMany({
       where: and(
@@ -263,18 +284,6 @@ export async function getContentBySlug(slug: string, type: ContentType) {
             : undefined,
       },
     });
-
-    const fullResult = {
-      ...result,
-      readTime: calculateReadTime(
-        result[type === "blog" ? "blogPost" : "newsArticle"]?.content ?? ""
-      ),
-      tags: result.tags.map(({ tag }) => tag),
-    };
-
-    if (!user && false) {
-      return fullResult;
-    }
 
     const formattedRelated = related.map((c) => ({
       ...c,
@@ -361,7 +370,13 @@ export async function saveContent(
 
   // Determine if this is an edit or create operation
   const originalSlug = formData.get("originalSlug") as string | undefined;
-  const isEditMode = !!originalSlug;
+  let isEditMode = !!originalSlug;
+
+  const referer = (await headers()).get("referer");
+  if (referer) {
+    const { pathname } = new URL(referer);
+    isEditMode = pathname.endsWith("/edit");
+  }
 
   let imageUrl = data.featuredImage;
 
