@@ -10,7 +10,7 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Akili Energy - Intelligence for African Energy Transactions",
+  title: "Akili Energy - Intelligence for African Energy Transitions",
   description: "Strategic intelligence platform for the African energy sector",
 };
 

@@ -41,7 +41,7 @@ export function TypewriterEffect({ text, speed = 100, className = "" }: Typewrit
   return (
     <span className={className}>
       {displayText.split(" ").map((word, index) => {
-        const isGreenWord = ["d'énergie", "verte", "green", "energy"].includes(word.toLowerCase())
+        const isGreenWord = ["énergétiques", "energy"].includes(word.toLowerCase())
         return (
           <span key={index} className={isGreenWord ? "text-akili-green" : ""}>
             {word}

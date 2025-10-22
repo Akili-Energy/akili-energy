@@ -94,7 +94,6 @@ import {
   SUB_SECTORS,
 } from "@/lib/constants";
 import { MultiSelect } from "@/components/ui/multi-select";
-import loading from "../loading";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const initialState: ActionState = {
@@ -206,8 +205,8 @@ export default function CreateEditDealPage({
         }
 
         setDeal(fetchedDeal);
-        setSelectedDealType(fetchedDeal?.type)
-        setSelectedDealSubtype(fetchedDeal?.subtype ?? undefined)
+        setSelectedDealType(fetchedDeal?.type);
+        setSelectedDealSubtype(fetchedDeal?.subtype ?? undefined);
       });
     } else {
       router.replace("/admin/deals");
@@ -438,7 +437,9 @@ export default function CreateEditDealPage({
                       type="number"
                       id="amount"
                       name="amount"
-                      defaultValue={mode === "edit" ? deal?.amount ?? undefined : undefined}
+                      defaultValue={
+                        mode === "edit" ? deal?.amount ?? undefined : undefined
+                      }
                       placeholder="e.g. 150.5"
                       step={0.01}
                       required={selectedDealType === "financing"}
@@ -546,6 +547,11 @@ export default function CreateEditDealPage({
                       placeholder="https://example.com/blog/article-slug"
                       name="pressReleaseUrl"
                       id="pressReleaseUrl"
+                      defaultValue={
+                        mode === "edit"
+                          ? deal?.pressReleaseUrl ?? undefined
+                          : undefined
+                      }
                     />
                   </div>
                 </CardContent>
@@ -1101,6 +1107,11 @@ export default function CreateEditDealPage({
                       type="date"
                       name="announcementDate"
                       id="announcementDate"
+                      defaultValue={
+                        mode === "edit"
+                          ? deal?.announcementDate?.toISOString() ?? undefined
+                          : undefined
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -1109,6 +1120,11 @@ export default function CreateEditDealPage({
                       type="date"
                       name="completionDate"
                       id="completionDate"
+                      defaultValue={
+                        mode === "edit"
+                          ? deal?.completionDate?.toISOString() ?? undefined
+                          : undefined
+                      }
                     />
                   </div>
                 </CardContent>
@@ -1144,6 +1160,11 @@ export default function CreateEditDealPage({
                       placeholder="Summary"
                       name="description"
                       id="description"
+                      defaultValue={
+                        mode === "edit"
+                          ? deal?.description ?? undefined
+                          : undefined
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -1152,6 +1173,11 @@ export default function CreateEditDealPage({
                       placeholder="Insights"
                       name="insights"
                       id="insights"
+                      defaultValue={
+                        mode === "edit"
+                          ? deal?.insights ?? undefined
+                          : undefined
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -1160,6 +1186,9 @@ export default function CreateEditDealPage({
                       placeholder="Impact"
                       name="impacts"
                       id="impacts"
+                      defaultValue={
+                        mode === "edit" ? deal?.impacts ?? undefined : undefined
+                      }
                     />
                   </div>
                 </CardContent>
@@ -1194,7 +1223,14 @@ export default function CreateEditDealPage({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>M&A Type</Label>
-                          <Select name="subtype" required>
+                          <Select
+                            name="subtype"
+                            value={selectedDealSubtype}
+                            required
+                            onValueChange={(value) =>
+                              setSelectedDealSubtype(value as DealSubtype)
+                            }
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Select M&A Type..." />
                             </SelectTrigger>
@@ -1211,7 +1247,15 @@ export default function CreateEditDealPage({
                         </div>
                         <div className="space-y-2">
                           <Label>M&A Structure</Label>
-                          <Select name="maStructure">
+                          <Select
+                            name="maStructure"
+                            defaultValue={
+                              mode === "edit"
+                                ? deal?.mergerAcquisition?.structure ??
+                                  undefined
+                                : undefined
+                            }
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Select M&A Structure..." />
                             </SelectTrigger>
@@ -1226,7 +1270,15 @@ export default function CreateEditDealPage({
                         </div>
                         <div className="space-y-2">
                           <Label>Revenue Model</Label>
-                          <Select name="revenueModel">
+                          <Select
+                            name="revenueModel"
+                            defaultValue={
+                              mode === "edit"
+                                ? deal?.mergerAcquisition?.revenueModel ??
+                                  undefined
+                                : undefined
+                            }
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Select Revenue Model..." />
                             </SelectTrigger>
@@ -1248,6 +1300,12 @@ export default function CreateEditDealPage({
                             placeholder="e.g. 20"
                             id="revenueModelDuration"
                             name="revenueModelDuration"
+                            defaultValue={
+                              mode === "edit"
+                                ? deal?.mergerAcquisition
+                                    ?.revenueModelDuration ?? undefined
+                                : undefined
+                            }
                           />
                         </div>
                         <div className="space-y-2">
@@ -1305,6 +1363,12 @@ export default function CreateEditDealPage({
                             placeholder="Explain the strategy rationale for this M&A"
                             id="maStrategyRationale"
                             name="maStrategyRationale"
+                            defaultValue={
+                              mode === "edit"
+                                ? deal?.mergerAcquisition?.strategyRationale ??
+                                  undefined
+                                : undefined
+                            }
                           />
                         </div>
                       </div>
@@ -1319,11 +1383,22 @@ export default function CreateEditDealPage({
                             placeholder="Investment Vehicle"
                             name="financingVehicle"
                             id="financingVehicle"
+                            defaultValue={
+                              mode === "edit"
+                                ? deal?.financing?.vehicle ??
+                                  undefined
+                                : undefined
+                            }
                           />
                         </div>
                         <div className="space-y-2">
                           <Label>Financing Objective</Label>
-                          <Select name="financingObjective">
+                          <Select name="financingObjective" defaultValue={
+                              mode === "edit"
+                                ? deal?.financing?.objective ??
+                                  undefined
+                                : undefined
+                            }>
                             <SelectTrigger>
                               <SelectValue placeholder="Select financing objective..." />
                             </SelectTrigger>
@@ -1345,7 +1420,6 @@ export default function CreateEditDealPage({
                             name="financingType"
                             value={dealDetails?.financingType}
                           />
-
                           <MultiSelect
                             options={dealFinancingType.enumValues.map((ft) => ({
                               label: ft,

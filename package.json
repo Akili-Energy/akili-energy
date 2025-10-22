@@ -85,6 +85,7 @@
     "date-fns": "4.1.0",
     "drizzle-orm": "^0.44.6",
     "embla-carousel-react": "8.5.1",
+    "eslint-config-next": "^16.0.0",
     "input-otp": "1.4.1",
     "install": "^0.13.0",
     "katex": "^0.16.23",
@@ -97,15 +98,15 @@
     "lucide-react": "^0.454.0",
     "material-symbols": "^0.33.0",
     "negotiator": "^1.0.0",
-    "next": "15.5.3",
+    "next": "16.0.0",
     "next-themes": "latest",
     "npm": "^11.6.2",
     "postgres": "^3.4.7",
-    "react": "19.1.1",
+    "react": "19.2.0",
     "react-day-picker": "9.11.1",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
-    "react-dom": "19.1.1",
+    "react-dom": "19.2.0",
     "react-hook-form": "^7.64.0",
     "react-hotkeys-hook": "^5.1.0",
     "react-leaflet": "5.0.0-rc.2",
@@ -146,9 +147,9 @@
       "@types/react-dom": "19.1.9"
     },
     "onlyBuiltDependencies": [
-      "@parcel/watcher",
       "esbuild",
-      "sharp"
+      "sharp",
+      "unrs-resolver"
     ]
   }
 }
