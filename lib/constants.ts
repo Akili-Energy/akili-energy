@@ -15,6 +15,7 @@ import {
   projectSubSector,
 } from "./db/schema";
 
+export const DEFAULT_PAGE_SIZE = 10;
 export const BLOG_PAGE_SIZE = 6;
 export const NEWS_PAGE_SIZE = 4;
 export const RESEARCH_PAGE_SIZE = 3;
@@ -96,7 +97,7 @@ export const SECTORS_TECHNOLOGIES: Partial<Record<Sector, Technology[]>> = {
   geothermal: ["geothermal"],
   nuclear: ["nuclear"],
 };
-export const SUB_SECTOR: SubSector[] = [...companySubSector.enumValues, ...projectSubSector.enumValues];
+export const SUB_SECTORS: SubSector[] = [...companySubSector.enumValues, ...projectSubSector.enumValues];
 
 
 export const DEAL_TYPES_SUBTYPES: Record<DealType, DealSubtype[]> = {

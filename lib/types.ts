@@ -50,7 +50,7 @@ export type Pagination = "next" | "previous";
 export type DealFilters = {
   // region?: Region;
   // country?: Country;
-  // sector?: Sector;
+  sector?: Sector;
   type?: DealType;
   subtype?: DealSubtype;
   dateRange?: { from?: Date; to?: Date };

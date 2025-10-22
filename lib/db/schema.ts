@@ -1325,6 +1325,7 @@ export const newsArticles = pgTable(
       .primaryKey()
       .references(() => content.slug, { onDelete: "cascade" }),
     content: text("content").notNull(),
+    // sourceUrl: varchar("source_url", { length: 255 }),
     updatedAt: timestamp("updated_at", {
       withTimezone: true,
       mode: "date",

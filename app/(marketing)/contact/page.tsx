@@ -133,7 +133,7 @@ export default function ContactPage() {
                   <Mail className="w-5 h-5 text-blue-600 mt-1" />
                   <div>
                     <p className="font-medium">Email</p>
-                    <p className="text-gray-600">contact@akiligreen.com</p>
+                    <p className="text-gray-600">contact@akilienergy.com</p>
                   </div>
                 </div>
 
@@ -141,7 +141,7 @@ export default function ContactPage() {
                   <Phone className="w-5 h-5 text-blue-600 mt-1" />
                   <div>
                     <p className="font-medium">Phone</p>
-                    <p className="text-gray-600">+33 1 23 45 67 89</p>
+                    <p className="text-gray-600">+33 6 64 76 66 68</p>
                   </div>
                 </div>
 

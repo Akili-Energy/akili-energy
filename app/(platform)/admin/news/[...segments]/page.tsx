@@ -34,7 +34,7 @@ const initialState: ContentActionState = {
   message: "",
 };
 
-export default function EditNewsPage({
+export default function CreateEditNewsPage({
   params,
 }: {
   params: Promise<{ segments: string[] }>;

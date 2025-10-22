@@ -1,135 +1,213 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+"use client";
+import { deleteDeal, getDeals } from "@/app/actions/deals";
+import { SectorsIconsTooltip } from "@/components/sector-icon";
+import { TooltipText } from "@/components/tooltip-text";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+import {
+  SECTORS,
+  REGIONS_COUNTRIES,
+  DEAL_TYPES_SUBTYPES,
+  DEFAULT_PAGE_SIZE,
+} from "@/lib/constants";
+import {
+  geographicRegion,
+  countryCode,
+  dealType,
+  dealSubtype,
+} from "@/lib/db/schema";
+import {
+  FetchDealsResults,
+  Sector,
+  Region,
+  Country,
+  DealType,
+  DealSubtype,
+  Pagination,
+  DealFilters,
+} from "@/lib/types";
 import {
   Search,
+  FilterX,
+  ExternalLink,
+  Eye,
   Plus,
-  Grid3X3,
-  List,
-  Download,
   Edit,
   Trash2,
-  Eye,
-  DollarSign,
-  Calendar,
-  MapPin,
-  Building2,
-} from "lucide-react"
-import Link from "next/link"
-import { toast } from "sonner"
-import type { Deal } from "@/lib/types";
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { useLanguage } from "@/components/language-context";
+import { Countries } from "@/components/countries-flags";
+import { useDebounce } from "@/hooks/use-debounce";
+import { toast } from "sonner";
+
+const DEAL_TYPE_COLORS: Record<DealType, string> = {
+  merger_acquisition: "bg-blue-100 text-blue-800 border-blue-200",
+  financing: "bg-green-100 text-green-800 border-green-200",
+  project_update: "bg-orange-100 text-orange-800 border-orange-200",
+  power_purchase_agreement: "bg-purple-100 text-purple-800 border-purple-200",
+  joint_venture: "bg-gray-100 text-gray-800 border-gray-200",
+};
 
 export default function AdminDealsPage() {
-  const [deals, setDeals] = useState<Deal[]>([])
-  const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterType, setFilterType] = useState<string>("all")
-  const [filterStatus, setFilterStatus] = useState<string>("all")
+  const router = useRouter();
+  const { t } = useLanguage();
+
+  const [deals, setDeals] = useState<FetchDealsResults>([]);
+  const [count, setCount] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRegion, setSelectedRegion] = useState<Region>();
+  const [selectedCountry, setSelectedCountry] = useState<Country>();
+  const [isPending, startTransition] = useTransition();
+  const [filters, setFilters] = useState<DealFilters>();
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  const fetchDeals = (newFilter?: DealFilters, order?: Pagination) =>
+    startTransition(async () => {
+      const { deals: allDeals, total } = await getDeals({
+        filters: { ...filters, ...newFilter },
+        order,
+        cursor:
+          deals.length > 0
+            ? order === "previous"
+              ? deals[0].date
+              : deals[deals.length - 1].date
+            : undefined,
+        search: debouncedSearchTerm,
+      });
+      setDeals(
+        allDeals.toSorted((a, b) => b.date.getTime() - a.date.getTime())
+      );
+      setCount(total);
+      setCurrentPage(
+        order === "previous"
+          ? Math.max(1, currentPage - 1)
+          : order === "next"
+          ? Math.min(Math.ceil(total / DEFAULT_PAGE_SIZE), currentPage + 1)
+          : 1
+      );
+      setFilters((prev) => ({
+        ...prev,
+        ...(newFilter ?? {}),
+      }));
+    });
 
   useEffect(() => {
-    loadDeals()
-  }, [])
+    fetchDeals();
+  }, [debouncedSearchTerm]);
 
-  const loadDeals = async () => {
-    try {
-      setLoading(true)
-      setDeals([])
-    } catch (error) {
-      console.error("Error loading deals:", error)
-      toast.error("Failed to load deals")
-    } finally {
-      setLoading(false)
+  const filteredDeals = deals.filter(
+    ({ regions, countries }) =>
+      (selectedRegion ? regions.includes(selectedRegion) : true) &&
+      (selectedCountry ? countries.includes(selectedCountry) : true)
+  );
+
+  const onRegionChange = (value: string) => {
+    const region = value as Region;
+    setSelectedRegion(region);
+    if (!REGIONS_COUNTRIES[region].includes(selectedCountry as Country)) {
+      setSelectedCountry(undefined);
     }
-  }
+  };
+
+  const onCountryChange = (value: string) => {
+    const country = value as Country;
+    setSelectedCountry(country);
+    for (const key in REGIONS_COUNTRIES) {
+      const region = key as Region;
+      if (
+        REGIONS_COUNTRIES[region].includes(country) &&
+        selectedRegion !== region
+      ) {
+        setSelectedRegion(region);
+      }
+    }
+  };
+
+  const onDealTypeChange = async (value: string) => {
+    const dealType = value as DealType;
+    await fetchDeals({ type: dealType });
+    setFilters((prev) => ({
+      ...prev,
+      type: dealType,
+      subtype: !DEAL_TYPES_SUBTYPES[dealType].includes(
+        prev?.subtype as DealSubtype
+      )
+        ? undefined
+        : prev?.subtype,
+    }));
+  };
+
+  const onDealSubtypeChange = async (value: string) => {
+    const subtype = value as DealSubtype;
+    await fetchDeals({ subtype });
+    setFilters((prev) => ({
+      ...prev,
+      subtype,
+      type:
+        (Object.keys(DEAL_TYPES_SUBTYPES).find(
+          (key) =>
+            DEAL_TYPES_SUBTYPES[key as DealType].includes(subtype) &&
+            prev?.type !== key
+        ) as DealType) ?? prev?.type,
+    }));
+  };
+
+  const resetFilters = async () => {
+    setSearchTerm("");
+    setFilters({});
+    setSelectedRegion(undefined);
+    setSelectedCountry(undefined);
+    await fetchDeals(undefined);
+  };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this deal?")) return
+    if (!confirm("Are you sure you want to delete this deal?")) return;
 
     try {
-      // await DealsService.delete(id)
-      setDeals(deals.filter((deal) => deal.id !== id))
-      toast.success("Deal deleted successfully")
+      const { message, success } = await deleteDeal(id);
+      await fetchDeals();
+      toast[success ? "success" : "error"](message);
     } catch (error) {
-      toast.error("Failed to delete deal")
+      toast.error("Failed to delete deal");
     }
-  }
-
-  const filteredDeals = deals.filter((deal) => {
-    const matchesSearch =
-      deal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      deal.country.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesType = filterType === "all" || deal.deal_type === filterType
-    const matchesStatus = filterStatus === "all" || deal.deal_status === filterStatus
-
-    return matchesSearch && matchesType && matchesStatus
-  })
-
-  const formatValue = (value: number) => {
-    if (value >= 1000000000) {
-      return `$${(value / 1000000000).toFixed(1)}B`
-    } else if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`
-    } else {
-      return `$${(value / 1000).toFixed(0)}K`
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-        return "bg-green-100 text-green-800"
-      case "active":
-        return "bg-blue-100 text-blue-800"
-      case "pending":
-        return "bg-yellow-100 text-yellow-800"
-      case "cancelled":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "M&A":
-        return "bg-purple-100 text-purple-800"
-      case "Financing":
-        return "bg-blue-100 text-blue-800"
-      case "JV":
-        return "bg-orange-100 text-orange-800"
-      case "PPA":
-        return "bg-green-100 text-green-800"
-      case "Project Update":
-        return "bg-cyan-100 text-cyan-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="container mx-auto py-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading deals...</div>
-        </div>
-      </div>
-    )
-  }
+  };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Deals Management</h1>
-          <p className="text-muted-foreground">Manage energy deals and transactions</p>
+          <p className="text-muted-foreground">
+            Manage energy deals and transactions
+          </p>
         </div>
         <Button asChild>
           <Link href="/admin/deals/create">
@@ -139,215 +217,275 @@ export default function AdminDealsPage() {
         </Button>
       </div>
 
-      {/* Filters and Search */}
+      {/* Enhanced Filters */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex flex-1 gap-4 items-center">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search deals..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Deal Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="M&A">M&A</SelectItem>
-                  <SelectItem value="Financing">Financing</SelectItem>
-                  <SelectItem value="JV">Joint Venture</SelectItem>
-                  <SelectItem value="PPA">PPA</SelectItem>
-                  <SelectItem value="Project Update">Project Update</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Export
-              </Button>
-
-              <div className="flex border rounded-lg">
-                <Button
-                  variant={viewMode === "cards" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("cards")}
-                  className="rounded-r-none"
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "table" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("table")}
-                  className="rounded-l-none"
-                >
-                  <List className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 m-6">
+          <div className="relative col-span-2">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search deals..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
-        </CardContent>
+          <Select value={selectedRegion} onValueChange={onRegionChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Region" />
+            </SelectTrigger>
+            <SelectContent>
+              {geographicRegion.enumValues.map((region) => (
+                <SelectItem key={region} value={region}>
+                  {t(`common.regions.${region}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedRegion} onValueChange={onCountryChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Country" />
+            </SelectTrigger>
+            <SelectContent>
+              {(selectedRegion
+                ? REGIONS_COUNTRIES[selectedRegion]
+                : countryCode.enumValues
+              )
+                .toSorted()
+                .map((country, index) => (
+                  <SelectItem key={index} value={country}>
+                    {t(`common.countries.${country}`)}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+          <Select value={filters?.type} onValueChange={onDealTypeChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Deal Type" />
+            </SelectTrigger>
+            <SelectContent>
+              {dealType.enumValues.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {t(`deals.types.${type}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filters?.subtype} onValueChange={onDealSubtypeChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Deal Subtype" />
+            </SelectTrigger>
+            <SelectContent>
+              {(filters?.type
+                ? DEAL_TYPES_SUBTYPES[filters?.type]
+                : dealSubtype.enumValues
+              ).map((subtype) => (
+                <SelectItem key={subtype} value={subtype}>
+                  {t(`deals.subtypes.${subtype}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={filters?.sector}
+            onValueChange={(value) => fetchDeals({ sector: value as Sector })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Sector" />
+            </SelectTrigger>
+            <SelectContent>
+              {SECTORS.map((sector) => (
+                <SelectItem key={sector} value={sector}>
+                  {t(`common.sectors.${sector}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            className="border-akili-orange text-akili-orange hover:bg-akili-orange hover:text-white"
+            onClick={resetFilters}
+          >
+            <FilterX className="w-4 h-4 mr-2" />
+            Reset Filters
+          </Button>
+        </div>
       </Card>
 
-      {/* Results Count */}
-      <div className="text-sm text-muted-foreground">
-        Showing {filteredDeals.length} of {deals.length} deals
-      </div>
-
-      {/* Cards View */}
-      {viewMode === "cards" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDeals.map((deal) => (
-            <Card key={deal.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg line-clamp-2">{deal.title}</CardTitle>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/admin/deals/${deal.id}`}>
-                        <Eye className="w-4 h-4" />
-                      </Link>
-                    </Button>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/admin/deals/${deal.id}/edit`}>
-                        <Edit className="w-4 h-4" />
-                      </Link>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(deal.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Badge className={getTypeColor(deal.deal_type)}>{deal.deal_type}</Badge>
-                  <Badge className={getStatusColor(deal.deal_status)}>{deal.deal_status}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  <span>
-                    {deal.country}, {deal.region}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <DollarSign className="w-4 h-4" />
-                  <span className="font-semibold text-foreground">{formatValue(deal.value)}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  <span>{new Date(deal.announced_date).toLocaleDateString()}</span>
-                </div>
-                {deal.company_id && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Building2 className="w-4 h-4" />
-                    <span>{deal.company_id}</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Table View */}
-      {viewMode === "table" && (
-        <Card>
-          <CardContent className="p-0">
+      {/* Deals Table */}
+      <Card>
+        <CardContent>
+          <div className="overflow-x-auto pt-8">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Deal</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="min-w-[300px] sticky left-0 bg-background z-20 border-r">
+                    Deal Update
+                  </TableHead>
+                  {/* <TableHead>Asset Name</TableHead> */}
+                  <TableHead>Sector</TableHead>
+                  {/* <TableHead>Region</TableHead> */}
                   <TableHead>Country</TableHead>
-                  <TableHead>Value</TableHead>
+                  <TableHead>Deal Type</TableHead>
+                  <TableHead>Deal Sub-Type</TableHead>
+                  <TableHead>Amount ($M)</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="sticky right-0 bg-background z-20 border-l"></TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {filteredDeals.map((deal) => (
-                  <TableRow key={deal.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{deal.title}</div>
-                        {deal.company_id && <div className="text-sm text-muted-foreground">{deal.company_id}</div>}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getTypeColor(deal.deal_type)}>{deal.deal_type}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(deal.deal_status)}>{deal.deal_status}</Badge>
-                    </TableCell>
-                    <TableCell>{deal.country}</TableCell>
-                    <TableCell className="font-semibold">{formatValue(deal.value)}</TableCell>
-                    <TableCell>{new Date(deal.announced_date).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
+              <TableBody className="text-xs">
+                {filteredDeals.map(
+                  ({
+                    id,
+                    update,
+                    type,
+                    subtype,
+                    amount,
+                    currency,
+                    date,
+                    regions,
+                    countries,
+                    sectors,
+                    assets,
+                  }) => (
+                    <TableRow
+                      key={id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
+                      <TableCell className="max-w-xs sticky left-0 bg-background z-10 border-r">
+                        <div className="line-clamp-2 font-medium cursor-pointer">
+                          {update}
+                          {type === "project_update" && (
+                            <ExternalLink className="w-3 h-3 inline ml-1" />
+                          )}
+                        </div>
+                      </TableCell>
+                      {/* <TableCell className="max-w-[150px]">
+                        <TooltipText values={assets.map((a) => a.name)} />
+                      </TableCell> */}
+                      <TableCell>
+                        <SectorsIconsTooltip sectors={sectors} />
+                      </TableCell>
+                      {/* <TableCell>
+                        <TooltipText
+                          values={regions.map((r) => t(`common.regions.${r}`))}
+                        />
+                      </TableCell> */}
+                      <TableCell className="truncate">
+                        <Countries countries={countries} max={3} />
+                      </TableCell>
+                      <TableCell className="truncate">
+                        <Badge className={DEAL_TYPE_COLORS[type]}>
+                          {t(`deals.types.${type}`)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-gray-600 dark:text-gray-400 truncate">
+                        {!!subtype && t(`deals.subtypes.${subtype}`)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {amount &&
+                          `${amount}${
+                            currency?.toLowerCase() !== "usd"
+                              ? `M${currency}`
+                              : ""
+                          }`}
+                      </TableCell>
+                      <TableCell>{date.toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right flex justify-end gap-1 sticky right-0 bg-background z-10 border-l">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/admin/deals/${deal.id}`}>
+                          <Link
+                            href={`/platform/${
+                              type === "project_update" &&
+                              assets.length &&
+                              assets[0].id
+                                ? `projects/${assets[0].id}`
+                                : `deals/${id}`
+                            }`}
+                            className="hover:text-blue-800 transition-colors"
+                          >
                             <Eye className="w-4 h-4" />
                           </Link>
                         </Button>
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/admin/deals/${deal.id}/edit`}>
+                          <Link href={`/admin/deals/${id}/edit`}>
                             <Edit className="w-4 h-4" />
                           </Link>
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(deal.id)}
+                          onClick={() => handleDelete(id)}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                    </TableRow>
+                  )
+                )}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
-      )}
-
-      {filteredDeals.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">No deals found matching your criteria.</p>
-          </CardContent>
-        </Card>
-      )}
+            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-4">
+              <div className="flex flex-1 justify-between sm:hidden">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchDeals(undefined, "previous")}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchDeals(undefined, "next")}
+                  disabled={
+                    currentPage === Math.ceil(count / DEFAULT_PAGE_SIZE)
+                  }
+                  className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Next
+                </Button>
+              </div>
+              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <p className="text-sm text-gray-700">
+                  Showing{" "}
+                  <span className="font-medium">
+                    {(currentPage - 1) * DEFAULT_PAGE_SIZE + 1}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-medium">
+                    {Math.min(currentPage * DEFAULT_PAGE_SIZE, count)}
+                  </span>{" "}
+                  of <span className="font-medium">{count}</span> results
+                </p>
+                <div className="flex space-x-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchDeals(undefined, "previous")}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchDeals(undefined, "next")}
+                    disabled={
+                      currentPage === Math.ceil(count / DEFAULT_PAGE_SIZE)
+                    }
+                    className="px-3 py-1 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }

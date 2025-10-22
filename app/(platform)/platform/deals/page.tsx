@@ -31,6 +31,7 @@ import {
   SECTORS,
   REGIONS_COUNTRIES,
   DEAL_TYPES_SUBTYPES,
+  DEFAULT_PAGE_SIZE,
 } from "@/lib/constants";
 import {
   geographicRegion,
@@ -54,8 +55,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useLanguage } from "@/components/language-context";
 import { Countries } from "@/components/countries-flags";
-
-const PAGE_SIZE = 10;
+import { useDebounce } from "@/hooks/use-debounce";
 
 const DEAL_TYPE_COLORS: Record<DealType, string> = {
   merger_acquisition: "bg-blue-100 text-blue-800 border-blue-200",
@@ -73,23 +73,25 @@ export default function DealsPage() {
   const [count, setCount] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSector, setSelectedSector] = useState<Sector>();
   const [selectedRegion, setSelectedRegion] = useState<Region>();
   const [selectedCountry, setSelectedCountry] = useState<Country>();
   const [isPending, startTransition] = useTransition();
   const [filters, setFilters] = useState<DealFilters>();
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  const fetchDeals = (newFilter?:DealFilters, order?: Pagination) =>
+  const fetchDeals = (newFilter?: DealFilters, order?: Pagination) =>
     startTransition(async () => {
-      const { deals: allDeals, total } = await getDeals(
-        { ...filters, ...newFilter },
+      const { deals: allDeals, total } = await getDeals({
+        filters: { ...filters, ...newFilter },
         order,
-        deals.length > 0
-          ? order === "previous"
-            ? deals[0].date
-            : deals[deals.length - 1].date
-          : undefined
-      );
+        cursor:
+          deals.length > 0
+            ? order === "previous"
+              ? deals[0].date
+              : deals[deals.length - 1].date
+            : undefined,
+        search: debouncedSearchTerm,
+      });
       setDeals(
         allDeals.toSorted((a, b) => b.date.getTime() - a.date.getTime())
       );
@@ -98,19 +100,21 @@ export default function DealsPage() {
         order === "previous"
           ? Math.max(1, currentPage - 1)
           : order === "next"
-          ? Math.min(Math.ceil(total / PAGE_SIZE), currentPage + 1)
+          ? Math.min(Math.ceil(total / DEFAULT_PAGE_SIZE), currentPage + 1)
           : 1
       );
+      setFilters((prev) => ({
+        ...prev,
+        ...(newFilter ?? {}),
+      }));
     });
 
   useEffect(() => {
     fetchDeals();
-  }, []);
+  }, [debouncedSearchTerm]);
 
   const filteredDeals = deals.filter(
-    ({ update, regions, countries, sectors, type, subtype }) =>
-      update.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (selectedSector ? sectors.includes(selectedSector) : true) &&
+    ({ regions, countries }) =>
       (selectedRegion ? regions.includes(selectedRegion) : true) &&
       (selectedCountry ? countries.includes(selectedCountry) : true)
   );
@@ -151,10 +155,9 @@ export default function DealsPage() {
     }
   };
 
-
   const onDealTypeChange = async (value: string) => {
     const dealType = value as DealType;
-    await fetchDeals({type: dealType});
+    await fetchDeals({ type: dealType });
     setFilters((prev) => ({
       ...prev,
       type: dealType,
@@ -168,7 +171,7 @@ export default function DealsPage() {
 
   const onDealSubtypeChange = async (value: string) => {
     const subtype = value as DealSubtype;
-    await fetchDeals({subtype});
+    await fetchDeals({ subtype });
     setFilters((prev) => ({
       ...prev,
       subtype,
@@ -182,10 +185,11 @@ export default function DealsPage() {
   };
 
   const resetFilters = async () => {
-    await fetchDeals();
-    setSelectedSector(undefined);
+    setSearchTerm("");
+    setFilters({});
     setSelectedRegion(undefined);
     setSelectedCountry(undefined);
+    await fetchDeals(undefined);
   };
 
   return (
@@ -280,8 +284,8 @@ export default function DealsPage() {
               </SelectContent>
             </Select>
             <Select
-              value={selectedSector}
-              onValueChange={(value) => setSelectedSector(value as Sector)}
+              value={filters?.sector}
+              onValueChange={(value) => fetchDeals({ sector: value as Sector })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Sector" />
@@ -430,7 +434,9 @@ export default function DealsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => fetchDeals(undefined, "next")}
-                  disabled={currentPage === count}
+                  disabled={
+                    currentPage === Math.ceil(count / DEFAULT_PAGE_SIZE)
+                  }
                   className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Next
@@ -440,10 +446,12 @@ export default function DealsPage() {
                 <p className="text-sm text-gray-700">
                   Showing{" "}
                   <span className="font-medium">
-                    {(currentPage - 1) * PAGE_SIZE + 1}
+                    {(currentPage - 1) * DEFAULT_PAGE_SIZE + 1}
                   </span>{" "}
                   to{" "}
-                  <span className="font-medium">{currentPage * PAGE_SIZE}</span>{" "}
+                  <span className="font-medium">
+                    {Math.min(currentPage * DEFAULT_PAGE_SIZE, count)}
+                  </span>{" "}
                   of <span className="font-medium">{count}</span> results
                 </p>
                 <div className="flex space-x-4">
@@ -460,7 +468,9 @@ export default function DealsPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => fetchDeals(undefined, "next")}
-                    disabled={currentPage === count}
+                    disabled={
+                      currentPage === Math.ceil(count / DEFAULT_PAGE_SIZE)
+                    }
                     className="px-3 py-1 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >
                     Next

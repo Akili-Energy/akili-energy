@@ -653,7 +653,7 @@ function MergerAcquisitionContent({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                Deal Financials
+                Deal Financials ({financial.year})
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -674,8 +674,8 @@ function MergerAcquisitionContent({
                   Revenue/EBITDA
                 </label>
                 <p className="font-medium">
-                  {financial && revenue > 0
-                    ? `${(Number(financial.ebitda) / revenue).toFixed(2)}`
+                  {financial && ebitda > 0 && financial.revenue
+                    ? `${(Number(financial.revenue) / ebitda).toFixed(2)}`
                     : "-"}
                 </p>
               </div>
@@ -1075,7 +1075,7 @@ function FinancingContent({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                Deal Financials
+                Deal Financials ({financial.year})
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -1096,8 +1096,8 @@ function FinancingContent({
                   Revenue/EBITDA
                 </label>
                 <p className="font-medium">
-                  {financial && revenue > 0
-                    ? `${(Number(financial.ebitda) / revenue).toFixed(2)}`
+                  {financial && ebitda > 0 && financial.revenue
+                    ? `${(Number(financial.revenue) / ebitda).toFixed(2)}`
                     : "-"}
                 </p>
               </div>

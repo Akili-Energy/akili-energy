@@ -1,15 +1,24 @@
 "use client";
+import { useActionState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState, useActionState } from "react";
 import { login } from "@/app/actions/auth";
+import { toast } from "sonner";
+import { redirect, useSearchParams } from "next/navigation";
 
 export default function LoginForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const searchParams = useSearchParams();
+  const to = searchParams.get("redirect");
 
-  const [_, formAction, isPending] = useActionState(login, undefined);
+  const [state, formAction, isPending] = useActionState(login, undefined);
+
+  useEffect(() => {
+    if (state?.success) {
+      toast.success(state.success);
+      redirect(to ? decodeURIComponent(to) : "/");
+    }
+  }, [state]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -20,8 +29,7 @@ export default function LoginForm() {
           name="email"
           type="email"
           placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
           required
         />
       </div>
@@ -32,8 +40,7 @@ export default function LoginForm() {
           name="password"
           type="password"
           placeholder="Enter your password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
           required
         />
       </div>
@@ -45,6 +52,9 @@ export default function LoginForm() {
       >
         {isPending ? "Signing in..." : "Sign in"}
       </Button>
+      {!!state?.error && (
+        <p className="text-sm text-red-500 text-center">{state.error}</p>
+      )}
     </form>
   );
 }

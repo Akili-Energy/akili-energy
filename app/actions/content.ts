@@ -516,7 +516,6 @@ export async function saveContent(
     // 6. Revalidate paths to reflect new content
     revalidatePath(data.type === "blog" ? "/blog" : "/news-research"); // Revalidate the public content listing
     revalidatePath(`/${data.type}/${data.slug}`); // Revalidate the specific post page
-    revalidatePath(`/admin/${data.type}`);
     if (originalSlug) revalidatePath(`/${data.type}/${originalSlug}`);
 
     return {
@@ -593,7 +592,6 @@ export async function deleteContent(
     }
 
     // Revalidate paths to ensure caches are cleared
-    revalidatePath(`/admin/${type}`);
     revalidatePath(type === "blog" ? "/blog" : "/news-research");
     revalidatePath(`/${type}/${slug}`);
 

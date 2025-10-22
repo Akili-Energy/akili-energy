@@ -8,8 +8,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { GoogleAuth } from "@/components/google-auth";
 import Link from "next/link";
-import type { CredentialResponse } from "google-one-tap";
-import { supabase } from "@/lib/supabase";
 import LoginForm from "./login-form";
 
 export default function LoginPage() {

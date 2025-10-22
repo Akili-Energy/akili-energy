@@ -30,7 +30,7 @@ import {
   projectsTechnologies,
   proposals,
   topCountriesByDealValue,
-  topCompaniesByFinancingAndCapacity
+  topCompaniesByFinancingAndCapacity,
 } from "@/lib/db/schema";
 import {
   Country,
@@ -64,16 +64,38 @@ export async function fetchDeals() {
 
 export async function fetchProjects() {
   try {
-    return await db.query.projects.findMany({
-      columns: {
-        id: true,
-        name: true,
-        plantCapacity: true,
-        stage: true,
-        onOffGrid: true,
-        colocatedStorageCapacity: true,
-      },
-    });
+    return (
+      await db.query.projects.findMany({
+        columns: {
+          id: true,
+          name: true,
+          plantCapacity: true,
+          stage: true,
+          onOffGrid: true,
+          colocatedStorageCapacity: true,
+          segments: true,
+          subSectors: true,
+        },
+        with: {
+          country: {
+            columns: {
+              code: true,
+            },
+          },
+          projectsSectors: {
+            columns: { sector: true },
+          },
+          projectsTechnologies: {
+            columns: { technology: true },
+          },
+        },
+      })
+    ).map(({ country, projectsSectors, projectsTechnologies, ...project }) => ({
+      ...project,
+      country: country ? country.code : null,
+      sectors: projectsSectors.map((ps) => ps.sector),
+      technologies: projectsTechnologies.map((pt) => pt.technology),
+    }));
   } catch (error) {
     console.error("Error fetching projects:", error);
     throw new Error("Failed to fetch projects");
@@ -82,13 +104,27 @@ export async function fetchProjects() {
 
 export async function fetchCompanies() {
   try {
-    return await db.query.companies.findMany({
-      columns: {
-        id: true,
-        name: true,
-        classification: true,
-      },
-    });
+    return (
+      await db.query.companies.findMany({
+        columns: {
+          id: true,
+          name: true,
+          classification: true,
+        },
+        with: {
+          companiesSectors: {
+            columns: { sector: true },
+          },
+          companiesTechnologies: {
+            columns: { technology: true },
+          },
+        },
+      })
+    ).map(({ companiesSectors, companiesTechnologies, ...company }) => ({
+      ...company,
+      sectors: companiesSectors.map((cs) => cs.sector),
+      technologies: companiesTechnologies.map((ct) => ct.technology),
+    }));
   } catch (error) {
     console.error("Error fetching companies:", error);
     throw new Error("Failed to fetch companies");
@@ -454,7 +490,9 @@ export async function seedDatabase(payload: {
     await db.refreshMaterializedView(projectsBySector).concurrently();
     await db.refreshMaterializedView(projectsByMonthAndStage).concurrently();
     await db.refreshMaterializedView(topCountriesByDealValue).concurrently();
-    await db.refreshMaterializedView(topCompaniesByFinancingAndCapacity).concurrently();
+    await db
+      .refreshMaterializedView(topCompaniesByFinancingAndCapacity)
+      .concurrently();
     await db
       .refreshMaterializedView(countriesByCapacityAndFinancing)
       .concurrently();
@@ -697,7 +735,9 @@ export async function getProjectsAnalytics() {
             .padStart(6, "0")}`,
         })
       ),
-      countriesByCapacityAndFinancing: await db.select().from(countriesByCapacityAndFinancing),
+      countriesByCapacityAndFinancing: await db
+        .select()
+        .from(countriesByCapacityAndFinancing),
     };
   } catch (error) {
     console.error("Error fetching projects:", error);

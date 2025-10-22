@@ -20,7 +20,7 @@ export default function NewsAdmin() {
   const [cursor, setCursor] = useState<Date | undefined>(undefined);
 
   const loaderRef = useRef<HTMLDivElement>(null);
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // Function to load articles, handling both initial/search loads and "load more"
   const loadArticles = useCallback(
