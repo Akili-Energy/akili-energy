@@ -21,9 +21,6 @@ import { useState, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { AkiliLogo } from "@/components/akili-logo";
 
-// This ensures client-side rendering for platform pages
-export const dynamic = "force-dynamic";
-
 const navigation = [
   { name: "Dashboard", href: "/platform", icon: BarChart3 },
   { name: "Deals", href: "/platform/deals", icon: Briefcase },
