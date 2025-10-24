@@ -26,10 +26,10 @@ export function OverviewTab({ company }: OverviewTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {company.description && (
+            {company?.description && (
               <div>
                 <h4 className="font-semibold mb-2">Description</h4>
-                <p className="text-gray-600">{company.description}</p>
+                <p className="text-gray-600">{company?.description}</p>
               </div>
             )}
 
@@ -37,24 +37,24 @@ export function OverviewTab({ company }: OverviewTabProps) {
               <div>
                 <h4 className="font-semibold mb-2">Founded</h4>
                 <p className="text-gray-600">
-                  {company.foundingDate
-                    ? new Date(company.foundingDate).getFullYear()
+                  {company?.foundingDate
+                    ? new Date(company?.foundingDate).getFullYear()
                     : "-"}
                 </p>
               </div>
               <div>
                 <h4 className="font-semibold mb-2">Company Size</h4>
-                <p className="text-gray-600">{company.size || "-"}</p>
+                <p className="text-gray-600">{company?.size || "-"}</p>
               </div>
             </div>
 
             <Separator />
 
-            {company.sectors?.length > 0 && (
+            {company?.sectors?.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2">Sectors</h4>
                 <div className="flex flex-wrap gap-2">
-                  {company.sectors.map((sector) => (
+                  {company?.sectors.map((sector) => (
                     <Badge key={sector} variant="secondary">
                       {t(`common.sectors.${sector}`)}
                     </Badge>
@@ -63,11 +63,11 @@ export function OverviewTab({ company }: OverviewTabProps) {
               </div>
             )}
 
-            {(company.activities ?? []).length > 0 && (
+            {(company?.activities ?? []).length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2">Main Activities</h4>
                 <div className="flex flex-wrap gap-2">
-                  {company.activities?.map((activity) => (
+                  {company?.activities?.map((activity) => (
                     <Badge key={activity} variant="outline">
                       {t(`companies.activities.${activity}`)}
                     </Badge>
@@ -76,11 +76,11 @@ export function OverviewTab({ company }: OverviewTabProps) {
               </div>
             )}
 
-            {company.technologies?.length > 0 && (
+            {company?.technologies?.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2">Technology</h4>
                 <div className="flex flex-wrap gap-2">
-                  {company.technologies.map((tech) => (
+                  {company?.technologies.map((tech) => (
                     <Badge key={tech} variant="secondary">
                       {t(`common.technologies.${tech}`)}
                     </Badge>
@@ -101,18 +101,18 @@ export function OverviewTab({ company }: OverviewTabProps) {
           <CardContent className="space-y-4">
             <div>
               <h4 className="font-semibold mb-2">Headquarters</h4>
-              <p className="text-gray-600">{company.hqAddress}</p>
-              {company.hqCountry && (
-                <Countries countries={[company.hqCountry]} />
+              <p className="text-gray-600">{company?.hqAddress}</p>
+              {company?.hqCountry && (
+                <Countries countries={[company?.hqCountry]} />
               )}
             </div>
 
             <Separator />
 
-            {company.operatingCountries?.length > 0 && (
+            {company?.operatingCountries?.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2">Operating Countries</h4>
-                <Countries countries={company.operatingCountries} />
+                <Countries countries={company?.operatingCountries} />
               </div>
             )}
           </CardContent>
@@ -132,14 +132,14 @@ export function OverviewTab({ company }: OverviewTabProps) {
               <p className="text-sm font-medium text-muted-foreground">
                 Total Portfolio
               </p>
-              <p className="text-2xl font-bold">{company.portfolio?.total} MW</p>
+              <p className="text-2xl font-bold">{company?.portfolio?.total} MW</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">
                 In Development
               </p>
               <p className="text-xl font-semibold">
-                {company.portfolio?.inDevelopment} MW
+                {company?.portfolio?.inDevelopment} MW
               </p>
             </div>
             <div>
@@ -147,7 +147,7 @@ export function OverviewTab({ company }: OverviewTabProps) {
                 In Construction
               </p>
               <p className="text-xl font-semibold text-akili-orange">
-                {company.portfolio?.inConstruction} MW
+                {company?.portfolio?.inConstruction} MW
               </p>
             </div>
             <div>
@@ -155,7 +155,7 @@ export function OverviewTab({ company }: OverviewTabProps) {
                 Operational
               </p>
               <p className="text-xl font-semibold text-green-600">
-                {company.portfolio?.operational} MW
+                {company?.portfolio?.operational} MW
               </p>
             </div>
           </CardContent>

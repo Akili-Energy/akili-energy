@@ -1,18 +1,16 @@
 "use client";
-import { use, useActionState, useEffect } from "react";
+import { useActionState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { login } from "@/app/actions/auth";
 import { toast } from "sonner";
-import { redirect } from "next/navigation";
+import { redirect, useSearchParams } from "next/navigation";
 
-export default function LoginForm({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const to = use(searchParams).redirect;
+export default function LoginForm() {
+  const searchParams = useSearchParams();
+
+  const to = searchParams.get("redirect");
 
   const [state, formAction, isPending] = useActionState(login, undefined);
 

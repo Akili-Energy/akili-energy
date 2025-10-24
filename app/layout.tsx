@@ -6,6 +6,7 @@ import "./globals.scss";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/components/language-context";
 import { Toaster } from "@/components/ui/toaster";
+import { Suspense } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,7 +32,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <LanguageProvider>{children}</LanguageProvider>
+          <Suspense>
+            <LanguageProvider>{children}</LanguageProvider>
+          </Suspense>
         </ThemeProvider>
         <Toaster />
       </body>

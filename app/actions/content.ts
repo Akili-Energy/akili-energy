@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { cacheLife, cacheTag, revalidatePath, updateTag } from "next/cache";
 import { db } from "@/lib/db/drizzle";
 import { z } from "zod";
 import {
@@ -188,6 +188,13 @@ export async function getContent({
  * Fetches a single blog post by its slug, including related posts.
  */
 export async function getContentBySlug(slug: string, type: ContentType) {
+  "use cache"
+  // This cache can be revalidated by webhook or server action
+  // when you call revalidateTag("content")
+  cacheTag("content");
+  // This cache will revalidate after an hour even if no explicit
+  // revalidate instruction was received
+  cacheLife("hours");
   try {
     const result = await db.query.content.findFirst({
       where: and(eq(content.slug, slug), eq(content.status, "published")),
@@ -197,9 +204,10 @@ export async function getContentBySlug(slug: string, type: ContentType) {
             user: {
               columns: {
                 profilePictureUrl: true,
-              }
-            }
-          }
+                name: true,
+              },
+            },
+          },
         },
         blogPost:
           type === "blog"
@@ -242,19 +250,23 @@ export async function getContentBySlug(slug: string, type: ContentType) {
 
     const fullResult = {
       ...result,
-      author: { ...result.author, photoUrl: result.author.user?.profilePictureUrl },
+      author: {
+        ...result.author,
+        photoUrl: result.author.user?.profilePictureUrl,
+        name: result.author.user?.name,
+      },
       readTime: calculateReadTime(
         result[type === "blog" ? "blogPost" : "newsArticle"]?.content ?? ""
       ),
       tags: result.tags.map(({ tag }) => tag),
     };
 
-    const referer = (await headers()).get("referer");
+    // const referer = (await headers()).get("referer");
     let isAdmin = false;
-    if (referer) {
-      const { pathname } = new URL(referer);
-      isAdmin = pathname.startsWith("/admin");
-    }
+    // if (referer) {
+    //   const { pathname } = new URL(referer);
+    //   isAdmin = pathname.startsWith("/admin");
+    // }
     if (isAdmin) {
       return fullResult;
     }
@@ -309,7 +321,7 @@ export async function getContentBySlug(slug: string, type: ContentType) {
       },
     });
 
-    const formattedRelated = related.map(({author: {user}, ...c}) => ({
+    const formattedRelated = related.map(({ author: { user }, ...c }) => ({
       ...c,
       author: user,
       readTime: calculateReadTime(
@@ -542,6 +554,8 @@ export async function saveContent(
     revalidatePath(data.type === "blog" ? "/blog" : "/news-research"); // Revalidate the public content listing
     revalidatePath(`/${data.type}/${data.slug}`); // Revalidate the specific post page
     if (originalSlug) revalidatePath(`/${data.type}/${originalSlug}`);
+
+    updateTag("content");
 
     return {
       success: true,

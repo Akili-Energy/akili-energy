@@ -9,6 +9,18 @@ const nextConfig: NextConfig = {
   images: {
     // unoptimized: true,
     dangerouslyAllowLocalIP: true, // Only for private networks
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "akilienergy.com",
+        port: "",
+      },
+      {
+        protocol: "https",
+        hostname: "www.akilienergy.com",
+        port: "",
+      },
+    ],
   },
   experimental: {
     serverActions: {

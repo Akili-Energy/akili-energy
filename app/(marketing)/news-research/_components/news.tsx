@@ -53,7 +53,8 @@ export default function News({
             className="hover:shadow-lg transition-shadow duration-300 group"
           >
             <div className="relative">
-              <Image
+              {/* <Image */}
+              <img
                 src={article.imageUrl || "/placeholder.svg"}
                 alt={article.title}
                 width={300}

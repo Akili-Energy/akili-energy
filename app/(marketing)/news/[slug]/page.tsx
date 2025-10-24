@@ -106,7 +106,8 @@ export default async function NewsArticle({
             <article className="bg-white rounded-lg shadow-sm overflow-hidden">
               {/* Article Header */}
               <div className="relative">
-                <Image
+                <img
+                // <Image
                   src={article.imageUrl || "/placeholder.svg"}
                   alt={article.title}
                   width={800}
@@ -335,7 +336,8 @@ export default async function NewsArticle({
                   className="hover:shadow-lg transition-shadow duration-300"
                 >
                   <div className="relative">
-                    <Image
+                    <img
+                    // <Image
                       src={related.imageUrl || "/placeholder.svg"}
                       alt={related.title}
                       width={300}

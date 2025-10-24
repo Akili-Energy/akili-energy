@@ -183,7 +183,8 @@ export default async function NewsResearchPage({
                     </div>
                   </div>
                   <div className="relative">
-                    <Image
+                    {/* <Image */}
+                    <img
                       src={featuredReport?.imageUrl || "/placeholder.svg"}
                       alt={featuredReport?.title}
                       width={600}

@@ -82,7 +82,8 @@ export default function Research({
             className="hover:shadow-lg transition-shadow duration-300"
           >
             <div className="relative">
-              <Image
+              {/* <Image */}
+              <img
                 src={report.imageUrl || "/placeholder.svg"}
                 alt={report.title}
                 width={300}

@@ -125,7 +125,7 @@ export default async function BlogPostPage({
                         src={post.author.photoUrl || "/placeholder.svg"}
                       />
                       <AvatarFallback>
-                        {post.author?.name.substring(0, 2)}
+                        {post.author?.name?.substring(0, 2)}
                       </AvatarFallback>
                     </Avatar>
                     <div>
@@ -195,7 +195,7 @@ export default async function BlogPostPage({
                         src={post.author.photoUrl || "/placeholder.svg"}
                       />
                       <AvatarFallback>
-                        {post.author?.name.substring(0, 2)}
+                        {post.author?.name?.substring(0, 2)}
                       </AvatarFallback>
                     </Avatar>
                     <div>

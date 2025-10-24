@@ -35,7 +35,6 @@ export default function PlatformLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -69,23 +68,15 @@ export default function PlatformLayout({
             </Button>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => {
-              const Icon = item.icon;
+            {navigation.map((item, i) => {
               return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
-                    pathname === item.href
-                      ? "bg-akili-green text-white"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                  )}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                  {item.name}
-                </Link>
+                <Suspense key={i}>
+                  <SideBarLink
+                    key={item.href}
+                    item={item}
+                    onClick={() => setSidebarOpen(false)}
+                  />
+                </Suspense>
               );
             })}
           </nav>
@@ -104,22 +95,11 @@ export default function PlatformLayout({
             </Link>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => {
-              const Icon = item.icon;
+            {navigation.map((item, i) => {
               return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
-                    pathname === item.href
-                      ? "bg-akili-green text-white"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                  )}
-                >
-                  <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                  {item.name}
-                </Link>
+                <Suspense key={i}>
+                  <SideBarLink key={item.href} item={item} />
+                </Suspense>
               );
             })}
           </nav>
@@ -177,5 +157,33 @@ export default function PlatformLayout({
         </main>
       </div>
     </div>
+  );
+}
+
+function SideBarLink({
+  onClick,
+  item,
+}: {
+  item: (typeof navigation)[number];
+  onClick?: () => void;
+}) {
+  const pathname = usePathname();
+  const Icon = item.icon;
+
+  return (
+    <Link
+      key={item.name}
+      href={item.href}
+      className={cn(
+        "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
+        pathname === item.href
+          ? "bg-akili-green text-white"
+          : "text-gray-300 hover:bg-gray-700 hover:text-white"
+      )}
+      onClick={onClick}
+    >
+      <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
+      {item.name}
+    </Link>
   );
 }

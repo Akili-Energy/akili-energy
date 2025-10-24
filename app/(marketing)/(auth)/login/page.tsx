@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { GoogleAuth } from "@/components/google-auth";
 import Link from "next/link";
 import LoginForm from "./login-form";
+import { Suspense } from "react";
 
 export default function LoginPage() {
   return (
@@ -23,7 +24,6 @@ export default function LoginPage() {
       </CardHeader>
       <CardContent className="space-y-4">
         <GoogleAuth type="signin" />
-        
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -36,7 +36,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <LoginForm />
+        <Suspense>
+          <LoginForm />
+        </Suspense>
 
         <div className="text-center text-sm">
           <span className="text-gray-600">Don't have an account? </span>
