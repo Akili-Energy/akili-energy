@@ -601,7 +601,6 @@ CREATE TABLE IF NOT EXISTS documents (
 
 CREATE TABLE IF NOT EXISTS authors (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
     job_title VARCHAR(255),
     bio TEXT,
     linkedin_profile VARCHAR(255) UNIQUE,

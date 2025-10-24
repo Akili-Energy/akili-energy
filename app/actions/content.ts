@@ -102,9 +102,14 @@ export async function getContent({
       },
       with: {
         author: {
-          columns: {
-            name: true,
-          },
+          columns: {},
+          with: {
+            user: {
+              columns: {
+                name: true,
+              }
+            }
+          }
         },
         blogPost:
           type === "blog"
@@ -149,10 +154,11 @@ export async function getContent({
     if (hasMore) results.pop();
 
     return {
-      content: results.map((article) => ({
+      content: results.map(({tags, author: {user}, ...article}) => ({
         ...article,
+        author: user,
         tags: isAdmin
-          ? article.tags.map(({ tag: { name } }: any) => name).filter(Boolean)
+          ? tags.map(({ tag: { name } }: any) => name).filter(Boolean)
           : undefined,
         readTime:
           isAdmin || type === "research"
@@ -264,7 +270,16 @@ export async function getContentBySlug(slug: string, type: ContentType) {
       limit: 2,
       orderBy: desc(content.publicationDate),
       with: {
-        author: { columns: { name: true } },
+        author: {
+          columns: {},
+          with: {
+            user: {
+              columns: {
+                name: true,
+              },
+            },
+          },
+        },
         blogPost:
           type === "blog"
             ? {
@@ -294,8 +309,9 @@ export async function getContentBySlug(slug: string, type: ContentType) {
       },
     });
 
-    const formattedRelated = related.map((c) => ({
+    const formattedRelated = related.map(({author: {user}, ...c}) => ({
       ...c,
+      author: user,
       readTime: calculateReadTime(
         c[type === "blog" ? "blogPost" : "newsArticle"]?.content ?? ""
       ),

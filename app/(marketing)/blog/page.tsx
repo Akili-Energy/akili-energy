@@ -95,7 +95,7 @@ export default async function BlogPage({
                   <div className="flex items-center space-x-4 text-sm text-gray-500">
                     <div className="flex items-center space-x-1">
                       <User className="w-4 h-4" />
-                      <span>{featuredPost.author.name}</span>
+                      <span>{featuredPost.author?.name}</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Calendar className="w-4 h-4" />

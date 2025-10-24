@@ -161,10 +161,10 @@ export default async function NewsArticle({
                     <Avatar className="w-12 h-12">
                       <AvatarImage
                         src={article.author.photoUrl || "/placeholder.svg"}
-                        alt={article.author.name}
+                        alt={article.author?.name}
                       />
                       <AvatarFallback>
-                        {article.author.name
+                        {article.author?.name
                           .split(" ")
                           .map((n) => n[0])
                           .join("")}
@@ -172,7 +172,7 @@ export default async function NewsArticle({
                     </Avatar>
                     <div>
                       <div className="font-semibold text-gray-900">
-                        {article.author.name}
+                        {article.author?.name}
                       </div>
                       <div className="text-sm text-gray-500">
                         {article.author.jobTitle}
@@ -223,10 +223,10 @@ export default async function NewsArticle({
                       <Avatar className="w-16 h-16">
                         <AvatarImage
                           src={article.author.photoUrl || "/placeholder.svg"}
-                          alt={article.author.name}
+                          alt={article.author?.name}
                         />
                         <AvatarFallback>
-                          {article.author.name
+                          {article.author?.name
                             .split(" ")
                             .map((n) => n[0])
                             .join("")}
@@ -234,7 +234,7 @@ export default async function NewsArticle({
                       </Avatar>
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg text-gray-900 mb-1">
-                          About {article.author.name}
+                          About {article.author?.name}
                         </h3>
                         <p className="text-gray-600 mb-3">
                           {article.author.bio}
@@ -358,7 +358,7 @@ export default async function NewsArticle({
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <div className="flex items-center space-x-1">
                         <User className="w-3 h-3" />
-                        <span>{related.author.name}</span>
+                        <span>{related.author?.name}</span>
                       </div>
                       <Button variant="ghost" size="sm" asChild>
                         <Link href={`/news-research/${related.slug}`}>

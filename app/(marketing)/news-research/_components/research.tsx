@@ -120,7 +120,7 @@ export default function Research({
                 <div className="text-sm text-gray-500">
                   <div className="flex items-center space-x-1 mb-1">
                     <User className="w-3 h-3" />
-                    <span>{report.author.name}</span>
+                    <span>{report.author?.name}</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <Calendar className="w-3 h-3" />

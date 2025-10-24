@@ -182,7 +182,7 @@ export default function BlogAdmin() {
                       ))}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span>✍️ {post.author.name}</span>
+                      <span>✍️ {post.author?.name}</span>
                       <span className="capitalize">
                         📂 {post.category.replace("-", " ")}
                       </span>

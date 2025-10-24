@@ -153,7 +153,7 @@ export default async function NewsResearchPage({
                     <div className="flex items-center space-x-4 text-sm text-gray-500">
                       <div className="flex items-center space-x-1">
                         <User className="w-4 h-4" />
-                        <span>{featuredReport?.author.name}</span>
+                        <span>{featuredReport?.author?.name}</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <Calendar className="w-4 h-4" />

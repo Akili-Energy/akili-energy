@@ -125,12 +125,12 @@ export default async function BlogPostPage({
                         src={post.author.photoUrl || "/placeholder.svg"}
                       />
                       <AvatarFallback>
-                        {post.author.name.substring(0, 2)}
+                        {post.author?.name.substring(0, 2)}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="font-semibold text-gray-900">
-                        {post.author.name}
+                        {post.author?.name}
                       </div>
                       <div className="text-sm text-gray-500">
                         {post.author.jobTitle}
@@ -195,12 +195,12 @@ export default async function BlogPostPage({
                         src={post.author.photoUrl || "/placeholder.svg"}
                       />
                       <AvatarFallback>
-                        {post.author.name.substring(0, 2)}
+                        {post.author?.name.substring(0, 2)}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <h3 className="font-semibold text-gray-900">
-                        {post.author.name}
+                        {post.author?.name}
                       </h3>
                       <p className="text-sm text-gray-500">
                         {post.author.jobTitle}
@@ -270,7 +270,7 @@ export default async function BlogPostPage({
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <div className="flex items-center space-x-1">
                         <User className="w-3 h-3" />
-                        <span>{relatedPost.author.name}</span>
+                        <span>{relatedPost.author?.name}</span>
                       </div>
                       <Button variant="ghost" size="sm" asChild>
                         <Link href={`/blog/${relatedPost.slug}`}>

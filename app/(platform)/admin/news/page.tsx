@@ -185,7 +185,7 @@ export default function NewsAdmin() {
                       ))}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span>✍️ {article.author.name}</span>
+                      <span>✍️ {article.author?.name}</span>
                       <span className="capitalize">
                         📂 {article.category.replace("-", " ")}
                       </span>

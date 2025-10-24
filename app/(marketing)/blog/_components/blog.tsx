@@ -91,7 +91,7 @@ export default function Blog({
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                   <div className="flex items-center space-x-1">
                     <User className="w-3 h-3" />
-                    <span>{post.author.name}</span>
+                    <span>{post.author?.name}</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <Clock className="w-3 h-3" />

@@ -1220,7 +1220,6 @@ export const documents = pgTable(
 
 export const authors = pgTable("authors", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar("name", { length: 255 }).notNull(),
   jobTitle: varchar("job_title", { length: 255 }),
   bio: text("bio"),
   linkedinProfile: varchar("linkedin_profile", { length: 255 }).unique(),
