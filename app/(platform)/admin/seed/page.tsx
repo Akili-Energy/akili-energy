@@ -120,7 +120,7 @@ import {
 import { isValidUrl } from "@/lib/utils";
 import { COUNTRIES_ISO_3166_CODE } from "@/lib/constants";
 import { useLanguage } from "@/components/language-context";
-import { PgEnum } from "drizzle-orm/pg-core";
+import Image from 'next/image'
 
 /**
  * Converts a full country name (in English, French, or common variations) to its ISO 3166-1 alpha-2 code.
@@ -4024,7 +4024,7 @@ export default function BulkUploadPage() {
         } else if (field.type === "image" && value) {
           return (
             <div className="flex items-center justify-center p-1">
-              <img
+              <Image
                 src={value}
                 alt={`${row["name"] ?? row.id} Logo`}
                 className="max-h-6 w-auto object-contain" // max-h-10 is 40px. Use max-h-5 for 20px.

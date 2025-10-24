@@ -789,7 +789,7 @@ export default function LandingPage() {
                       </linearGradient>
                     </defs>
                   </svg> */}
-                  <img
+                  <Image
                     src="https://upload.wikimedia.org/wikipedia/commons/6/66/Blank_Map-Africa.svg"
                     alt="Africa Map SVG"
                     height="500"

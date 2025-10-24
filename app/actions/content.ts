@@ -186,7 +186,15 @@ export async function getContentBySlug(slug: string, type: ContentType) {
     const result = await db.query.content.findFirst({
       where: and(eq(content.slug, slug), eq(content.status, "published")),
       with: {
-        author: true,
+        author: {
+          with: {
+            user: {
+              columns: {
+                profilePictureUrl: true,
+              }
+            }
+          }
+        },
         blogPost:
           type === "blog"
             ? {
@@ -228,6 +236,7 @@ export async function getContentBySlug(slug: string, type: ContentType) {
 
     const fullResult = {
       ...result,
+      author: { ...result.author, photoUrl: result.author.user?.profilePictureUrl },
       readTime: calculateReadTime(
         result[type === "blog" ? "blogPost" : "newsArticle"]?.content ?? ""
       ),

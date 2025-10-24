@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import Image from 'next/image'
 
 interface Company {
   id: string
@@ -214,7 +215,7 @@ export default function CompanyDetailPage() {
               </Link>
             </Button>
             <div className="flex items-center space-x-4">
-              <img
+              <Image
                 src={company.logo_url || "/placeholder.svg"}
                 alt={`${company.name} logo`}
                 className="h-12 w-auto object-contain"
@@ -488,7 +489,7 @@ export default function CompanyDetailPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {team.map((member) => (
                       <div key={member.id} className="flex items-start space-x-4 p-4 border rounded-lg">
-                        <img
+                        <Image
                           src={member.profile_image || "/placeholder.svg"}
                           alt={member.name}
                           className="w-16 h-16 rounded-full object-cover"

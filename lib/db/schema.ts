@@ -580,12 +580,12 @@ export const users = pgTable(
     profilePictureUrl: varchar("profile_picture_url", { length: 255 }).unique(),
     phoneNumber: varchar("phone_number", { length: 20 }).unique(),
     isActive: boolean("is_active").default(true),
-    emailVerified: boolean("email_verified").default(false),
-    lastLoginAt: timestamp("last_login_at", {
-      withTimezone: true,
-      mode: "date",
-    }),
-    ...timestamps,
+    // emailVerified: boolean("email_verified").default(false),
+    // lastLoginAt: timestamp("last_login_at", {
+    //   withTimezone: true,
+    //   mode: "date",
+    // }),
+    // ...timestamps,
   },
   (table) => [index().on(table.role)]
 );
@@ -1223,8 +1223,6 @@ export const authors = pgTable("authors", {
   name: varchar("name", { length: 255 }).notNull(),
   jobTitle: varchar("job_title", { length: 255 }),
   bio: text("bio"),
-  photoUrl: varchar("photo_url", { length: 255 }).unique(),
-  email: varchar("email", { length: 64 }).unique(),
   linkedinProfile: varchar("linkedin_profile", { length: 255 }).unique(),
   xProfile: varchar("x_profile", { length: 255 }).unique(),
   userId: varchar("user_id", { length: 255 })
@@ -1935,20 +1933,37 @@ export const dealsByMonthAndType = pgMaterializedView(
 export const financingDealsByMonthAndType = pgMaterializedView(
   "financing_deals_by_month_and_type"
 ).as((qb) => {
+  // 1. Define a Common Table Expression (CTE) to unnest the array first.
+  // This creates a clean, flat list of rows to aggregate.
+  const unnestedDeals = qb.$with("unnested_deals").as(
+    qb
+      .select({
+        month: sql<string>`TO_CHAR(${deals.date}, 'YYYY-MM')`.as("month"),
+        dealId: deals.id,
+        amount: deals.amount,
+        // The UNNEST function is the key part, creating a row for each financing type.
+        financingType: sql<
+          (typeof dealFinancingType.enumValues)[number]
+        >`UNNEST(${financing.financingType})`.as("financing_type"),
+      })
+      .from(deals)
+      .innerJoin(financing, eq(deals.id, financing.dealId))
+      .where(and(eq(deals.type, "financing"), isNotNull(deals.amount)))
+  );
+
+  // 2. Perform the final aggregation on the CTE.
+  // This guarantees that the combination of (month, financingType) will be unique.
   return qb
+    .with(unnestedDeals) // Important: Tell the query builder to use the CTE
     .select({
-      month: sql<string>`TO_CHAR(${deals.date}, 'YYYY-MM')`.as("month"),
-      financingType: sql<
-        (typeof dealFinancingType.enumValues)[number]
-      >`UNNEST(${financing.financingType})`.as("financing_type"),
-      totalAmount: sql`sum(${deals.amount})`.mapWith(Number).as("total_amount"),
-      dealCount: countDistinct(deals.id).as("deal_count"),
+      month: unnestedDeals.month,
+      financingType: unnestedDeals.financingType,
+      totalAmount: sum(unnestedDeals.amount).mapWith(Number).as("total_amount"),
+      dealCount: countDistinct(unnestedDeals.dealId).as("deal_count"),
     })
-    .from(deals)
-    .innerJoin(financing, eq(deals.id, financing.dealId))
-    .where(eq(deals.type, "financing"))
-    .groupBy(sql`month`, sql`financing_type`)
-    .orderBy(sql`month`, sql`financing_type`);
+    .from(unnestedDeals) // Select FROM the CTE
+    .groupBy(unnestedDeals.month, unnestedDeals.financingType)
+    .orderBy(unnestedDeals.month, unnestedDeals.financingType);
 });
 
 // View for: PPA Deals categorized by the Offtaker's primary sector

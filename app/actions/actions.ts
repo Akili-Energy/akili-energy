@@ -43,11 +43,11 @@ import {
 } from "@/lib/types";
 import { getTableColumns } from "drizzle-orm";
 import { PgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, cacheTag, updateTag } from "next/cache";
 
 export async function fetchDeals() {
   "use cache";
-  cacheTag('deals')
+  cacheTag("deals");
   try {
     return await db.query.deals.findMany({
       columns: {
@@ -66,7 +66,7 @@ export async function fetchDeals() {
 
 export async function fetchProjects() {
   "use cache";
-  cacheTag('projects')
+  cacheTag("projects");
   try {
     return (
       await db.query.projects.findMany({
@@ -108,7 +108,7 @@ export async function fetchProjects() {
 
 export async function fetchCompanies() {
   "use cache";
-  cacheTag('companies')
+  cacheTag("companies");
   try {
     return (
       await db.query.companies.findMany({
@@ -505,9 +505,9 @@ export async function seedDatabase(payload: {
 
     // Revalidate paths to update cached data
     revalidatePath("/admin/seed");
-    revalidateTag('companies', 'max')
-    revalidateTag('projects', 'max')
-    revalidateTag('deals', 'max')
+    updateTag("companies");
+    updateTag("projects");
+    updateTag("deals");
 
     return { success: true, result };
   } catch (err: any) {

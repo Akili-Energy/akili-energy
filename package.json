@@ -79,6 +79,7 @@
     "@uppy/react": "^5.1.0",
     "@uppy/tus": "^5.0.1",
     "autoprefixer": "^10.4.21",
+    "babel-plugin-react-compiler": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
@@ -86,8 +87,10 @@
     "drizzle-orm": "^0.44.6",
     "embla-carousel-react": "8.5.1",
     "eslint-config-next": "^16.0.0",
+    "express-jwt": "^8.5.1",
     "input-otp": "1.4.1",
     "install": "^0.13.0",
+    "jwt-decode": "^4.0.0",
     "katex": "^0.16.23",
     "leaflet": "^1.9.4",
     "leaflet-defaulticon-compatibility": "^0.1.2",
@@ -140,7 +143,6 @@
     "tailwindcss": "^3.4.18",
     "typescript": "^5.9.3"
   },
-  "packageManager": "pnpm@10.17.0+sha512.fce8a3dd29a4ed2ec566fb53efbb04d8c44a0f05bc6f24a73046910fb9c3ce7afa35a0980500668fa3573345bd644644fa98338fa168235c80f4aa17aa17fbef",
   "pnpm": {
     "overrides": {
       "@types/react": "19.1.13",

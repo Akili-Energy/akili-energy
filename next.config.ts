@@ -3,21 +3,19 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
   images: {
-    unoptimized: true,
+    // unoptimized: true,
+    dangerouslyAllowLocalIP: true, // Only for private networks
   },
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
     },
-    // ppr: "incremental",
   },
+  reactCompiler: true,
 };
 
-export default nextConfig
+export default nextConfig;

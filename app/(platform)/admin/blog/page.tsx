@@ -11,6 +11,7 @@ import { getContent, deleteContent } from "@/app/actions/content";
 import { useDebounce } from "@/hooks/use-debounce"; // Assuming you have a debounce hook
 import { toast } from "sonner";
 import type { Content, ContentStatus } from "@/lib/types";
+import Image from 'next/image';
 
 export default function BlogAdmin() {
   const [posts, setPosts] = useState<Content[]>([]);
@@ -146,7 +147,7 @@ export default function BlogAdmin() {
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-4 mr-4">
-                  <img
+                  <Image
                     src={post.imageUrl || "/placeholder.svg"}
                     alt={post.title}
                     width={128}

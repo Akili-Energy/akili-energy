@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Upload, X, ImageIcon } from "lucide-react"
+import Image from "next/image";
 
 interface ImageUploadProps {
   value?: string
@@ -36,7 +37,7 @@ export default function ImageUpload({ value, onChange, onRemove, placeholder }: 
   if (value) {
     return (
       <div className="relative">
-        <img
+        <Image
           src={value || "/placeholder.svg"}
           alt="Uploaded image"
           className="w-full h-48 object-cover rounded-lg border"
