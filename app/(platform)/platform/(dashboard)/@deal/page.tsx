@@ -616,7 +616,7 @@ export default function DealAnalyticsPage() {
                         <Calendar className="w-3 h-3" />
                         <span>{deal.date.toLocaleDateString()}</span>
                       </span>
-                      {deal.sectors.length && (
+                      {deal.sectors.length > 0 && (
                         <Badge
                           variant="secondary"
                           className="bg-gray-100 text-gray-600"
