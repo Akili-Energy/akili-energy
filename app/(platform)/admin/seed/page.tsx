@@ -1192,10 +1192,12 @@ export default function BulkUploadPage() {
           dealFinancingType.enumValues
         ),
         financingSubtype: filterArray(
-          toArray(row["Financing Subtype"]),
+          toArray(row["Financing Subtype"].replaceAll("/", ";")),
           financingSubtype.enumValues
         ),
       });
+
+      console.log(toArray(row["Financing Subtype"].replaceAll("/", ";")))
 
       const technologies = parseTechnologies(row);
 
