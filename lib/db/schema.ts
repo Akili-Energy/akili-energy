@@ -1245,9 +1245,6 @@ export const content = pgTable(
     status: contentStatus("status").notNull().default("draft"),
     metaTitle: varchar("meta_title", { length: 72 }),
     metaDescription: varchar("meta_description", { length: 160 }),
-    metaKeywords: varchar("meta_keywords", { length: 20 })
-      .array()
-      .default(sql`ARRAY[]::varchar(20)[]`),
     publicationDate: timestamp("publication_date", {
       withTimezone: true,
       mode: "date",
