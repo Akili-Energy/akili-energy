@@ -93,6 +93,7 @@ export async function fetchProjects() {
             columns: { technology: true },
           },
         },
+        orderBy: (projects, { asc }) => [asc(projects.name)]
       })
     ).map(({ country, projectsSectors, projectsTechnologies, ...project }) => ({
       ...project,
@@ -125,6 +126,7 @@ export async function fetchCompanies() {
             columns: { technology: true },
           },
         },
+        orderBy: (companies, { asc }) => [asc(companies.name)]
       })
     ).map(({ companiesSectors, companiesTechnologies, ...company }) => ({
       ...company,
@@ -219,7 +221,8 @@ export async function seedDatabase(payload: {
       const insertData = <T extends PgTableWithColumns<any>>(
         table: T,
         data: Array<T["$inferInsert"]>
-      ) => tx.insert(table).values(data).onConflictDoNothing();
+      ) => tx.insert(table).values(data)
+      // .onConflictDoNothing();
 
       const insertLinkedData = <
         T extends PgTableWithColumns<any>,

@@ -203,7 +203,8 @@ CREATE TYPE financing_investor_type AS ENUM (
 );
 
 CREATE TYPE financing_subtype AS ENUM (
-    'project_finance', 'loan', 'grant', 'equity', 'private', 'senior_debt'
+    'project_finance', 'loan', 'grant', 'equity', 'private', 'senior_debt', 
+    'concessional_loan', 'senior_loan'
 );
 
 CREATE TYPE partnership_objective AS ENUM (

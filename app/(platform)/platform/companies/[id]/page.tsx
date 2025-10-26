@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Globe } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { notFound, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { FetchCompanyResult } from "@/lib/types";
 import { useState, useTransition, useEffect } from "react";
 

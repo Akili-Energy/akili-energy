@@ -60,7 +60,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useLanguage } from "@/components/language-context";
 import { Countries } from "@/components/countries-flags";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -88,35 +88,38 @@ export default function AdminDealsPage() {
   const [filters, setFilters] = useState<DealFilters>();
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  const fetchDeals = (newFilter?: DealFilters, order?: Pagination) =>
-    startTransition(async () => {
-      const { deals: allDeals, total } = await getDeals({
-        filters: { ...filters, ...newFilter },
-        order,
-        cursor:
-          deals.length > 0
-            ? order === "previous"
-              ? deals[0].date
-              : deals[deals.length - 1].date
-            : undefined,
-        search: debouncedSearchTerm,
-      });
-      setDeals(
-        allDeals.toSorted((a, b) => b.date.getTime() - a.date.getTime())
-      );
-      setCount(total);
-      setCurrentPage(
-        order === "previous"
-          ? Math.max(1, currentPage - 1)
-          : order === "next"
-          ? Math.min(Math.ceil(total / DEFAULT_PAGE_SIZE), currentPage + 1)
-          : 1
-      );
-      setFilters((prev) => ({
-        ...prev,
-        ...(newFilter ?? {}),
-      }));
-    });
+  const fetchDeals = useCallback(
+    (newFilter?: DealFilters, order?: Pagination) =>
+      startTransition(async () => {
+        const { deals: allDeals, total } = await getDeals({
+          filters: { ...filters, ...newFilter },
+          order,
+          cursor:
+            deals.length > 0
+              ? order === "previous"
+                ? deals[0].date
+                : deals[deals.length - 1].date
+              : undefined,
+          search: debouncedSearchTerm,
+        });
+        setDeals(
+          allDeals.toSorted((a, b) => b.date.getTime() - a.date.getTime())
+        );
+        setCount(total);
+        setCurrentPage((prev) =>
+          order === "previous"
+            ? Math.max(1, prev - 1)
+            : order === "next"
+            ? Math.min(Math.ceil(total / DEFAULT_PAGE_SIZE), prev + 1)
+            : 1
+        );
+        setFilters((prev) => ({
+          ...prev,
+          ...newFilter,
+        }));
+      }),
+    [filters, debouncedSearchTerm]
+  );
 
   useEffect(() => {
     fetchDeals();
@@ -129,19 +132,23 @@ export default function AdminDealsPage() {
   );
 
   const onRegionChange = (value: string) => {
-    const region = value as Region;
+    const region = value === "all" ? undefined : (value as Region);
     setSelectedRegion(region);
-    if (!REGIONS_COUNTRIES[region].includes(selectedCountry as Country)) {
+    if (
+      region &&
+      !REGIONS_COUNTRIES[region].includes(selectedCountry as Country)
+    ) {
       setSelectedCountry(undefined);
     }
   };
 
   const onCountryChange = (value: string) => {
-    const country = value as Country;
+    const country = value === "all" ? undefined : (value as Country);
     setSelectedCountry(country);
     for (const key in REGIONS_COUNTRIES) {
       const region = key as Region;
       if (
+        country &&
         REGIONS_COUNTRIES[region].includes(country) &&
         selectedRegion !== region
       ) {
@@ -151,40 +158,40 @@ export default function AdminDealsPage() {
   };
 
   const onDealTypeChange = async (value: string) => {
-    const dealType = value as DealType;
-    await fetchDeals({ type: dealType });
-    setFilters((prev) => ({
-      ...prev,
+    const dealType = value === "all" ? undefined : (value as DealType);
+    await fetchDeals({
       type: dealType,
-      subtype: !DEAL_TYPES_SUBTYPES[dealType].includes(
-        prev?.subtype as DealSubtype
-      )
-        ? undefined
-        : prev?.subtype,
-    }));
+      subtype:
+        dealType &&
+        !DEAL_TYPES_SUBTYPES[dealType].includes(filters?.subtype as DealSubtype)
+          ? undefined
+          : filters?.subtype,
+    });
   };
 
   const onDealSubtypeChange = async (value: string) => {
-    const subtype = value as DealSubtype;
-    await fetchDeals({ subtype });
-    setFilters((prev) => ({
-      ...prev,
-      subtype,
+    const dealSubtype = value === "all" ? undefined : (value as DealSubtype);
+    await fetchDeals({
+      subtype: dealSubtype,
       type:
         (Object.keys(DEAL_TYPES_SUBTYPES).find(
           (key) =>
-            DEAL_TYPES_SUBTYPES[key as DealType].includes(subtype) &&
-            prev?.type !== key
-        ) as DealType) ?? prev?.type,
-    }));
+            dealSubtype &&
+            DEAL_TYPES_SUBTYPES[key as DealType].includes(dealSubtype) &&
+            filters?.type !== key
+        ) as DealType) ?? filters?.type,
+    });
   };
 
   const resetFilters = async () => {
     setSearchTerm("");
-    setFilters({});
     setSelectedRegion(undefined);
     setSelectedCountry(undefined);
-    await fetchDeals(undefined);
+    await fetchDeals({
+      sector: undefined,
+      type: undefined,
+      subtype: undefined,
+    });
   };
 
   const handleDelete = async (id: string) => {
@@ -229,11 +236,15 @@ export default function AdminDealsPage() {
               className="pl-10"
             />
           </div>
-          <Select value={selectedRegion} onValueChange={onRegionChange}>
+          <Select
+            value={selectedRegion ?? "all"}
+            onValueChange={onRegionChange}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select Region" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">All Regions</SelectItem>
               {geographicRegion.enumValues.map((region) => (
                 <SelectItem key={region} value={region}>
                   {t(`common.regions.${region}`)}
@@ -241,11 +252,15 @@ export default function AdminDealsPage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={selectedRegion} onValueChange={onCountryChange}>
+          <Select
+            value={selectedCountry ?? "all"}
+            onValueChange={onCountryChange}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select Country" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">All Countries</SelectItem>
               {(selectedRegion
                 ? REGIONS_COUNTRIES[selectedRegion]
                 : countryCode.enumValues
@@ -258,11 +273,15 @@ export default function AdminDealsPage() {
                 ))}
             </SelectContent>
           </Select>
-          <Select value={filters?.type} onValueChange={onDealTypeChange}>
+          <Select
+            value={filters?.type ?? "all"}
+            onValueChange={onDealTypeChange}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select Deal Type" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">All Deal Types</SelectItem>
               {dealType.enumValues.map((type) => (
                 <SelectItem key={type} value={type}>
                   {t(`deals.types.${type}`)}
@@ -270,11 +289,15 @@ export default function AdminDealsPage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={filters?.subtype} onValueChange={onDealSubtypeChange}>
+          <Select
+            value={filters?.subtype ?? "all"}
+            onValueChange={onDealSubtypeChange}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select Deal Subtype" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">All Deal Subtypes</SelectItem>
               {(filters?.type
                 ? DEAL_TYPES_SUBTYPES[filters?.type]
                 : dealSubtype.enumValues
@@ -286,13 +309,18 @@ export default function AdminDealsPage() {
             </SelectContent>
           </Select>
           <Select
-            value={filters?.sector}
-            onValueChange={(value) => fetchDeals({ sector: value as Sector })}
+            value={filters?.sector ?? "all"}
+            onValueChange={(value) =>
+              fetchDeals({
+                sector: value === "all" ? undefined : (value as Sector),
+              })
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Select Sector" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">All Sectors</SelectItem>
               {SECTORS.map((sector) => (
                 <SelectItem key={sector} value={sector}>
                   {t(`common.sectors.${sector}`)}
@@ -321,7 +349,7 @@ export default function AdminDealsPage() {
                   <TableHead className="min-w-[300px] sticky left-0 bg-background z-20 border-r">
                     Deal Update
                   </TableHead>
-                  {/* <TableHead>Asset Name</TableHead> */}
+                  <TableHead>Asset Name</TableHead>
                   <TableHead>Sector</TableHead>
                   {/* <TableHead>Region</TableHead> */}
                   <TableHead>Country</TableHead>
@@ -359,15 +387,15 @@ export default function AdminDealsPage() {
                           )}
                         </div>
                       </TableCell>
-                      {/* <TableCell className="max-w-[150px]">
+                      <TableCell className="max-w-[150px]">
                         <TooltipText values={assets.map((a) => a.name)} />
-                      </TableCell> */}
+                      </TableCell>
                       <TableCell>
                         <SectorsIconsTooltip sectors={sectors} />
                       </TableCell>
                       {/* <TableCell>
                         <TooltipText
-                          values={regions.map((r) => t(`common.regions.${r}`))}
+                          values={regions.map((r) => t(`common.regions.${r}`))}0
                         />
                       </TableCell> */}
                       <TableCell className="truncate">

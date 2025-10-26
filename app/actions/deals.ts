@@ -253,6 +253,7 @@ export async function getDealById(id: string) {
                 onOffGrid: true,
                 subSectors: true,
                 segments: true,
+                country: true,
               },
               extras: (projects, { sql }) => ({
                 capacity: sql<number>`${projects.plantCapacity}`.as("capacity"),
@@ -338,6 +339,7 @@ export async function getDealById(id: string) {
             financingSubtype: true,
           },
         },
+        powerPurchaseAgreement: {},
         documents: {
           columns: {
             fileUrl: true,

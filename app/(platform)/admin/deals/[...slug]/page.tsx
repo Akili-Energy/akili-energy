@@ -110,7 +110,7 @@ interface Asset {
   name: string;
   capacity: number;
   lifecycle: ProjectStage;
-  country: Country;
+  country?: Country | null;
   maturity?: number;
   equity?: number;
 }
@@ -164,8 +164,16 @@ export default function CreateEditDealPage({
         fetchProjects(),
         fetchCompanies(),
       ]);
-      setProjects(allProjects);
-      setCompanies(allCompanies);
+      setProjects(
+        allProjects.toSorted((a, b) =>
+          a.name.toUpperCase().localeCompare(b.name.toUpperCase())
+        )
+      );
+      setCompanies(
+        allCompanies.toSorted((a, b) =>
+          a.name.toUpperCase().localeCompare(b.name.toUpperCase())
+        )
+      );
     });
   }, []);
 
@@ -207,6 +215,48 @@ export default function CreateEditDealPage({
         setDeal(fetchedDeal);
         setSelectedDealType(fetchedDeal?.type);
         setSelectedDealSubtype(fetchedDeal?.subtype ?? undefined);
+        setRegions(fetchedDeal?.regions ?? []);
+        setCountries(fetchedDeal?.countries ?? []);
+        setTechnologies(fetchedDeal?.technologies ?? []);
+        setSectors(fetchedDeal?.sectors ?? []);
+        setSubSectors(
+          fetchedDeal?.subSectors.filter((ss) => ss !== null) ?? []
+        );
+        setSegments(fetchedDeal?.segments.filter((ss) => ss !== null) ?? []);
+        setAssets(
+          deal?.assets.map(
+            ({ maturity, equityTransactedPercentage, ...a }) => ({
+              ...a,
+              equity: equityTransactedPercentage ?? undefined,
+              maturity: maturity ?? undefined,
+            })
+          ) ?? []
+        );
+        console.log(
+          deal?.assets.map(
+            ({ maturity, equityTransactedPercentage, ...a }) => ({
+              ...a,
+              equity: equityTransactedPercentage ?? undefined,
+              maturity: maturity ?? undefined,
+            })
+          )
+        );
+        setDealCompanies(
+          deal?.companies.map(
+            ({ classification, commitment, investorType, ...c }) => ({
+              ...c,
+              categories: classification ?? [],
+              commitment: commitment ?? undefined,
+              investorType: investorType ?? undefined,
+            })
+          ) ?? []
+        );
+        setDealDetails({
+          maSpecifics: deal?.mergerAcquisition?.specifics ?? [],
+          maFinancingStrategy: deal?.mergerAcquisition?.financingStrategy ?? [],
+          financingType: deal?.financing?.financingType ?? [],
+          financingSubtype: deal?.financing?.financingSubtype ?? [],
+        });
       });
     } else {
       router.replace("/admin/deals");
@@ -334,7 +384,15 @@ export default function CreateEditDealPage({
     );
   };
 
-  if (!deal && mode === "edit") return notFound(); // Or a "Not Found" component
+  if (pending) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!deal && mode === "edit") return null; // Or a "Not Found" component
 
   return (
     <div>
@@ -414,7 +472,7 @@ export default function CreateEditDealPage({
                       </SelectTrigger>
                       <SelectContent>
                         {dealType.enumValues
-                          .filter((type) => type === "project_update")
+                          .filter((type) => type !== "project_update")
                           .map((type) => (
                             <SelectItem key={type} value={type}>
                               {type}
@@ -618,7 +676,7 @@ export default function CreateEditDealPage({
                               htmlFor={`asset-${id}-maturity`}
                               className="text-sm"
                             >
-                              Maturity Date
+                              Maturity (Years)
                             </Label>
                             <Input
                               id={`asset-${id}-maturity`}
@@ -1385,20 +1443,21 @@ export default function CreateEditDealPage({
                             id="financingVehicle"
                             defaultValue={
                               mode === "edit"
-                                ? deal?.financing?.vehicle ??
-                                  undefined
+                                ? deal?.financing?.vehicle ?? undefined
                                 : undefined
                             }
                           />
                         </div>
                         <div className="space-y-2">
                           <Label>Financing Objective</Label>
-                          <Select name="financingObjective" defaultValue={
+                          <Select
+                            name="financingObjective"
+                            defaultValue={
                               mode === "edit"
-                                ? deal?.financing?.objective ??
-                                  undefined
+                                ? deal?.financing?.objective ?? undefined
                                 : undefined
-                            }>
+                            }
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Select financing objective..." />
                             </SelectTrigger>

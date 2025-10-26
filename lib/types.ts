@@ -53,7 +53,7 @@ export type DealFilters = {
   sector?: Sector;
   type?: DealType;
   subtype?: DealSubtype;
-  dateRange?: { from?: Date; to?: Date };
+  // dateRange?: { from?: Date; to?: Date };
 };
 
 export type ProjectFilters = {
@@ -147,6 +147,11 @@ export interface Financing
     "mergerAcquisition" | "powerPurchaseAgreement" | "jointVenture"
   > {
   financing: NonNullable<Deal["financing"]>;
+}
+
+export interface PowerPurchaseAgreement
+  extends Omit<Deal, "financing" | "powerPurchaseAgreement" | "jointVenture"> {
+  powerPurchaseAgreement: NonNullable<Deal["powerPurchaseAgreement"]>;
 }
 
 export interface BaseModel {

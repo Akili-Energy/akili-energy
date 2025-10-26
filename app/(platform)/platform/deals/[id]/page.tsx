@@ -12,7 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DEAL_ADVISORS } from "@/lib/constants";
-import { MergerAcquisition, Financing, FetchDealResult } from "@/lib/types";
+import {
+  MergerAcquisition,
+  Financing,
+  PowerPurchaseAgreement,
+  FetchDealResult,
+} from "@/lib/types";
 import {
   ArrowLeft,
   ExternalLink,
@@ -84,7 +89,7 @@ export default function DealDetailPage() {
       case "financing":
         return <FinancingContent deal={deal as Financing} />;
       case "power_purchase_agreement":
-        return <PowerPurchaseAgreementContent deal={deal} />;
+        return <PowerPurchaseAgreementContent deal={deal as PowerPurchaseAgreement} />;
       case "joint_venture":
         return <JointVentureContent deal={deal} />;
       default:
@@ -1174,7 +1179,22 @@ function FinancingContent({
 }
 
 // PPA Deal Content Component
-function PowerPurchaseAgreementContent({ deal }: { deal: any }) {
+function PowerPurchaseAgreementContent({
+  deal: {
+    companies,
+    assets,
+    financials,
+    powerPurchaseAgreement,
+    locations,
+    ...deal
+  },
+}: {
+  deal: PowerPurchaseAgreement;
+}) {
+  const { t } = useLanguage();
+
+  const financial = financials?.[0];
+  const ebitda = financial?.ebitda ? Number(financial.ebitda) : 0;
   return (
     <div className="grid lg:grid-cols-3 gap-6">
       {/* Main Content */}
@@ -1188,45 +1208,92 @@ function PowerPurchaseAgreementContent({ deal }: { deal: any }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">
-                  Announcement Date
-                </label>
-                <p className="font-medium">{deal.announcementDate ?? "-"}</p>
-              </div>
+            <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-500">
                   Region
                 </label>
-                <p className="font-medium">{deal.region}</p>
+                <div>
+                  <TooltipText
+                    values={deal.regions.map((r) => t(`common.regions.${r}`))}
+                  />
+                </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">
                   Country
                 </label>
-                <p className="font-medium">{deal.country.join(", ")}</p>
+                <Countries countries={deal.countries} />
               </div>
             </div>
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-500">
-                  Asset Name
+                  Sector
                 </label>
-                <p className="font-medium">Undisclosed</p>
+                <div className="font-medium  truncate line-clamp-1">
+                  {deal.sectors.length > 0 ? (
+                    <SectorsIconsTooltip sectors={deal.sectors} />
+                  ) : (
+                    "-"
+                  )}
+                </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">
                   Technology
                 </label>
-                <p className="font-medium">{deal.sector.join(", ")}</p>
+                <p className="font-medium">
+                  {deal.technologies.length
+                    ? deal.technologies
+                        .map((tech) => {
+                          t(`common.technologies.${tech}`);
+                        })
+                        .join(", ")
+                    : "-"}
+                </p>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">
-                  Asset Lifecycle
-                </label>
-                <p className="font-medium">{deal.assetLifecycle}</p>
-              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Assets</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {assets.map(
+                ({
+                  id,
+                  name,
+                  // capacity,
+                  lifecycle,
+                }) => (
+                  <div key={id} className="border rounded-lg p-4">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          Asset Name
+                        </label>
+                        <PlatformLink data={{ id, name }} type="projects" />
+                      </div>
+                      {/* <div>
+                          <label className="text-sm font-medium text-gray-500">
+                            Capacity (MW)
+                          </label>
+                          <p className="font-medium">{capacity ?? "-"}</p>
+                        </div> */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          Lifecycle
+                        </label>
+                        <p className="font-medium">{lifecycle ?? "-"}</p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              )}
             </div>
           </CardContent>
         </Card>
@@ -1237,73 +1304,153 @@ function PowerPurchaseAgreementContent({ deal }: { deal: any }) {
             <CardTitle>Deal Details</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Supplier
-                  </label>
-                  <p className="font-medium">{deal.supplier}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Off-taker
-                  </label>
-                  <p className="font-medium">{deal.offtakers}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Off-taker Sector
-                  </label>
-                  <p className="font-medium">{deal.offtakerSector ?? "-"}</p>
-                </div>
+            <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="text-sm font-medium text-gray-500">
                     Category
                   </label>
-                  <p className="font-medium">{deal.category ?? "-"}</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    PPA Duration (Years)
-                  </label>
-                  <p className="font-medium">{deal.ppaDuration ?? "-"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    PPA Specific
-                  </label>
-                  <p className="font-medium">{deal.ppaSpecific}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Generated Power Offtaken (GWh/Yr)
-                  </label>
-                  <p className="font-medium">{deal.generatedPowerOfftaken}</p>
+                  <p className="font-medium">
+                    {t(`deals.subtypes.${deal.subtype}`)}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">
                     Onsite/Offsite PPA
                   </label>
-                  <p className="font-medium">{deal.onsiteOffsite}</p>
+                  <p className="font-medium">
+                    {powerPurchaseAgreement.onOffSite}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">
+                    PPA Duration (Years)
+                  </label>
+                  <p className="font-medium">
+                    {powerPurchaseAgreement.duration ?? "-"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">
+                    PPA Specific
+                  </label>
+                  <p className="font-medium">
+                    {powerPurchaseAgreement.details === null
+                      ? "-"
+                      : powerPurchaseAgreement.details
+                      ? "Long-term"
+                      : "Short-term"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">
+                    Generated Power Offtaken (GWh/Yr)
+                  </label>
+                  <p className="font-medium">
+                    {powerPurchaseAgreement.generatedPower ?? "-"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">
+                    Capacity Off-taken (MW)
+                  </label>
+                  <p className="font-medium">
+                    {powerPurchaseAgreement.capacity ?? "-"}
+                  </p>
                 </div>
               </div>
             </div>
-            <div className="grid md:grid-cols-2 gap-4 mt-6">
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Deal Companies</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-1 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-500">
-                  Grid Operator
+                  Offtaker(s)
                 </label>
-                <p className="font-medium">{deal.gridOperator}</p>
+                <PlatformLink
+                  data={
+                    companies.filter(({ role }) => role === "offtaker")?.[0]
+                  }
+                  type="companies"
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">
-                  Supply Start Date
+                  Supplier(s)
                 </label>
-                <p className="font-medium">{deal.supplyStartDate}</p>
+                <PlatformLink
+                  data={companies.filter(({ role }) => role === "supplier")}
+                  type="companies"
+                />
               </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Grid Operator(s)
+                </label>
+                <PlatformLink
+                  data={companies.filter(
+                    ({ role }) => role === "grid_operator"
+                  )}
+                  type="companies"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Advisor(s)
+                </label>
+                <PlatformLink
+                  data={companies.filter(({ role }) => role === "advisor")}
+                  type="companies"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Companies</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {companies.map(({ id, name, role, companiesSectors }) => (
+                <div key={id} className="border rounded-lg p-4">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">
+                        Company
+                      </label>
+                      <PlatformLink data={{ id, name }} type="companies" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">
+                        Role
+                      </label>
+                      <p className="font-medium">{role}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">
+                        Sector
+                      </label>
+                      <div className="font-medium  truncate line-clamp-1">
+                        {companiesSectors.length > 0 ? (
+                          <SectorsIconsTooltip
+                            sectors={companiesSectors.map((s) => s.sector)}
+                          />
+                        ) : (
+                          "-"
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -1314,25 +1461,47 @@ function PowerPurchaseAgreementContent({ deal }: { deal: any }) {
             <CardTitle>Deal Comments</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">SDG Impacts</h4>
-              <p
-                className="text-gray-700 leading-relaxed text-justify"
-                dangerouslySetInnerHTML={{
-                  __html: deal.impacts.replaceAll("\n", "<br/>"),
-                }}
-              />
-            </div>
-            <Separator />
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Insights</h4>
-              <p
-                className="text-gray-700 leading-relaxed text-justify"
-                dangerouslySetInnerHTML={{
-                  __html: deal.insights.replaceAll("\n", "<br/>"),
-                }}
-              />
-            </div>
+            {deal.impacts && (
+              <>
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">
+                    SDG Impacts
+                  </h4>
+                  <p
+                    className="text-gray-700 leading-relaxed text-justify"
+                    dangerouslySetInnerHTML={{
+                      __html: deal.impacts.replaceAll("\n", "<br/>"),
+                    }}
+                  />
+                </div>
+                <Separator />
+              </>
+            )}
+            {deal.description && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Summary</h4>
+                <p
+                  className="text-gray-700 leading-relaxed text-justify"
+                  dangerouslySetInnerHTML={{
+                    __html: deal.description.replaceAll("\n", "<br/>"),
+                  }}
+                />
+              </div>
+            )}
+            {deal.insights && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Insights</h4>
+                  <p
+                    className="text-gray-700 leading-relaxed text-justify"
+                    dangerouslySetInnerHTML={{
+                      __html: deal.insights.replaceAll("\n", "<br/>"),
+                    }}
+                  />
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -1350,37 +1519,111 @@ function PowerPurchaseAgreementContent({ deal }: { deal: any }) {
           <CardContent className="space-y-3">
             <div>
               <label className="text-sm font-medium text-gray-500">
-                Announced Date
+                Announcement Date
               </label>
-              <p className="font-medium">{deal.announcementDate}</p>
+              <p className="font-medium">
+                {deal.announcementDate
+                  ? deal.announcementDate.toLocaleDateString()
+                  : "-"}
+              </p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">
-                Completed Date
+                Completion Date
               </label>
-              <p className="font-medium">{deal.completionDate || "Pending"}</p>
+              <p className="font-medium">
+                {deal.completionDate?.toLocaleDateString() ?? "-"}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">
+                Asset Operational Date
+              </label>
+              <p className="font-medium">
+                {powerPurchaseAgreement.assetOperationalDate?.toLocaleDateString() ??
+                  "-"}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">
+                Supply Start Date
+              </label>
+              <p className="font-medium">
+                {powerPurchaseAgreement.supplyStart?.toLocaleDateString() ??
+                  "-"}
+              </p>
             </div>
           </CardContent>
         </Card>
+
+        {/* Financials */}
+        {financial && ebitda && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Deal Financials ({financial.year})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  EV/EBITDA
+                </label>
+                <p className="font-medium">
+                  {financial && ebitda > 0 && financial.enterpriseValue
+                    ? `${(Number(financial.enterpriseValue) / ebitda).toFixed(
+                        2
+                      )}`
+                    : "-"}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Revenue/EBITDA
+                </label>
+                <p className="font-medium">
+                  {financial && ebitda > 0 && financial.revenue
+                    ? `${(Number(financial.revenue) / ebitda).toFixed(2)}`
+                    : "-"}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Net Debt/EBITDA
+                </label>
+                <p className="font-medium">
+                  {financial && ebitda > 0 && financial.debt
+                    ? `${(Number(financial.debt) / ebitda).toFixed(2)}`
+                    : "-"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Location */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
               Deal Location
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <span className="text-sm">City: {deal.city}</span>
+                <MapPin className="w-4 h-4 text-gray-500" />
+                <span className="text-sm">Address: </span>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm">
-                  Country: {deal.country.join(", ")}
-                </span>
-              </div>
+            </div>
+            <div className="mt-4 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
+              {locations.length > 0 && (
+                <Map
+                  locations={
+                    locations as { name: string; position: [number, number] }[]
+                  }
+                />
+              )}
             </div>
           </CardContent>
         </Card>

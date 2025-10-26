@@ -1197,8 +1197,6 @@ export default function BulkUploadPage() {
         ),
       });
 
-      console.log(toArray(row["Financing Subtype"].replaceAll("/", ";")))
-
       const technologies = parseTechnologies(row);
 
       // Link deal to project if it's an asset financing

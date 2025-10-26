@@ -78,6 +78,7 @@ export default function DealsPage() {
   const [isPending, startTransition] = useTransition();
   const [filters, setFilters] = useState<DealFilters>();
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [keys, setKeys] = useState<number[]>([1, 2, 3, 4, 5]);
 
   const fetchDeals = (newFilter?: DealFilters, order?: Pagination) =>
     startTransition(async () => {
@@ -190,6 +191,7 @@ export default function DealsPage() {
     setSelectedRegion(undefined);
     setSelectedCountry(undefined);
     await fetchDeals(undefined);
+    setKeys((prev) => prev.map((k) => k + 5));
   };
 
   return (
@@ -224,7 +226,11 @@ export default function DealsPage() {
                 className="pl-10"
               />
             </div>
-            <Select value={selectedRegion} onValueChange={onRegionChange}>
+            <Select
+              key={keys[0]}
+              value={selectedRegion}
+              onValueChange={onRegionChange}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select Region" />
               </SelectTrigger>
@@ -236,7 +242,11 @@ export default function DealsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={selectedRegion} onValueChange={onCountryChange}>
+            <Select
+              key={keys[1]}
+              value={selectedRegion}
+              onValueChange={onCountryChange}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select Country" />
               </SelectTrigger>
@@ -253,7 +263,11 @@ export default function DealsPage() {
                   ))}
               </SelectContent>
             </Select>
-            <Select value={filters?.type} onValueChange={onDealTypeChange}>
+            <Select
+              key={keys[2]}
+              value={filters?.type}
+              onValueChange={onDealTypeChange}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select Deal Type" />
               </SelectTrigger>
@@ -266,6 +280,7 @@ export default function DealsPage() {
               </SelectContent>
             </Select>
             <Select
+              key={keys[3]}
               value={filters?.subtype}
               onValueChange={onDealSubtypeChange}
             >
@@ -284,6 +299,7 @@ export default function DealsPage() {
               </SelectContent>
             </Select>
             <Select
+              key={keys[4]}
               value={filters?.sector}
               onValueChange={(value) => fetchDeals({ sector: value as Sector })}
             >
