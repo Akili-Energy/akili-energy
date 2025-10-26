@@ -1540,14 +1540,6 @@ function PowerPurchaseAgreementContent({
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">
-                Completion Date
-              </label>
-              <p className="font-medium">
-                {deal.completionDate?.toLocaleDateString() ?? "-"}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500">
                 Asset Operational Date
               </label>
               <p className="font-medium">
