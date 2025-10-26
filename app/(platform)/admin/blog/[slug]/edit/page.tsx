@@ -54,7 +54,7 @@ export default function EditBlogPage({ params }: { params: Promise<{ slug: strin
   useEffect(() => {
     const fetchPost = async () => {
       setIsLoading(true);
-      const fetchedPost = await getContentBySlug(slug, "blog");
+      const fetchedPost = await getContentBySlug(slug, "blog", true);
       if (fetchedPost) {
         setPost(fetchedPost);
         setContent(fetchedPost.blogPost?.content || "");

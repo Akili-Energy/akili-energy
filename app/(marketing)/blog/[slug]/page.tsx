@@ -35,6 +35,7 @@ import "@/components/tiptap-ui/table-dropdown-menu/table-dropdown-menu.scss";
 import { cache } from "react";
 import { formatDate } from "@/lib/utils";
 import { Content } from "@/lib/types";
+import { cacheLife } from "next/cache";
 
 const getBlogPost = cache(getContentBySlug);
 
@@ -56,6 +57,11 @@ export default async function BlogPostPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  "use cache";
+  // This cache will revalidate after an hour even if no explicit
+  // revalidate instruction was received
+  cacheLife("hours");
+
   const post = await getBlogPost((await params).slug, "blog");
 
   if (!post || !post.blogPost || !post.author) {

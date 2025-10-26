@@ -38,6 +38,7 @@ import "katex/dist/katex.min.css";
 import "@/components/tiptap-ui/table-dropdown-menu/table-dropdown-menu.scss";
 import { getContentBySlug } from "@/app/actions/content";
 import { Content } from "@/lib/types";
+import { cacheLife } from "next/cache";
 
 const getNewsArticle = cache(getContentBySlug);
 
@@ -58,6 +59,11 @@ export default async function NewsArticle({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  "use cache"
+  // This cache will revalidate after an hour even if no explicit
+  // revalidate instruction was received
+  cacheLife("hours");
+
   const article = await getNewsArticle((await params).slug, "news");
 
   const relatedArticles: Content[] = (article as any).related;
@@ -166,7 +172,7 @@ export default async function NewsArticle({
                       />
                       <AvatarFallback>
                         {article.author?.name
-                          .split(" ")
+                          ?.split(" ")
                           .map((n) => n[0])
                           .join("")}
                       </AvatarFallback>
@@ -228,7 +234,7 @@ export default async function NewsArticle({
                         />
                         <AvatarFallback>
                           {article.author?.name
-                            .split(" ")
+                            ?.split(" ")
                             .map((n) => n[0])
                             .join("")}
                         </AvatarFallback>

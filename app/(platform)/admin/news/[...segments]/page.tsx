@@ -62,7 +62,8 @@ export default function CreateEditNewsPage({
   useEffect(() => {
     const fetchArticle = async (articleSlug: string) => {
       setLoading(true);
-      const fetchedArticle = await getContentBySlug(articleSlug, "news");
+      const fetchedArticle = await getContentBySlug(articleSlug, "news", true);
+      console.log("Fetched Article:", fetchedArticle);
       if (fetchedArticle) {
         setArticle(fetchedArticle);
         setContent(fetchedArticle.newsArticle?.content || "");

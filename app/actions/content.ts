@@ -107,9 +107,9 @@ export async function getContent({
             user: {
               columns: {
                 name: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         blogPost:
           type === "blog"
@@ -154,7 +154,7 @@ export async function getContent({
     if (hasMore) results.pop();
 
     return {
-      content: results.map(({tags, author: {user}, ...article}) => ({
+      content: results.map(({ tags, author: { user }, ...article }) => ({
         ...article,
         author: user,
         tags: isAdmin
@@ -187,17 +187,20 @@ export async function getContent({
 /**
  * Fetches a single blog post by its slug, including related posts.
  */
-export async function getContentBySlug(slug: string, type: ContentType) {
-  "use cache"
-  // This cache can be revalidated by webhook or server action
-  // when you call revalidateTag("content")
-  cacheTag("content");
-  // This cache will revalidate after an hour even if no explicit
-  // revalidate instruction was received
-  cacheLife("hours");
+export async function getContentBySlug(
+  slug: string,
+  type: ContentType,
+  isAdmin: boolean = false
+) {
+  // cacheTag("content"); 
   try {
     const result = await db.query.content.findFirst({
-      where: and(eq(content.slug, slug), eq(content.status, "published")),
+      where: isAdmin
+        ? undefined
+        : and(
+            eq(content.slug, slug),
+            eq(content.status, "published")
+          ),
       with: {
         author: {
           with: {
@@ -262,7 +265,6 @@ export async function getContentBySlug(slug: string, type: ContentType) {
     };
 
     // const referer = (await headers()).get("referer");
-    let isAdmin = false;
     // if (referer) {
     //   const { pathname } = new URL(referer);
     //   isAdmin = pathname.startsWith("/admin");
@@ -555,7 +557,7 @@ export async function saveContent(
     revalidatePath(`/${data.type}/${data.slug}`); // Revalidate the specific post page
     if (originalSlug) revalidatePath(`/${data.type}/${originalSlug}`);
 
-    updateTag("content");
+    // updateTag("content");
 
     return {
       success: true,
