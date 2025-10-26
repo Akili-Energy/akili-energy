@@ -89,7 +89,11 @@ export default function DealDetailPage() {
       case "financing":
         return <FinancingContent deal={deal as Financing} />;
       case "power_purchase_agreement":
-        return <PowerPurchaseAgreementContent deal={deal as PowerPurchaseAgreement} />;
+        return (
+          <PowerPurchaseAgreementContent
+            deal={deal as PowerPurchaseAgreement}
+          />
+        );
       case "joint_venture":
         return <JointVentureContent deal={deal} />;
       default:
@@ -190,9 +194,7 @@ function MergerAcquisitionContent({
                 <p className="font-medium">
                   {deal.technologies.length
                     ? deal.technologies
-                        .map((tech) => {
-                          t(`common.technologies.${tech}`);
-                        })
+                        .map((tech) => t(`common.technologies.${tech}`))
                         .join(", ")
                     : "-"}
                 </p>
@@ -1246,9 +1248,7 @@ function PowerPurchaseAgreementContent({
                 <p className="font-medium">
                   {deal.technologies.length
                     ? deal.technologies
-                        .map((tech) => {
-                          t(`common.technologies.${tech}`);
-                        })
+                        .map((tech) => t(`common.technologies.${tech}`))
                         .join(", ")
                     : "-"}
                 </p>
@@ -1319,7 +1319,11 @@ function PowerPurchaseAgreementContent({
                     Onsite/Offsite PPA
                   </label>
                   <p className="font-medium">
-                    {powerPurchaseAgreement.onOffSite}
+                    {powerPurchaseAgreement.onOffSite === null
+                      ? "-"
+                      : powerPurchaseAgreement.onOffSite
+                      ? "Onsite"
+                      : "Offsite"}
                   </p>
                 </div>
                 <div>
@@ -1412,6 +1416,48 @@ function PowerPurchaseAgreementContent({
             </div>
           </CardContent>
         </Card>
+
+        {/* <Card>
+          <CardHeader>
+            <CardTitle>Companies</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {companies.map(({ id, name, role, companiesSectors }) => (
+                <div key={id} className="border rounded-lg p-4">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">
+                        Company
+                      </label>
+                      <PlatformLink data={{ id, name }} type="companies" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">
+                        Role
+                      </label>
+                      <p className="font-medium">{role}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">
+                        Sector
+                      </label>
+                      <div className="font-medium  truncate line-clamp-1">
+                        {companiesSectors.length > 0 ? (
+                          <SectorsIconsTooltip
+                            sectors={companiesSectors.map((s) => s.sector)}
+                          />
+                        ) : (
+                          "-"
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card> */}
 
         {/* Deal Comments */}
         <Card>
