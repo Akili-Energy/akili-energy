@@ -1,8 +1,10 @@
 import {
+  CompanySector,
   Country,
   DealCompanyRole,
   DealSubtype,
   DealType,
+  ProjectSector,
   Region,
   Sector,
   SubSector,
@@ -79,7 +81,9 @@ export const REGIONS_COUNTRIES: Record<Region, Country[]> = {
   southern_africa: ["BW", "LS", "NA", "ZA", "SZ"],
 };
 
-export const SECTORS: Sector[] = [...new Set([...companySector.enumValues, ...projectSector.enumValues])];
+export const SECTORS: Sector[] = [
+  ...new Set([...companySector.enumValues, ...projectSector.enumValues]),
+];
 export const SECTORS_TECHNOLOGIES: Partial<Record<Sector, Technology[]>> = {
   solar: [
     "photovoltaic",
@@ -97,8 +101,10 @@ export const SECTORS_TECHNOLOGIES: Partial<Record<Sector, Technology[]>> = {
   geothermal: ["geothermal"],
   nuclear: ["nuclear"],
 };
-export const SUB_SECTORS: SubSector[] = [...companySubSector.enumValues, ...projectSubSector.enumValues];
-
+export const SUB_SECTORS: SubSector[] = [
+  ...companySubSector.enumValues,
+  ...projectSubSector.enumValues,
+];
 
 export const DEAL_TYPES_SUBTYPES: Record<DealType, DealSubtype[]> = {
   merger_acquisition: ["asset", "ma_corporate"],
@@ -268,4 +274,44 @@ export const COUNTRIES_ISO_3166_CODE: Record<string, Country> = {
   zambia: "ZM",
   zambie: "ZM",
   zimbabwe: "ZW",
+};
+
+export const TECHNOLOGIES_SECTORS: Record<
+  Technology,
+  { projectSector: ProjectSector; companySector: CompanySector }
+> = {
+  photovoltaic: { projectSector: "solar", companySector: "renewables" },
+  concentrated_solar_power: {
+    projectSector: "solar",
+    companySector: "renewables",
+  },
+  solar_home_systems: { projectSector: "solar", companySector: "renewables" },
+  concentrated_photovoltaic: {
+    projectSector: "solar",
+    companySector: "renewables",
+  },
+  onshore_wind: { projectSector: "wind", companySector: "renewables" },
+  offshore_wind: { projectSector: "wind", companySector: "renewables" },
+  small_hydro: { projectSector: "hydro", companySector: "renewables" },
+  large_hydro: { projectSector: "hydro", companySector: "renewables" },
+  bess: { projectSector: "battery", companySector: "renewables" },
+  lithium_ion: { projectSector: "battery", companySector: "renewables" },
+  biogas: { projectSector: "biomass", companySector: "renewables" },
+  waste: { projectSector: "biomass", companySector: "renewables" },
+  oil: { projectSector: "oil_gas", companySector: "non_renewables" },
+  gas: { projectSector: "oil_gas", companySector: "non_renewables" },
+  coal: { projectSector: "oil_gas", companySector: "non_renewables" },
+  mini_grid: { projectSector: "other", companySector: "utilities" },
+  decentralised: { projectSector: "other", companySector: "utilities" },
+  high_voltage_transmission_lines: {
+    projectSector: "other",
+    companySector: "utilities",
+  },
+  hydrogen: { projectSector: "hydrogen", companySector: "renewables" },
+  green_hydrogen: { projectSector: "hydrogen", companySector: "renewables" },
+  geothermal: { projectSector: "geothermal", companySector: "renewables" },
+  nuclear: { projectSector: "nuclear", companySector: "non_renewables" },
+  wave_onshore: { projectSector: "hydro", companySector: "renewables" },
+  wave_nearshore: { projectSector: "hydro", companySector: "renewables" },
+  hybrid: { projectSector: "other", companySector: "other" },
 };

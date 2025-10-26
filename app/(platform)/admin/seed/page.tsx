@@ -1681,6 +1681,10 @@ export default function BulkUploadPage() {
               row["Asset Life-Cycle"]?.toLowerCase().replaceAll(/\s+/g, "_"),
               projectStage.enumValues
             ),
+            sectors: parseSectors(
+              row,
+              projectSector.enumValues
+            ) as ProjectSector[],
             technologies: parseTechnologies(row),
             country: countries.length ? countries[0] : undefined,
             location,
@@ -1904,6 +1908,13 @@ export default function BulkUploadPage() {
               label: t(`common.countries.${c}`),
               value: c,
             })),
+            dictionary: "common",
+          },
+          {
+            key: "sectors",
+            label: "Sectors",
+            type: "multiselect",
+            options: projectSector.enumValues,
             dictionary: "common",
           },
           {

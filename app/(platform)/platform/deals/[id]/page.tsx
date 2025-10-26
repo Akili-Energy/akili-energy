@@ -11,7 +11,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { DEAL_ADVISORS } from "@/lib/constants";
+import { DEAL_ADVISORS, TECHNOLOGIES_SECTORS } from "@/lib/constants";
 import {
   MergerAcquisition,
   Financing,
@@ -1197,6 +1197,13 @@ function PowerPurchaseAgreementContent({
 
   const financial = financials?.[0];
   const ebitda = financial?.ebitda ? Number(financial.ebitda) : 0;
+
+  const sectors =
+    deal.sectors.length > 0
+      ? deal.sectors
+      : deal.technologies
+          .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
+          .filter(Boolean);
   return (
     <div className="grid lg:grid-cols-3 gap-6">
       {/* Main Content */}
@@ -1234,8 +1241,8 @@ function PowerPurchaseAgreementContent({
                   Sector
                 </label>
                 <div className="font-medium  truncate line-clamp-1">
-                  {deal.sectors.length > 0 ? (
-                    <SectorsIconsTooltip sectors={deal.sectors} />
+                  {sectors.length > 0 ? (
+                    sectors.map((s) => t(`common.sectors.${s}`)).join(", ")
                   ) : (
                     "-"
                   )}
