@@ -20,6 +20,21 @@ const nextConfig: NextConfig = {
         hostname: "www.akilienergy.com",
         port: "",
       },
+      {
+        protocol: "https",
+        hostname: "cweicspxjbbfndvtznwi.supabase.co",
+        port: "",
+      },
+      {
+        protocol: "https",
+        hostname: "dcmlyppdcnxqbyvyvlpv.supabase.co",
+        port: "",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        port: "",
+      },
     ],
   },
   experimental: {

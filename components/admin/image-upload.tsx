@@ -37,7 +37,7 @@ export default function ImageUpload({ value, onChange, onRemove, placeholder }: 
   if (value) {
     return (
       <div className="relative">
-        <Image
+        <img
           src={value || "/placeholder.svg"}
           alt="Uploaded image"
           className="w-full h-48 object-cover rounded-lg border"

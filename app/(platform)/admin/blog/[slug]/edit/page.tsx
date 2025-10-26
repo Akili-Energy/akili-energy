@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useActionState, useEffect } from "react";
+import React, { useState, useActionState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,9 @@ const initialState: ContentActionState = {
   message: "",
 };
 
-export default function EditBlogPage({ params }: { params: { slug: string } }) {
+export default function EditBlogPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params)
+
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(
     saveContent,
@@ -52,7 +54,7 @@ export default function EditBlogPage({ params }: { params: { slug: string } }) {
   useEffect(() => {
     const fetchPost = async () => {
       setIsLoading(true);
-      const fetchedPost = await getContentBySlug(params.slug, "blog");
+      const fetchedPost = await getContentBySlug(slug, "blog");
       if (fetchedPost) {
         setPost(fetchedPost);
         setContent(fetchedPost.blogPost?.content || "");
@@ -65,7 +67,7 @@ export default function EditBlogPage({ params }: { params: { slug: string } }) {
       setIsLoading(false);
     };
     fetchPost();
-  }, [params.slug, router]);
+  }, [slug, router]);
 
   // Handle form submission success/error
   useEffect(() => {
@@ -125,7 +127,7 @@ export default function EditBlogPage({ params }: { params: { slug: string } }) {
               <form action={formAction} className="space-y-6">
                 <input type="hidden" name="type" value="blog" />
                 {/* Hidden field to pass the original slug for the WHERE clause */}
-                <input type="hidden" name="originalSlug" value={params.slug} />
+                <input type="hidden" name="originalSlug" value={slug} />
                 <div className="space-y-2">
                   <Label htmlFor="title">Title *</Label>
                   <Input
