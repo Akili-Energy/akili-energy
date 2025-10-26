@@ -3288,7 +3288,7 @@ export default function BulkUploadPage() {
           ? parseDate(new Date(row["Founded date"]))
           : undefined,
         activities: filterArray(
-          toArray(row["Main Activities"]),
+          toArray(row["Main Activities"].replaceAll(',', ";")),
           companyActivity.enumValues
         ),
         size: parseEnum(row["Company size"], companySize.enumValues),
@@ -4035,7 +4035,7 @@ export default function BulkUploadPage() {
         } else if (field.type === "image" && value) {
           return (
             <div className="flex items-center justify-center p-1">
-              <Image
+              <img
                 src={value}
                 alt={`${row["name"] ?? row.id} Logo`}
                 className="max-h-6 w-auto object-contain" // max-h-10 is 40px. Use max-h-5 for 20px.
