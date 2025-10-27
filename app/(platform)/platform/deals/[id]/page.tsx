@@ -747,7 +747,14 @@ function FinancingContent({
 
   const financial = financials?.[0];
   const ebitda = financial?.ebitda ? Number(financial.ebitda) : 0;
-  const revenue = financial?.revenue ? Number(financial.revenue) : 0;
+  
+  const sectors =
+    deal.sectors.length > 0
+      ? deal.sectors
+      : deal.technologies
+          .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
+          .filter(Boolean);
+
   return (
     <div className="grid lg:grid-cols-3 gap-6">
       {/* Main Content */}
@@ -795,7 +802,9 @@ function FinancingContent({
                   Main Sector
                 </label>
                 <p className="font-medium">
-                  {deal.sectors.length ? deal.sectors?.[0] : "-"}
+                  {sectors.length
+                    ? sectors.map((s) => t(`common.sectors.${s}`)).join(", ")
+                    : "-"}
                 </p>
               </div>
               <div>
@@ -1241,11 +1250,9 @@ function PowerPurchaseAgreementContent({
                   Sector
                 </label>
                 <div className="font-medium  truncate line-clamp-1">
-                  {sectors.length > 0 ? (
-                    sectors.map((s) => t(`common.sectors.${s}`)).join(", ")
-                  ) : (
-                    "-"
-                  )}
+                  {sectors.length > 0
+                    ? sectors.map((s) => t(`common.sectors.${s}`)).join(", ")
+                    : "-"}
                 </div>
               </div>
               <div>

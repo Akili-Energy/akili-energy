@@ -120,7 +120,7 @@ import {
 import { isValidUrl } from "@/lib/utils";
 import { COUNTRIES_ISO_3166_CODE } from "@/lib/constants";
 import { useLanguage } from "@/components/language-context";
-import Image from 'next/image'
+import Image from "next/image";
 
 /**
  * Converts a full country name (in English, French, or common variations) to its ISO 3166-1 alpha-2 code.
@@ -364,7 +364,6 @@ export default function BulkUploadPage() {
           .replace("solar pv", "photovoltaic")
           .replace("wind onshore", "onshore_wind")
           .replace("wind offshore", "offshore_wind")
-          .replace("small", "offshore_wind")
           .replaceAll(/\s+/g, "_")
           .replaceAll("-", "_")
           .replace("pv", "photovoltaic")
@@ -669,7 +668,9 @@ export default function BulkUploadPage() {
               // Add to companies table if not exists
               if (
                 ![...companiesData, ...initialData.companies].find(
-                  ({ id, name }) => id === companyId || name.toLowerCase() === target.toLowerCase()
+                  ({ id, name }) =>
+                    id === companyId ||
+                    name.toLowerCase() === target.toLowerCase()
                 )
               ) {
                 companiesData.push({
@@ -703,10 +704,9 @@ export default function BulkUploadPage() {
                 ) || [],
               projectStage.enumValues
             );
-            const { names: storageCapacities } =
-              parseCommaSeparatedWithNumbers(
-                row["Co-located storage capacity"]
-              );
+            const { names: storageCapacities } = parseCommaSeparatedWithNumbers(
+              row["Co-located storage capacity"]
+            );
             const { numbers: assetCapacities } = parseCommaSeparatedWithNumbers(
               row["Total Asset capacity (MW)"]
             );
@@ -805,20 +805,28 @@ export default function BulkUploadPage() {
               companiesData.push({
                 id: companyId,
                 name: companyName,
-                classification: category && category.length ? [filterArray(
-                  category
-                    .trim()
-                    .toLowerCase()
-                    .split(";")
-                    .map((s: string) =>
-                      s
-                        .trim()
-                        .replace("ipp", "independent_power_producer")
-                        .replace("dfi", "development_finance_institution")
-                        .replaceAll(/\s+/g, "_")
-                    ) ?? [],
-                  companyClassification.enumValues
-                )[i]].filter(Boolean) : [],
+                classification:
+                  category && category.length
+                    ? [
+                        filterArray(
+                          category
+                            .trim()
+                            .toLowerCase()
+                            .split(";")
+                            .map((s: string) =>
+                              s
+                                .trim()
+                                .replace("ipp", "independent_power_producer")
+                                .replace(
+                                  "dfi",
+                                  "development_finance_institution"
+                                )
+                                .replaceAll(/\s+/g, "_")
+                            ) ?? [],
+                          companyClassification.enumValues
+                        )[i],
+                      ].filter(Boolean)
+                    : [],
                 countries,
               });
             }
@@ -1223,6 +1231,11 @@ export default function BulkUploadPage() {
             technologies,
             segments: parseSegments(row),
             plantCapacity: parseNumber(parseFloat(row["Asset capacity (MW)"])),
+            sectors: parseSectors(
+              row,
+              projectSector.enumValues,
+              "Main sector"
+            ) as ProjectSector[],
             stage: parseEnum(
               row["Project lifecycle"]
                 ?.toLowerCase()
@@ -1255,7 +1268,9 @@ export default function BulkUploadPage() {
         });
         if (
           ![...companiesData, ...initialData.companies].find(
-            (c) => c.id === companyId || c.name.toLowerCase() === row["Company"].toLowerCase()
+            (c) =>
+              c.id === companyId ||
+              c.name.toLowerCase() === row["Company"].toLowerCase()
           )
         ) {
           companiesData.push({
@@ -1298,7 +1313,11 @@ export default function BulkUploadPage() {
               companyName: investorName.trim(),
               role: "investor",
               investorType: parseEnum(
-                row["Investor Type"]?.toLowerCase().replaceAll(/\s+/g, "_"),
+                row["Investor Type"]
+                  ?.toLowerCase()
+                  .replace("dfi", "development_finance_institution")
+                  .replaceAll(/^pe$/gmi, "private_equity")
+                  .replaceAll(/\s+/g, "_"),
                 financingInvestorType.enumValues
               ),
               commitment: commitments[i],
@@ -1489,6 +1508,20 @@ export default function BulkUploadPage() {
               label: t(`common.countries.${c}`),
               value: c,
             })),
+            dictionary: "common",
+          },
+          {
+            key: "sectors",
+            label: "Sectors",
+            type: "multiselect",
+            options: projectSector.enumValues,
+            dictionary: "common",
+          },
+          {
+            key: "technologies",
+            label: "Technologies",
+            type: "multiselect",
+            options: technology.enumValues,
             dictionary: "common",
           },
           {
@@ -3288,7 +3321,7 @@ export default function BulkUploadPage() {
           ? parseDate(new Date(row["Founded date"]))
           : undefined,
         activities: filterArray(
-          toArray(row["Main Activities"].replaceAll(',', ";")),
+          toArray(row["Main Activities"].replaceAll(",", ";")),
           companyActivity.enumValues
         ),
         size: parseEnum(row["Company size"], companySize.enumValues),

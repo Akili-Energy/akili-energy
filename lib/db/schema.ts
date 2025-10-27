@@ -492,6 +492,8 @@ export const financingInvestorType = pgEnum("financing_investor_type", [
   "venture_capital",
   "developer",
   "multilateral",
+  "commercial",
+  "fund_manager",
 ]);
 export const financingSubtype = pgEnum("financing_subtype", [
   "project_finance",
@@ -1791,7 +1793,9 @@ export const companyPortfolios = pgView("company_portfolios").as((qb) =>
       companyName: aliasedColumn(companies.name, "company_name"),
       dealsCount: count(deals.id).as("deals_count"),
       dealsValue: sum(deals.amount).as("deals_value"),
-      totalPortfolio: sum(projects.plantCapacity).mapWith(Number).as("total_portfolio"),
+      totalPortfolio: sum(projects.plantCapacity)
+        .mapWith(Number)
+        .as("total_portfolio"),
       inDevelopmentPortfolio: sum(
         sql<number>`case when ${projects.stage} = 'in_development' then ${projects.plantCapacity} else 0 end`
       )

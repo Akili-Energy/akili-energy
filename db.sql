@@ -199,7 +199,7 @@ CREATE TYPE financing_objective AS ENUM (
 CREATE TYPE financing_investor_type AS ENUM (
     'private_equity', 'development_finance_institution', 'institutional', 'private',
     'public', 'limited_partners', 'government', 'non_profit', 'venture_capital',
-    'developer', 'multilateral'
+    'developer', 'multilateral', 'commercial', 'fund_manager'
 );
 
 CREATE TYPE financing_subtype AS ENUM (

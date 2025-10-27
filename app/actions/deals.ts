@@ -185,8 +185,7 @@ export async function getDeals({
           sectors: [
             ...new Set(
               (deal.type === "merger_acquisition" &&
-                deal.subtype === "ma_corporate") ||
-              deal.type === "financing"
+                deal.subtype === "ma_corporate")
                 ? dealsCompanies.flatMap((c) =>
                     getSectors(c.company.companiesSectors)
                   )
@@ -364,8 +363,7 @@ export async function getDealById(id: string) {
 
     const isCorporate =
       (result?.type === "merger_acquisition" &&
-        result?.subtype === "ma_corporate") ||
-      result?.type === "financing";
+        result?.subtype === "ma_corporate");
 
     const onOffGrids = result?.dealsAssets.map((a) => a.asset.onOffGrid);
 
