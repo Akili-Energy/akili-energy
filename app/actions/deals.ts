@@ -25,7 +25,7 @@ import {
 import { PgSelectBase, PgSelectWithout } from "drizzle-orm/pg-core";
 import { parseLocation } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
-import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
+import { DEFAULT_PAGE_SIZE, TECHNOLOGIES_SECTORS } from "@/lib/constants";
 import { z } from "zod";
 
 function getSectors(sectors: { sector: Sector }[]) {
@@ -115,6 +115,11 @@ export async function getDeals({
                             )
                         : undefined,
                   },
+                  projectsTechnologies: {
+                    columns: {
+                      technology: true,
+                    },
+                  },
                 },
               },
             },
@@ -140,6 +145,11 @@ export async function getDeals({
                               filters.sector! as CompanySector
                             )
                         : undefined,
+                  },
+                  companiesTechnologies: {
+                    columns: {
+                      technology: true,
+                    },
                   },
                 },
               },
@@ -175,17 +185,13 @@ export async function getDeals({
     ]);
     return {
       deals: results.map(
-        ({ dealsCountries, dealsCompanies, dealsAssets, date, ...deal }) => ({
-          ...deal,
-          date: new Date(date),
-          regions: [
-            ...new Set(dealsCountries.map(({ country: { region } }) => region)),
-          ],
-          countries: dealsCountries.map(({ country: { code } }) => code),
-          sectors: [
+        ({ dealsCountries, dealsCompanies, dealsAssets, date, ...deal }) => {
+          const isCorporate =
+            deal.type === "merger_acquisition" &&
+            deal.subtype === "ma_corporate";
+          const sectors = [
             ...new Set(
-              (deal.type === "merger_acquisition" &&
-                deal.subtype === "ma_corporate")
+              isCorporate
                 ? dealsCompanies.flatMap((c) =>
                     getSectors(c.company.companiesSectors)
                   )
@@ -193,9 +199,39 @@ export async function getDeals({
                     getSectors(a.asset.projectsSectors)
                   )
             ),
-          ],
-          assets: dealsAssets.map(({ asset: { id, name } }) => ({ id, name })),
-        })
+          ];
+          const technologies = [
+            ...new Set(
+              isCorporate
+                ? dealsCompanies.flatMap((c) =>
+                    getTechnologies(c.company.companiesTechnologies)
+                  )
+                : dealsAssets.flatMap((a) =>
+                    getTechnologies(a.asset.projectsTechnologies)
+                  )
+            ),
+          ];
+          return {
+            ...deal,
+            date: new Date(date),
+            regions: [
+              ...new Set(
+                dealsCountries.map(({ country: { region } }) => region)
+              ),
+            ],
+            countries: dealsCountries.map(({ country: { code } }) => code),
+            sectors:
+              sectors.length > 0
+                ? sectors
+                : technologies
+                    .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
+                    .filter(Boolean),
+            assets: dealsAssets.map(({ asset: { id, name } }) => ({
+              id,
+              name,
+            })),
+          };
+        }
       ),
       total: (total as { count: number }[])[0]?.count ?? 0,
     };
@@ -362,8 +398,8 @@ export async function getDealById(id: string) {
     });
 
     const isCorporate =
-      (result?.type === "merger_acquisition" &&
-        result?.subtype === "ma_corporate");
+      result?.type === "merger_acquisition" &&
+      result?.subtype === "ma_corporate";
 
     const onOffGrids = result?.dealsAssets.map((a) => a.asset.onOffGrid);
 

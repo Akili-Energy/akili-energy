@@ -1236,6 +1236,10 @@ export default function BulkUploadPage() {
               projectSector.enumValues,
               "Main sector"
             ) as ProjectSector[],
+            subSectors: parseSubSectors(
+              row,
+              projectSubSector.enumValues
+            ) as ProjectSubSector[],
             stage: parseEnum(
               row["Project lifecycle"]
                 ?.toLowerCase()
@@ -1522,6 +1526,14 @@ export default function BulkUploadPage() {
             label: "Technologies",
             type: "multiselect",
             options: technology.enumValues,
+            dictionary: "common",
+          },
+          
+          {
+            key: "subSectors",
+            label: "Sub-sectors",
+            type: "multiselect",
+            options: projectSubSector.enumValues,
             dictionary: "common",
           },
           {
