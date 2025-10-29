@@ -200,17 +200,20 @@ export async function getDeals({
                   )
             ),
           ];
+          const companiesTechnologies = dealsCompanies.flatMap((c) =>
+            getTechnologies(c.company.companiesTechnologies)
+          );
           const technologies = [
             ...new Set(
               isCorporate
-                ? dealsCompanies.flatMap((c) =>
-                    getTechnologies(c.company.companiesTechnologies)
-                  )
+                ? companiesTechnologies
                 : dealsAssets.flatMap((a) =>
                     getTechnologies(a.asset.projectsTechnologies)
                   )
             ),
           ];
+          if (deal.type === "financing" && technologies.length === 0)
+            technologies.push(...companiesTechnologies);
           return {
             ...deal,
             date: new Date(date),
@@ -403,6 +406,32 @@ export async function getDealById(id: string) {
 
     const onOffGrids = result?.dealsAssets.map((a) => a.asset.onOffGrid);
 
+    const sectors = [
+      ...new Set(
+        isCorporate
+          ? result?.dealsCompanies.flatMap((c) =>
+              getSectors(c.company.companiesSectors)
+            )
+          : result?.dealsAssets.flatMap((a) =>
+              getSectors(a.asset.projectsSectors)
+            )
+      ),
+    ];
+    const companiesTechnologies = result?.dealsCompanies.flatMap((c) =>
+      getTechnologies(c.company.companiesTechnologies)
+    ) ?? [];
+    const technologies = [
+      ...new Set(
+        isCorporate
+          ? companiesTechnologies
+          : result?.dealsAssets.flatMap((a) =>
+              getTechnologies(a.asset.projectsTechnologies)
+            )
+      ),
+    ];
+    if (result?.type === "financing" && technologies.length === 0)
+      technologies.push(...companiesTechnologies);
+
     return result
       ? {
           ...result,
@@ -419,28 +448,13 @@ export async function getDealById(id: string) {
             ),
           ],
           countries: result.dealsCountries.map(({ country: { code } }) => code),
-          sectors: [
-            ...new Set(
-              isCorporate
-                ? result.dealsCompanies.flatMap((c) =>
-                    getSectors(c.company.companiesSectors)
-                  )
-                : result.dealsAssets.flatMap((a) =>
-                    getSectors(a.asset.projectsSectors)
-                  )
-            ),
-          ],
-          technologies: [
-            ...new Set(
-              isCorporate
-                ? result.dealsCompanies.flatMap((c) =>
-                    getTechnologies(c.company.companiesTechnologies)
-                  )
-                : result.dealsAssets.flatMap((a) =>
-                    getTechnologies(a.asset.projectsTechnologies)
-                  )
-            ),
-          ],
+          sectors:
+              sectors.length > 0
+                ? sectors
+                : technologies
+                    .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
+                    .filter(Boolean),
+          technologies,
           subSectors: [
             ...new Set(
               isCorporate

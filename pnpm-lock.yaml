@@ -258,6 +258,9 @@ importers:
       install:
         specifier: ^0.13.0
         version: 0.13.0
+      jsonwebtoken:
+        specifier: ^9.0.2
+        version: 9.0.2
       jwt-decode:
         specifier: ^4.0.0
         version: 4.0.0

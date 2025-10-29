@@ -11,7 +11,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { DEAL_ADVISORS, TECHNOLOGIES_SECTORS } from "@/lib/constants";
+import { DEAL_ADVISORS } from "@/lib/constants";
 import {
   MergerAcquisition,
   Financing,
@@ -33,6 +33,7 @@ import { useParams } from "next/navigation";
 import { SectorsIconsTooltip } from "@/components/sector-icon";
 import { useLanguage } from "@/components/language-context";
 import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Map = dynamic(() => import("@/components/map"), {
   ssr: false,
@@ -47,7 +48,7 @@ export default function DealDetailPage() {
   const { t } = useLanguage();
 
   const [deal, setDeal] = useState<FetchDealResult>(null);
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     // Redirect Project Updates to project pages
@@ -65,7 +66,128 @@ export default function DealDetailPage() {
     });
   }, [router]);
 
-  if (!deal) {
+  if (isPending) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/platform/deals">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Deals
+              </Link>
+            </Button>
+            <div>
+              <Skeleton className="h-8 w-72 md:w-96 mb-2" />
+              <Skeleton className="h-5 w-24" />
+            </div>
+          </div>
+          <Skeleton className="h-10 w-36" />
+        </div>
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Main Content Skeleton */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Deal Description Skeleton */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-gray-300" />
+                  <Skeleton className="h-6 w-48" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <Skeleton className="h-4 w-24 mb-2" />
+                    <Skeleton className="h-5 w-3/4" />
+                  </div>
+                  <div>
+                    <Skeleton className="h-4 w-24 mb-2" />
+                    <Skeleton className="h-5 w-full" />
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <Skeleton className="h-4 w-20 mb-2" />
+                    <Skeleton className="h-5 w-3/4" />
+                  </div>
+                  <div>
+                    <Skeleton className="h-4 w-24 mb-2" />
+                    <Skeleton className="h-5 w-full" />
+                  </div>
+                  <div>
+                    <Skeleton className="h-4 w-20 mb-2" />
+                    <Skeleton className="h-5 w-1/2" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Details/Assets Skeleton */}
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-56" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="border rounded-lg p-4">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <Skeleton className="h-5 w-full" />
+                    <Skeleton className="h-5 w-full" />
+                    <Skeleton className="h-5 w-full" />
+                  </div>
+                </div>
+                <div className="border rounded-lg p-4">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <Skeleton className="h-5 w-full" />
+                    <Skeleton className="h-5 w-full" />
+                    <Skeleton className="h-5 w-full" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar Skeleton */}
+          <div className="space-y-6">
+            {/* Deal Timeline Skeleton */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-300" />
+                  <Skeleton className="h-5 w-32" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-5 w-1/2" />
+                </div>
+                <div>
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-5 w-1/2" />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Location Skeleton */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-gray-300" />
+                  <Skeleton className="h-5 w-32" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-32 w-full rounded-lg" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!deal && !isPending) {
     return (
       <div className="p-6">
         <div className="text-center">
@@ -83,7 +205,7 @@ export default function DealDetailPage() {
 
   // Render different layouts based on deal type
   const renderDealContent = () => {
-    switch (deal.type) {
+    switch (deal?.type) {
       case "merger_acquisition":
         return <MergerAcquisitionContent deal={deal as MergerAcquisition} />;
       case "financing":
@@ -113,15 +235,17 @@ export default function DealDetailPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{deal.update}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{deal?.update}</h1>
             <div className="flex items-center space-x-2 mt-1">
-              <Badge variant="secondary">{t(`deals.types.${deal.type}`)}</Badge>
+              <Badge variant="secondary">
+                {t(`deals.types.${deal?.type}`)}
+              </Badge>
               {/* <Badge variant="outline">{deal.dealStatus}</Badge> */}
             </div>
           </div>
         </div>
-        {deal.pressReleaseUrl && (
-          <Link href={deal.pressReleaseUrl} target="_blank">
+        {deal?.pressReleaseUrl && (
+          <Link href={deal?.pressReleaseUrl} target="_blank">
             <Button>
               <ExternalLink className="w-4 h-4 mr-2" />
               Press Release
@@ -747,13 +871,6 @@ function FinancingContent({
 
   const financial = financials?.[0];
   const ebitda = financial?.ebitda ? Number(financial.ebitda) : 0;
-  
-  const sectors =
-    deal.sectors.length > 0
-      ? deal.sectors
-      : deal.technologies
-          .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
-          .filter(Boolean);
 
   return (
     <div className="grid lg:grid-cols-3 gap-6">
@@ -802,8 +919,10 @@ function FinancingContent({
                   Main Sector
                 </label>
                 <p className="font-medium">
-                  {sectors.length
-                    ? sectors.map((s) => t(`common.sectors.${s}`)).join(", ")
+                  {deal.sectors.length
+                    ? deal.sectors
+                        .map((s) => t(`common.sectors.${s}`))
+                        .join(", ")
                     : "-"}
                 </p>
               </div>
@@ -856,27 +975,31 @@ function FinancingContent({
                 <label className="text-sm font-medium text-gray-500">
                   Capacity (MW)
                 </label>
-                <p className="font-medium">{asset?.capacity}</p>
+                <p className="font-medium">{asset?.capacity ?? "-"}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">
                   Lifecycle
                 </label>
-                <p className="font-medium">{asset?.lifecycle}</p>
+                <p className="font-medium">{asset?.lifecycle ?? "-"}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">
                   On-/Off-Grid
                 </label>
                 <p className="font-medium">
-                  {`${asset?.onOffGrid ? "On" : "Off"}-grid`}
+                  {asset?.onOffGrid !== null
+                    ? `${asset?.onOffGrid ? "On" : "Off"}-grid`
+                    : "-"}
                 </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">
                   Co-located Storage Capacity (MWh)
                 </label>
-                <p className="font-medium">{asset?.colocatedStorageCapacity}</p>
+                <p className="font-medium">
+                  {asset?.colocatedStorageCapacity ?? "-"}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -1158,7 +1281,7 @@ function FinancingContent({
         </Card>
 
         {/* Documentation */}
-        {deal.documents.length && (
+        {deal.documents.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Existing Documentation</CardTitle>
@@ -1207,12 +1330,6 @@ function PowerPurchaseAgreementContent({
   const financial = financials?.[0];
   const ebitda = financial?.ebitda ? Number(financial.ebitda) : 0;
 
-  const sectors =
-    deal.sectors.length > 0
-      ? deal.sectors
-      : deal.technologies
-          .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
-          .filter(Boolean);
   return (
     <div className="grid lg:grid-cols-3 gap-6">
       {/* Main Content */}
@@ -1250,8 +1367,10 @@ function PowerPurchaseAgreementContent({
                   Sector
                 </label>
                 <div className="font-medium  truncate line-clamp-1">
-                  {sectors.length > 0
-                    ? sectors.map((s) => t(`common.sectors.${s}`)).join(", ")
+                  {deal.sectors.length > 0
+                    ? deal.sectors
+                        .map((s) => t(`common.sectors.${s}`))
+                        .join(", ")
                     : "-"}
                 </div>
               </div>

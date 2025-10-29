@@ -41,12 +41,12 @@ export default function CompanyPage() {
           </Button>
         </div>
         <div className="flex items-center space-x-4 flex-1">
-          <Image
+          <img
             src={company?.logoUrl || "/placeholder.svg"}
             alt={`${company?.name} logo`}
-            width={60}
-            height={60}
-            className="rounded-lg border bg-white object-contain"
+            // width={60}
+            // height={60}
+            className="rounded-lg w-16 h-16 border bg-[#000] object-contain"
           />
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">{company?.name}</h1>
