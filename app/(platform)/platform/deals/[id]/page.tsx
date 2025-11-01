@@ -1184,6 +1184,8 @@ function FinancingContent({
               <p className="font-medium">
                 {deal.announcementDate
                   ? deal.announcementDate.toLocaleDateString()
+                  : deal.date
+                  ? deal.date.toLocaleDateString()
                   : "-"}
               </p>
             </div>
