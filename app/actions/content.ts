@@ -284,7 +284,7 @@ export async function getContentBySlug(
     //   const { pathname } = new URL(referer);
     //   isAdmin = pathname.startsWith("/admin");
     // }
-    if (isAdmin) {
+    if (isAdmin || type === "research") {
       return fullResult;
     }
 
@@ -375,7 +375,7 @@ const contentSchema = z.object({
     return [];
   }, z.array(z.string()).max(10, "You can add up to 10 tags")),
   status: z.enum(contentStatus.enumValues),
-  featuredImage: z.string().min(1, "Featured image is required"),
+  featuredImage: z.string().min(10, "Featured image is required"),
   isFeatured: z.preprocess((val) => val === "on" || val === true, z.boolean()),
   metaTitle: z.string().max(72).optional(),
   metaDescription: z.string().max(160).optional(),
@@ -429,7 +429,7 @@ export async function saveContent(
     return {
       success: false,
       message: "Invalid form data. Please check the fields.",
-      errors: validatedFields.error.flatten().fieldErrors,
+      errors: z.flattenError(validatedFields.error).fieldErrors,
     };
   }
 
@@ -446,7 +446,7 @@ export async function saveContent(
   }
 
   let imageUrl = data.featuredImage;
-  let reportUrl = data.fileDocument;
+  let reportUrl = data.fileDocument as string | undefined;
   try {
     // 3. Handle image upload if it's a new image (data URL)
     if (imageUrl.startsWith("data:image")) {
@@ -464,7 +464,7 @@ export async function saveContent(
         .data.publicUrl;
     }
 
-    if (data.type === "research" && reportUrl.startsWith("data:")) {
+    if (data.type === "research" && reportUrl?.startsWith("data:")) {
       const mimeType = reportUrl.split(":")[1].split(";")[0];
       const buffer = Buffer.from(reportUrl.split(",")[1], "base64");
       const filePath = `research/${data.slug}.${mimeType.split("/")[1]}`;
@@ -522,7 +522,7 @@ export async function saveContent(
         case "blog":
           const blogData: typeof blogPosts.$inferInsert = {
             slug: data.slug,
-            content: data.content,
+            content: data.content as string,
           };
           if (isEditMode) {
             blogData.editorId = author.id;
@@ -544,7 +544,7 @@ export async function saveContent(
         case "news":
           const newsData: typeof newsArticles.$inferInsert = {
             slug: data.slug,
-            content: data.content,
+            content: data.content as string,
           };
           // if (isEditMode) {
           //   blogData.editorId = author.id;
@@ -555,7 +555,7 @@ export async function saveContent(
             newsTransaction = newsTransaction.onConflictDoUpdate({
               target: newsArticles.slug,
               set: {
-                content: data.content,
+                content: data.content as string,
                 // editorId: author.id,
                 // revisionDate: new Date(), // Always update the revision date on edit
               },
@@ -566,7 +566,7 @@ export async function saveContent(
         case "research":
           const researchData: typeof researchReports.$inferInsert = {
             slug: data.slug,
-            reportUrl,
+            reportUrl: reportUrl as string,
           };
           let researchTransaction: any = tx
             .insert(researchReports)

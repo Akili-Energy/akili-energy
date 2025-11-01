@@ -11,11 +11,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, User, Loader2, Download } from "lucide-react";
-import Image from "next/image";
 import { getContent } from "@/app/actions/content";
 import type { Content, ContentCategory } from "@/lib/types";
 import { RESEARCH_PAGE_SIZE } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
+import Link from "next/link";
 
 interface ResearchProps {
   initialReports: Content[];
@@ -109,7 +109,9 @@ export default function Research({
                   {report.category}
                 </Badge>
                 <CardTitle className="text-lg leading-tight">
-                  {report.title}
+                  <Link href={`/research/${report?.slug}`}>
+                    {report.title}
+                  </Link>
                 </CardTitle>
               </div>
             </CardHeader>
@@ -132,9 +134,16 @@ export default function Research({
                   variant="outline"
                   size="sm"
                   className="border-akili-green text-akili-green hover:bg-akili-green hover:text-white"
+                  asChild
                 >
-                  <Download className="w-4 h-4 mr-1" />
-                  Download
+                  <Link
+                    href={report.researchReport?.reportUrl ?? ""}
+                    target="_blank"
+                    download
+                  >
+                    <Download className="w-4 h-4 mr-1" />
+                    Download
+                  </Link>
                 </Button>
               </div>
             </CardContent>

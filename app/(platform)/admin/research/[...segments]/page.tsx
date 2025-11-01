@@ -344,7 +344,7 @@ export default function CreateEditResearchPage({
                           />
                         </label>
                         <p className="mt-1 text-sm text-gray-500">
-                          PDF up to 5MB
+                          PDF up to 10MB
                         </p>
                       </div>
                     </div>

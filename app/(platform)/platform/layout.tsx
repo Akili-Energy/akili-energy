@@ -26,7 +26,7 @@ const navigation = [
   { name: "Deals", href: "/platform/deals", icon: Briefcase },
   { name: "Projects", href: "/platform/projects", icon: Building2 },
   { name: "Companies", href: "/platform/companies", icon: Users },
-  { name: "Simulator", href: "/platform/simulator", icon: Calculator },
+  // { name: "Simulator", href: "/platform/simulator", icon: Calculator },
   { name: "Events", href: "/platform/events", icon: Calendar },
 ];
 
