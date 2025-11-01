@@ -7,6 +7,8 @@ import type {
   AssetLifecycle,
   CompanySector,
   DealFilters,
+  DealFinancingType,
+  MASpecifics,
   Pagination,
   ProjectSector,
   Sector,
@@ -21,12 +23,33 @@ import {
   financing,
   projectSector,
   companySector,
+  dealType,
+  dealSubtype,
+  countryCode,
+  technology,
+  powerPurchaseAgreements,
+  segment,
+  dealCompanyRole,
+  financingInvestorType,
+  dealFinancingType,
+  maSpecifics,
+  maStructure,
+  revenueModel,
+  financingObjective,
+  financingSubtype,
 } from "@/lib/db/schema";
 import { PgSelectBase, PgSelectWithout } from "drizzle-orm/pg-core";
 import { parseLocation } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
-import { DEFAULT_PAGE_SIZE, TECHNOLOGIES_SECTORS } from "@/lib/constants";
-import { z } from "zod";
+import {
+  DEFAULT_PAGE_SIZE,
+  SECTORS,
+  SUB_SECTORS,
+  TECHNOLOGIES_SECTORS,
+} from "@/lib/constants";
+import z from "zod";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 function getSectors(sectors: { sector: Sector }[]) {
   return sectors.map((s) => s.sector);
@@ -417,9 +440,10 @@ export async function getDealById(id: string) {
             )
       ),
     ];
-    const companiesTechnologies = result?.dealsCompanies.flatMap((c) =>
-      getTechnologies(c.company.companiesTechnologies)
-    ) ?? [];
+    const companiesTechnologies =
+      result?.dealsCompanies.flatMap((c) =>
+        getTechnologies(c.company.companiesTechnologies)
+      ) ?? [];
     const technologies = [
       ...new Set(
         isCorporate
@@ -449,11 +473,11 @@ export async function getDealById(id: string) {
           ],
           countries: result.dealsCountries.map(({ country: { code } }) => code),
           sectors:
-              sectors.length > 0
-                ? sectors
-                : technologies
-                    .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
-                    .filter(Boolean),
+            sectors.length > 0
+              ? sectors
+              : technologies
+                  .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
+                  .filter(Boolean),
           technologies,
           subSectors: [
             ...new Set(
@@ -496,230 +520,309 @@ export async function getDealById(id: string) {
   }
 }
 
-// Helper to convert empty strings to undefined for optional fields
+// Helper to transform empty strings from FormData into undefined for optional fields
 const emptyStringToUndefined = z.literal("").transform(() => undefined);
 
-// Zod schema for validation
-const createDealSchema = z.object({
-  update: z.string().min(5, "Deal title must be at least 5 characters long."),
-  type: z.enum([
-    "merger_acquisition",
-    "financing",
-    "power_purchase_agreement",
-    "project_update",
-    "joint_venture",
-  ]),
-  amount: z.preprocess(
-    (val) => (val === "" ? undefined : parseFloat(String(val))),
-    z.number().positive().optional()
-  ),
-  currency: z.string().default("USD"),
-  pressReleaseUrl: z
-    .union([
-      emptyStringToUndefined,
-      z.string().url("Please enter a valid URL."),
-    ])
-    .optional(),
-  announcementDate: z.string().optional(),
-  completionDate: z.string().optional(),
-  summary: z.string().optional(),
-  insights: z.string().optional(),
-  impacts: z.string().optional(),
+// Unified Zod schema for both creating and editing a deal
+const upsertDealSchema = z
+  .object({
+    dealId: z.string().uuid().optional(),
+    update: z.string().min(1, "Deal update is required"),
+    type: z.enum(dealType.enumValues),
+    subtype: z.enum(dealSubtype.enumValues),
+    amount: z.coerce.number().positive().optional(),
+    dealDate: z.coerce.date().optional(),
+    announcementDate: z.coerce.date().optional(),
+    completionDate: z.coerce.date().optional(),
+    description: z.string().optional(),
+    impacts: z.string().optional(),
+    insights: z.string().optional(),
+    pressReleaseUrl: z.url().optional().or(z.literal("")),
 
-  // Dynamic Array Fields
-  assetIds: z.array(z.string()).optional(),
-  assetMaturities: z.array(z.string()).optional(),
-  assetEquities: z
-    .array(z.preprocess((val) => parseFloat(String(val)), z.number()))
-    .optional(),
+    // Arrays
+    countries: z.array(z.enum(countryCode.enumValues)).optional(),
+    sectors: z.array(z.enum(SECTORS)).optional(),
+    technologies: z.array(z.enum(technology.enumValues)).optional(),
+    subSectors: z.array(z.enum(SUB_SECTORS)).optional(),
+    segments: z.array(z.enum(segment.enumValues)).optional(),
 
-  companyIds: z.array(z.string()).optional(),
-  companyRoles: z.array(z.string()).optional(),
-  companyCommitments: z
-    .array(z.preprocess((val) => parseFloat(String(val)), z.number()))
-    .optional(),
-  companyInvestorTypes: z.array(z.string()).optional(),
+    // Assets (multiple)
+    assetId: z.array(z.uuid()).optional(),
+    assetMaturity: z.array(z.coerce.number().int().positive()).optional(),
+    assetEquity: z.array(z.coerce.number().min(0).max(100)).optional(),
 
-  // M&A specific
-  structure: z.enum(["asset", "ma_corporate"]).optional(),
-});
+    // Companies (multiple)
+    companyId: z.array(z.uuid()).optional(),
+    companyRole: z.array(z.enum(dealCompanyRole.enumValues)).optional(),
+    companyCommitment: z.array(z.coerce.number().positive()).optional(),
+    companyInvestorType: z
+      .array(z.enum(financingInvestorType.enumValues))
+      .optional(),
+    companyEquityTransacted: z
+      .array(z.coerce.number().min(0).max(100))
+      .optional(),
+    companyDetails: z.array(z.string()).optional(),
+
+    // Financials (multiple years)
+    financialYear: z.array(z.coerce.number().int().min(2000)).optional(),
+    financialEnterpriseValue: z.array(z.coerce.number().positive()).optional(),
+    financialEbitda: z.array(z.coerce.number()).optional(),
+    financialDebt: z.array(z.coerce.number().positive()).optional(),
+    financialRevenue: z.array(z.coerce.number()).optional(),
+    financialCash: z.array(z.coerce.number().positive()).optional(),
+
+    // M&A
+    maStructure: z.enum(maStructure.enumValues).optional(),
+    maSpecifics: z.array(z.enum(maSpecifics.enumValues)).optional(),
+    maFinancingStrategy: z
+      .array(z.enum(dealFinancingType.enumValues))
+      .optional(),
+    revenueModel: z.enum(revenueModel.enumValues).optional(),
+    revenueModelDuration: z.coerce.number().int().positive().optional(),
+    maStrategyRationale: z.string().optional(),
+
+    // Financing
+    financingVehicle: z.string().optional(),
+    financingObjective: z.enum(financingObjective.enumValues).optional(),
+    financingType: z.array(z.enum(dealFinancingType.enumValues)).optional(),
+    financingSubtype: z.array(z.enum(financingSubtype.enumValues)).optional(),
+
+    // PPA
+    ppaSpecific: z.coerce.boolean().optional(),
+    ppaDuration: z.coerce.number().int().positive().optional(),
+    ppaCapacity: z.coerce.number().positive().optional(),
+    ppaGeneratedPower: z.coerce.number().positive().optional(),
+    onOffsite: z.coerce.boolean().optional(),
+    ppaSupplyStart: z.coerce.date().optional(),
+    assetOperationalDate: z.coerce.date().optional(),
+  })
+  .superRefine((data, ctx) => {
+    // Validate financing deals have amount
+    if (data.type === "financing" && !data.amount) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Amount is required for financing deals",
+        path: ["amount"],
+      });
+    }
+
+    // Validate array lengths match
+    const assetLength = data.assetId?.length ?? 0;
+    if (data.assetMaturity && data.assetMaturity.length !== assetLength) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Assets count mismatch",
+        path: ["assetId"],
+      });
+    }
+
+    const companyLength = data.companyId?.length ?? 0;
+    if (data.companyRole && data.companyRole.length !== companyLength) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Companies count mismatch",
+        path: ["companyRole"],
+      });
+    }
+
+    const financialLength = data.financialYear?.length ?? 0;
+    if (
+      data.financialEbitda &&
+      data.financialEbitda.length !== financialLength
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Financial data length mismatch",
+        path: ["financialEbitda"],
+      });
+    }
+  });
 
 export async function upsertDeal(
-  prevState: unknown,
+  prevState: ActionState | undefined,
   formData: FormData
 ): Promise<ActionState> {
-  // 1. Reconstruct and Validate Data
-  const data = {
-    ...Object.fromEntries(formData.entries()),
-    assetIds: formData.getAll("assetId"),
-    assetMaturities: formData.getAll("assetMaturity"),
-    assetEquities: formData.getAll("assetEquity"),
-    companyIds: formData.getAll("companyId"),
-    companyRoles: formData.getAll("companyRole"),
-    companyCommitments: formData.getAll("companyCommitment"),
-    companyInvestorTypes: formData.getAll("companyInvestorType"),
-  };
-  console.log(data);
-
-  const validatedFields = createDealSchema.safeParse(data);
-
-  if (!validatedFields.success) {
-    return {
-      success: false,
-      message: "Invalid form data. Please check the fields.",
-      errors: validatedFields.error.flatten().fieldErrors,
-    };
-  }
-
-  const {
-    assetIds = [],
-    assetMaturities = [],
-    assetEquities = [],
-    companyIds = [],
-    companyRoles = [],
-    companyCommitments = [],
-    companyInvestorTypes = [],
-    ...dealData
-  } = validatedFields.data;
-
   try {
-    // 2. Perform DB operations in a transaction
-    const [newDeal] = await db.transaction(async (tx) => {
-      const [deal] = await tx
-        .insert(deals)
-        .values({
-          update: dealData.update,
-          type: dealData.type,
-          subtype:
-            dealData.type === "merger_acquisition"
-              ? dealData.structure
-              : undefined,
-          amount: dealData.amount,
-          announcementDate: dealData.announcementDate || null,
-          completionDate: dealData.completionDate || null,
-          // ... other deal fields
-        })
-        .returning();
+    // 1. Reconstruct data from FormData for validation
+    const rawData = Object.fromEntries(formData.entries());
+    const validatedData = upsertDealSchema.safeParse(rawData);
 
-      if (assetIds.length > 0) {
-        const assetsToInsert = assetIds.map((id, index) => ({
-          dealId: deal.id,
+    if (!validatedData.success) {
+      return {
+        success: false,
+        message: "Invalid form data.",
+        errors: z.flattenError(validatedData.error).fieldErrors,
+      };
+    }
+
+    const { data } = validatedData;
+    const isEditMode = !!data.dealId;
+
+    const [result] = await db.transaction(async (tx) => {
+      let dealId: string;
+      const dealData = {
+        update: data.update,
+        type: data.type,
+        subtype: data.subtype,
+        amount: data.amount ?? null,
+        date: data.dealDate,
+        description: data.description ?? null,
+        impacts: data.impacts ?? null,
+        insights: data.insights ?? null,
+        pressReleaseUrl: data.pressReleaseUrl || null,
+        announcementDate: data.announcementDate ?? null,
+        completionDate: data.completionDate ?? null,
+      };
+      // 2. Upsert the main 'deals' table
+      if (isEditMode) {
+        const [updatedDeal] = await tx
+          .update(deals)
+          .set(dealData)
+          .where(eq(deals.id, data.dealId))
+          .returning({ id: deals.id });
+        if (!updatedDeal) throw new Error("Deal not found for update.");
+        dealId = updatedDeal.id;
+      } else {
+        const [newDeal] = await tx
+          .insert(deals)
+          .values(dealData)
+          .returning({ id: deals.id });
+        dealId = newDeal.id;
+      }
+
+      // 3. Handle relational data: Delete existing and insert new
+      if (isEditMode) {
+        await tx.delete(dealsAssets).where(eq(dealsAssets.dealId, dealId));
+        await tx
+          .delete(dealsCompanies)
+          .where(eq(dealsCompanies.dealId, dealId));
+        await tx
+          .delete(dealFinancials)
+          .where(eq(dealFinancials.dealId, dealId));
+      }
+
+      if (d.assetId && d.assetId.length > 0) {
+        const assetsToInsert = d.assetId.map((id, i) => ({
+          dealId: dealId,
           assetId: id,
-          maturity: assetMaturities[index]
-            ? parseInt(assetMaturities[index])
+          maturity: d.assetMaturity?.[i] ? parseInt(d.assetMaturity[i]) : null,
+          equityTransactedPercentage: d.assetEquity?.[i]
+            ? parseFloat(d.assetEquity[i])
             : null,
-          equityTransactedPercentage: assetEquities[index] || null,
         }));
         await tx.insert(dealsAssets).values(assetsToInsert);
       }
 
-      if (companyIds.length > 0) {
-        const companiesToInsert = companyIds.map((id, index) => ({
-          dealId: deal.id,
+      if (d.companyId && d.companyId.length > 0) {
+        const companiesToInsert = d.companyId.map((id, i) => ({
+          dealId: dealId,
           companyId: id,
-          role: companyRoles[index],
-          commitment: companyCommitments[index] || null,
-          investorType: companyInvestorTypes[index] || null,
+          role: d.companyRole?.[i] || "advisor",
+          commitment: d.companyCommitment?.[i]
+            ? parseFloat(d.companyCommitment[i])
+            : null,
+          investorType: d.companyInvestorType?.[i] || null,
         }));
         await tx.insert(dealsCompanies).values(companiesToInsert);
       }
 
-      // ... Handle M&A or Financing specific tables here if needed
+      if (d.financialYear && d.financialYear.length > 0) {
+        const financialsToInsert = d.financialYear.map((year, i) => ({
+          dealId: dealId,
+          year: parseInt(year),
+          enterpriseValue: d.financialEnterpriseValue?.[i]
+            ? parseFloat(d.financialEnterpriseValue[i])
+            : null,
+          ebitda: d.financialEbitda?.[i]
+            ? parseFloat(d.financialEbitda[i])
+            : null,
+          debt: d.financialDebt?.[i] ? parseFloat(d.financialDebt[i]) : null,
+        }));
+        await tx.insert(dealFinancials).values(financialsToInsert);
+      }
 
-      return [deal];
+      // 4. Handle sub-deal tables
+      if (d.type === "merger_acquisition") {
+        await tx
+          .insert(mergersAcquisitions)
+          .values({
+            dealId: dealId,
+            structure: d.maStructure as any,
+            specifics: d.maSpecifics?.split(",") as any,
+            financingStrategy: d.maFinancingStrategy?.split(",") as any,
+            strategyRationale: d.maStrategyRationale,
+          })
+          .onConflictDoUpdate({
+            target: mergersAcquisitions.dealId,
+            set: {
+              structure: d.maStructure as any,
+              specifics: d.maSpecifics?.split(",") as any,
+              financingStrategy: d.maFinancingStrategy?.split(",") as any,
+              strategyRationale: d.maStrategyRationale,
+            },
+          });
+      } else if (d.type === "financing") {
+        await tx
+          .insert(financing)
+          .values({
+            dealId: dealId,
+            vehicle: d.financingVehicle,
+            objective: d.financingObjective as any,
+            financingType: d.financingType?.split(",") as any,
+            financingSubtype: d.financingSubtype?.split(",") as any,
+          })
+          .onConflictDoUpdate({
+            target: financing.dealId,
+            set: {
+              vehicle: d.financingVehicle,
+              objective: d.financingObjective as any,
+              financingType: d.financingType?.split(",") as any,
+              financingSubtype: d.financingSubtype?.split(",") as any,
+            },
+          });
+      } else if (d.type === "power_purchase_agreement") {
+        await tx
+          .insert(powerPurchaseAgreements)
+          .values({
+            dealId: dealId,
+            details: d.ppaSpecific === "true",
+            duration: d.ppaDuration ? parseInt(d.ppaDuration) : null,
+            capacity: d.ppaCapacity ? parseFloat(d.ppaCapacity) : null,
+            generatedPower: d.ppaGeneratedPower
+              ? parseFloat(d.ppaGeneratedPower)
+              : null,
+            onOffSite: d.onOffsite === "true",
+            supplyStart: d.ppaSupplyStart || null,
+          })
+          .onConflictDoUpdate({
+            target: powerPurchaseAgreements.dealId,
+            set: {
+              details: d.ppaSpecific === "true",
+              duration: d.ppaDuration ? parseInt(d.ppaDuration) : null,
+              capacity: d.ppaCapacity ? parseFloat(d.ppaCapacity) : null,
+              generatedPower: d.ppaGeneratedPower
+                ? parseFloat(d.ppaGeneratedPower)
+                : null,
+              onOffSite: d.onOffsite === "true",
+              supplyStart: d.ppaSupplyStart || null,
+            },
+          });
+      }
+
+      return [{ id: dealId }];
     });
 
-    return { success: true, message: "" };
+    // 5. Revalidate and redirect
+    revalidatePath("/admin/deals");
+    redirect(`/admin/deals`);
   } catch (error: any) {
-    console.error("Error upserting deal:", error);
+    console.error("Failed to upsert deal:", error);
     return {
       success: false,
-      message: error.message || "An unexpected error occurred.",
+      message: error.message || "An unexpected database error occurred.",
     };
   }
 }
-
-// export async function upsertDeal({
-//   formData,
-//   assetEntries,
-//   companyEntries,
-//   financialEntries,
-//   maData,
-//   financingData,
-// }: {
-//   formData: any;
-//   assetEntries: AssetEntry[];
-//   companyEntries: CompanyEntry[];
-//   financialEntries: FinancialEntry[];
-//   maData: any;
-//   financingData: any;
-// }) {
-//   try {
-//     const [deal] = await db
-//       .insert(deals)
-//       .values({
-//         ...formData,
-//         amount: formData.amount ? parseFloat(formData.amount) : null,
-//         type: formData.deal_type,
-//         subtype:
-//           formData.deal_type === "merger_acquisition"
-//             ? maData.structure
-//             : formData.subtype,
-//       })
-//       .returning();
-
-//     const deal_id = deal.id;
-
-//     if (assetEntries.length > 0) {
-//       const assets = assetEntries.map((a) => ({
-//         dealId: deal_id,
-//         assetId: a.project_id,
-//         maturity: a.maturity ? parseInt(a.maturity) : null,
-//         equityTransactedPercentage: a.equity_transacted
-//           ? parseFloat(a.equity_transacted)
-//           : null,
-//       }));
-//       await db.insert(dealsAssets).values(assets);
-//     }
-
-//     if (companyEntries.length > 0) {
-//       const companies = companyEntries.map((c) => ({
-//         dealId: deal_id,
-//         companyId: c.company_id,
-//         role: "advisor",
-//         commitment: c.commitment ? parseFloat(c.commitment) : null,
-//         investorType: c.investor_type || null,
-//       }));
-//       await db.insert(dealsCompanies).values(companies);
-//     }
-
-//     if (financialEntries.length > 0) {
-//       const financials = financialEntries.map((f) => ({
-//         dealId: deal_id,
-//         year: parseInt(f.year),
-//         enterpriseValue: f.enterprise_value
-//           ? parseFloat(f.enterprise_value)
-//           : null,
-//         ebitda: f.ebitda ? parseFloat(f.ebitda) : null,
-//         debt: f.debt ? parseFloat(f.debt) : null,
-//       }));
-//       await db.insert(dealFinancials).values(financials);
-//     }
-
-//     if (formData.deal_type === "merger_acquisition") {
-//       await db
-//         .insert(mergersAcquisitions)
-//         .values({ dealId: deal_id, ...maData, structure: "acquisition" });
-//     } else if (formData.deal_type === "financing") {
-//       await db.insert(financing).values({ dealId: deal_id, ...financingData });
-//     }
-
-//     return { success: true };
-//   } catch (error: any) {
-//     console.error("Error creating deal:", error);
-//     throw new Error(error.message);
-//   }
-// }
 
 export async function deleteDeal(id: string): Promise<ActionState> {
   const supabase = createClient();

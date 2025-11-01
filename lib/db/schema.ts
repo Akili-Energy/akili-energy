@@ -1273,7 +1273,7 @@ export const tags = pgTable("tags", {
 export const contentTags = pgTable(
   "content_tags",
   {
-    contentSlug: varchar("content_slug", { length: 255 })
+    contentSlug: varchar("content_slug", { length: 200 })
       .notNull()
       .references(() => content.slug, { onDelete: "cascade" }),
     tagId: varchar("tag_id", { length: 32 })
@@ -1289,7 +1289,7 @@ export const contentTags = pgTable(
 export const blogPosts = pgTable(
   "blog_posts",
   {
-    slug: varchar("slug", { length: 255 })
+    slug: varchar("slug", { length: 200 })
       .primaryKey()
       .references(() => content.slug, { onDelete: "cascade" }),
     content: text("content").notNull(),
@@ -1317,7 +1317,7 @@ export const blogPosts = pgTable(
 export const newsArticles = pgTable(
   "news_articles",
   {
-    slug: varchar("slug", { length: 255 })
+    slug: varchar("slug", { length: 200 })
       .primaryKey()
       .references(() => content.slug, { onDelete: "cascade" }),
     content: text("content").notNull(),
@@ -1336,7 +1336,7 @@ export const newsArticles = pgTable(
 );
 
 export const researchReports = pgTable("research_reports", {
-  slug: varchar("slug", { length: 255 })
+  slug: varchar("slug", { length: 200 })
     .primaryKey()
     .references(() => content.slug, { onDelete: "cascade" }),
   reportUrl: varchar("report_url", { length: 255 }).notNull().unique(),

@@ -11,6 +11,7 @@ import {
   contentStatus,
   contentType,
   newsArticles,
+  researchReports,
 } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server"; // Assumes you have a server client utility
 import type {
@@ -23,7 +24,8 @@ import { and, desc, eq, lt, ne, sql } from "drizzle-orm";
 import { BLOG_PAGE_SIZE } from "@/lib/constants";
 import { headers } from "next/headers";
 
-const BUCKET_NAME = "images";
+const IMAGE_BUCKET = "images";
+const DOCUMENT_BUCKET = "documents";
 
 export type ContentActionState = ActionState & {
   slug?: string;
@@ -137,6 +139,14 @@ export async function getContent({
                 //   }),
               }
             : undefined,
+        researchReport:
+          type === "research"
+            ? {
+                columns: {
+                  reportUrl: true,
+                },
+              }
+            : undefined,
         tags: isAdmin
           ? {
               columns: {},
@@ -192,15 +202,12 @@ export async function getContentBySlug(
   type: ContentType,
   isAdmin: boolean = false
 ) {
-  // cacheTag("content"); 
+  // cacheTag("content");
   try {
     const result = await db.query.content.findFirst({
       where: isAdmin
         ? undefined
-        : and(
-            eq(content.slug, slug),
-            eq(content.status, "published")
-          ),
+        : and(eq(content.slug, slug), eq(content.status, "published")),
       with: {
         author: {
           with: {
@@ -238,6 +245,14 @@ export async function getContentBySlug(
                 //   }),
               }
             : undefined,
+        researchReport:
+          type === "research"
+            ? {
+                columns: {
+                  reportUrl: true,
+                },
+              }
+            : undefined,
         tags: {
           columns: {},
           with: {
@@ -258,7 +273,7 @@ export async function getContentBySlug(
         photoUrl: result.author.user?.profilePictureUrl,
         name: result.author.user?.name,
       },
-      readTime: calculateReadTime(
+      readTime: type === "research" ? undefined : calculateReadTime(
         result[type === "blog" ? "blogPost" : "newsArticle"]?.content ?? ""
       ),
       tags: result.tags.map(({ tag }) => tag),
@@ -350,10 +365,9 @@ export async function getContentBySlug(
 // 1. Zod schema for robust server-side validation
 const contentSchema = z.object({
   type: z.enum(contentType.enumValues),
-  slug: z.string().min(3, "Slug is required").max(200),
+  slug: z.string().min(3, "Slug is required").max(256),
   title: z.string().min(3, "Title must be at least 3 characters").max(72),
-  summary: z.string().min(10, "Summary is required").max(500),
-  content: z.string().min(50, "Content must be at least 50 characters"),
+  summary: z.string().min(10, "Summary is required").max(1000),
   category: z.string().min(1, "Category is required"),
   tags: z.preprocess((val) => {
     if (typeof val === "string" && val) return val.split(",");
@@ -368,15 +382,15 @@ const contentSchema = z.object({
 });
 
 export async function saveContent(
-  prevState: ContentActionState,
+  _: ContentActionState,
   formData: FormData
 ): Promise<ContentActionState> {
-  const supabase = await createClient();
+  const { auth, storage } = await createClient();
 
   // 1. Authenticate the user and find their author profile
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await auth.getUser();
 
   if (!user) {
     return { success: false, message: "Authentication failed. Please log in." };
@@ -395,7 +409,21 @@ export async function saveContent(
 
   // 2. Validate form data using Zod
   const rawFormData = Object.fromEntries(formData.entries());
-  const validatedFields = contentSchema.safeParse(rawFormData);
+  const validatedFields = contentSchema
+    .extend(
+      rawFormData.type === "research"
+        ? {
+            fileDocument: z
+              .string()
+              .min(12, "Report document file is required"),
+          }
+        : {
+            content: z
+              .string()
+              .min(50, "Content must be at least 50 characters"),
+          }
+    )
+    .safeParse(rawFormData);
 
   if (!validatedFields.success) {
     return {
@@ -418,7 +446,7 @@ export async function saveContent(
   }
 
   let imageUrl = data.featuredImage;
-
+  let reportUrl = data.fileDocument;
   try {
     // 3. Handle image upload if it's a new image (data URL)
     if (imageUrl.startsWith("data:image")) {
@@ -426,15 +454,32 @@ export async function saveContent(
       const buffer = Buffer.from(imageUrl.split(",")[1], "base64");
       const filePath = `content/blog/${data.slug}.${mimeType.split("/")[1]}`;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from(BUCKET_NAME) // Make sure this bucket exists in your Supabase project
+      const { data: uploadData, error: uploadError } = await storage
+        .from(IMAGE_BUCKET) // Make sure this bucket exists in your Supabase project
         .upload(filePath, buffer, { contentType: mimeType, upsert: true });
 
       if (uploadError) throw new Error(`Storage Error: ${uploadError.message}`);
 
-      imageUrl = supabase.storage
-        .from(BUCKET_NAME)
-        .getPublicUrl(uploadData.path).data.publicUrl;
+      imageUrl = storage.from(IMAGE_BUCKET).getPublicUrl(uploadData.path)
+        .data.publicUrl;
+    }
+
+    if (data.type === "research" && reportUrl.startsWith("data:")) {
+      const mimeType = reportUrl.split(":")[1].split(";")[0];
+      const buffer = Buffer.from(reportUrl.split(",")[1], "base64");
+      const filePath = `research/${data.slug}.${mimeType.split("/")[1]}`;
+
+      const bucket = storage.from(DOCUMENT_BUCKET);
+
+      const { data: uploadData, error: uploadError } = await bucket.upload(
+        filePath,
+        buffer,
+        { contentType: mimeType, upsert: true }
+      );
+
+      if (uploadError) throw new Error(`Storage Error: ${uploadError.message}`);
+
+      reportUrl = bucket.getPublicUrl(uploadData.path).data.publicUrl;
     }
 
     // 4. Perform database operations within a transaction
@@ -451,7 +496,7 @@ export async function saveContent(
         featured: data.isFeatured,
         status: data.status as ContentStatus,
         metaTitle: data.metaTitle || data.title,
-        metaDescription: data.metaDescription || data.summary,
+        metaDescription: data.metaDescription || data.summary.slice(0, 160),
         publicationDate: new Date(),
       });
       if (isEditMode) {
@@ -466,7 +511,7 @@ export async function saveContent(
             featured: data.isFeatured,
             status: data.status as ContentStatus,
             metaTitle: data.metaTitle || data.title,
-            metaDescription: data.metaDescription || data.summary,
+            metaDescription: data.metaDescription || data.summary.slice(0, 160),
           },
         });
       }
@@ -518,6 +563,25 @@ export async function saveContent(
           }
           await newsTransaction;
           break;
+        case "research":
+          const researchData: typeof researchReports.$inferInsert = {
+            slug: data.slug,
+            reportUrl,
+          };
+          let researchTransaction: any = tx
+            .insert(researchReports)
+            .values(researchData);
+          if (isEditMode) {
+            researchTransaction = researchTransaction.onConflictDoUpdate({
+              target: researchReports.slug,
+              set: {
+                content: data.content,
+              },
+            });
+          }
+          await researchTransaction;
+          break;
+
         default:
           break;
       }
@@ -525,7 +589,7 @@ export async function saveContent(
       // Handle tags
       if (data.tags.length > 0) {
         // Create tags that don't exist
-        const tagValues = data.tags.map((tag) => ({
+        const tagValues = data.tags.map((tag: string) => ({
           id: tag.toLowerCase().replace(/\s+/g, "-"),
           name: tag,
         }));
@@ -539,9 +603,9 @@ export async function saveContent(
         }
 
         // Insert new tag relationships
-        const contentTagValues = tagValues.map((tag) => ({
+        const contentTagValues = tagValues.map(({ id }: { id: string }) => ({
           contentSlug: data.slug,
-          tagId: tag.id,
+          tagId: id,
         }));
         await tx.insert(contentTags).values(contentTagValues);
       } else {

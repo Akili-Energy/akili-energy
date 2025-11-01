@@ -11,7 +11,12 @@ import Link from "next/link";
 import LoginForm from "./login-form";
 import { Suspense } from "react";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ redirect?: string }>;
+}) {
+  const { redirect: redirect = undefined } = (await searchParams) ?? {};
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
@@ -43,7 +48,7 @@ export default function LoginPage() {
         <div className="text-center text-sm">
           <span className="text-gray-600">Don't have an account? </span>
           <Link
-            href="/signup"
+            href={`/signup${redirect ? `?redirect=${redirect.includes("/") ? encodeURIComponent(redirect) : redirect}` : ""}`}
             className="text-akili-blue hover:underline font-medium"
           >
             Sign up

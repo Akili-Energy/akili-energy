@@ -630,13 +630,13 @@ CREATE TABLE IF NOT EXISTS tags (
 );
 
 CREATE TABLE IF NOT EXISTS content_tags (
-    content_slug VARCHAR(255) NOT NULL REFERENCES content(slug) ON DELETE CASCADE,
+    content_slug VARCHAR(200) NOT NULL REFERENCES content(slug) ON DELETE CASCADE,
     tag_id VARCHAR(32) NOT NULL REFERENCES tags(id) ON DELETE NO ACTION,
     PRIMARY KEY (content_slug, tag_id)
 );
 
 CREATE TABLE IF NOT EXISTS blog_posts (
-    slug VARCHAR(255) PRIMARY KEY REFERENCES content(slug) ON DELETE CASCADE,
+    slug VARCHAR(200) PRIMARY KEY REFERENCES content(slug) ON DELETE CASCADE,
     content TEXT NOT NULL, -- HTML/Markdown/Rich text
     editor_id UUID REFERENCES authors(id) ON DELETE SET NULL,
     revision_date TIMESTAMPTZ,
@@ -644,14 +644,14 @@ CREATE TABLE IF NOT EXISTS blog_posts (
 );
 
 CREATE TABLE IF NOT EXISTS news_articles (
-    slug VARCHAR(255) PRIMARY KEY REFERENCES content(slug) ON DELETE CASCADE,
+    slug VARCHAR(200) PRIMARY KEY REFERENCES content(slug) ON DELETE CASCADE,
     content TEXT NOT NULL, -- HTML/Markdown/Rich text
     source_url VARCHAR(255),
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS research_reports (
-    slug VARCHAR(255) PRIMARY KEY REFERENCES content(slug) ON DELETE CASCADE,
+    slug VARCHAR(200) PRIMARY KEY REFERENCES content(slug) ON DELETE CASCADE,
     report_url VARCHAR(255) UNIQUE NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

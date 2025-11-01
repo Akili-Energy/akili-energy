@@ -1,3 +1,31 @@
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user;
+-- inserts a row into public.users
+create function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  insert into public.users (id, email, name, profile_picture_url)
+  values (
+    new.id, 
+    new.email, 
+    COALESCE(
+      new.raw_user_meta_data->>'full_name', 
+      new.raw_user_meta_data->>'name', 
+      CONCAT(new.raw_user_meta_data ->> 'first_name', ' ', new.raw_user_meta_data ->> 'last_name')
+    ),
+    new.raw_user_meta_data->>'avatar_url'
+  );
+  return new;
+end;
+$$;
+-- trigger the function every time a user is created
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
 -- -- Custom types
 -- create type public.app_permission as enum ('channels.delete', 'messages.delete');
 

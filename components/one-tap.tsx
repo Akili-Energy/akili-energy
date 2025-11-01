@@ -55,6 +55,7 @@ const OneTapComponent = () => {
       // with chrome's removal of third-party cookies, we need to use FedCM instead (https://developers.google.com/identity/gsi/web/guides/fedcm-migration)
       use_fedcm_for_prompt: true,
     });
+    console.log("pathName: ", pathName);
     google.accounts.id.renderButton(document.getElementById("signinDiv")!, {
       theme: "outline",
       size: "large",

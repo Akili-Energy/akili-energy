@@ -330,6 +330,7 @@ export default function BulkUploadPage() {
       const projects = await fetchProjects();
       const companies = await fetchCompanies();
       const deals = await fetchDeals();
+      console.log(projects.map((p) => p.name));
       setInitialData({ projects, companies, deals });
     } catch (error) {
       console.error("Failed to load reference data:", error);
@@ -337,7 +338,7 @@ export default function BulkUploadPage() {
   };
 
   function filterArray<T>(arr: string[], set: T[]): T[] {
-    return arr.filter((el) => set.includes(el as T)) as T[];
+    return [...new Set(arr.filter((el) => set.includes(el as T)))] as T[];
   }
 
   function parseEnum<T>(value: string, enumValues: T[]): T | undefined {
@@ -667,7 +668,9 @@ export default function BulkUploadPage() {
 
               // Add to companies table if not exists
               if (
-                ![...companiesData, ...initialData.companies].find(
+                ![
+                  ...new Set([...companiesData, ...initialData.companies]),
+                ].find(
                   ({ id, name }) =>
                     id === companyId ||
                     name.toLowerCase() === target.toLowerCase()
@@ -727,7 +730,7 @@ export default function BulkUploadPage() {
 
               // Add to projects table if not exists
               if (
-                ![...projectsData, ...initialData.projects].find(
+                ![...new Set([...projectsData, ...initialData.projects])].find(
                   ({ id, name }) =>
                     id === projectId ||
                     name.toLowerCase() === target.toLowerCase()
@@ -840,7 +843,12 @@ export default function BulkUploadPage() {
       name: "deals",
       displayName: "Deals",
       icon: <Briefcase className="h-4 w-4" />,
-      data: dealsData,
+      data: dealsData.filter(
+        ({ id, update }) =>
+          !initialData.deals.some(
+            ({ id: dealId, name }) => dealId === id || name === update
+          )
+      ),
       columns: [
         {
           key: "update",
@@ -988,7 +996,12 @@ export default function BulkUploadPage() {
       name: "projects",
       displayName: "Projects",
       icon: <Factory className="h-4 w-4" />,
-      data: projectsData,
+      data: projectsData.filter(
+        (p1) =>
+          !initialData.projects.some(
+            (p2) => p2.id === p1.id || p2.name === p1.name
+          )
+      ),
       columns: [
         {
           key: "name",
@@ -1062,7 +1075,12 @@ export default function BulkUploadPage() {
       name: "companies",
       displayName: "Companies",
       icon: <Building className="h-4 w-4" />,
-      data: companiesData,
+      data: companiesData.filter(
+        (c1) =>
+          !initialData.companies.some(
+            (c2) => c2.id === c1.id || c2.name === c1.name
+          )
+      ),
       columns: [
         {
           key: "name",
@@ -1185,7 +1203,9 @@ export default function BulkUploadPage() {
         pressReleaseUrl: row["Press Release"]
           ? row["Press Release"]
           : undefined,
-        countries: country ? [...countries, country] : countries,
+        countries: country
+          ? ([...new Set([...countries, country])] as Country[])
+          : countries,
         vehicle: row["Investment vehicle"],
         status: parseEnum(
           row["Fundraising status"]?.toLowerCase().replaceAll(/\s+/g, "_"),
@@ -1219,7 +1239,7 @@ export default function BulkUploadPage() {
           equityTransactedPercentage: 0,
         });
         if (
-          ![...projectsData, ...initialData.projects].find(
+          ![...new Set([...projectsData, ...initialData.projects])].find(
             (p) =>
               p.id === projectId ||
               p.name.toLowerCase() === row["Project name"].toLowerCase()
@@ -1271,7 +1291,7 @@ export default function BulkUploadPage() {
           role: "financing",
         });
         if (
-          ![...companiesData, ...initialData.companies].find(
+          ![...new Set([...companiesData, ...initialData.companies])].find(
             (c) =>
               c.id === companyId ||
               c.name.toLowerCase() === row["Company"].toLowerCase()
@@ -1320,14 +1340,14 @@ export default function BulkUploadPage() {
                 row["Investor Type"]
                   ?.toLowerCase()
                   .replace("dfi", "development_finance_institution")
-                  .replaceAll(/^pe$/gmi, "private_equity")
+                  .replaceAll(/^pe$/gim, "private_equity")
                   .replaceAll(/\s+/g, "_"),
                 financingInvestorType.enumValues
               ),
               commitment: commitments[i],
             });
             if (
-              ![...companiesData, ...initialData.companies].find(
+              ![...new Set([...companiesData, ...initialData.companies])].find(
                 (c) =>
                   c.id === investorId ||
                   c.name.toLowerCase() === investorName.trim().toLowerCase()
@@ -1351,7 +1371,7 @@ export default function BulkUploadPage() {
             role: "advisor",
           });
           if (
-            ![...companiesData, ...initialData.companies].find(
+            ![...new Set([...companiesData, ...initialData.companies])].find(
               (c) =>
                 c.id === advisorId ||
                 c.name.toLowerCase() === advisorName.trim().toLowerCase()
@@ -1368,7 +1388,12 @@ export default function BulkUploadPage() {
         name: "deals",
         displayName: "Financing Deals",
         icon: <Briefcase className="h-4 w-4" />,
-        data: dealsData,
+        data: dealsData.filter(
+          ({ id, update }) =>
+            !initialData.deals.some(
+              ({ id: dealId, name }) => dealId === id || name === update
+            )
+        ),
         columns: [
           {
             key: "update",
@@ -1495,7 +1520,12 @@ export default function BulkUploadPage() {
         name: "projects",
         displayName: "Projects",
         icon: <Factory className="h-4 w-4" />,
-        data: projectsData,
+        data: projectsData.filter(
+          (p1) =>
+            !initialData.projects.some(
+              (p2) => p2.id === p1.id || p2.name === p1.name
+            )
+        ),
         columns: [
           {
             key: "name",
@@ -1528,7 +1558,7 @@ export default function BulkUploadPage() {
             options: technology.enumValues,
             dictionary: "common",
           },
-          
+
           {
             key: "subSectors",
             label: "Sub-sectors",
@@ -1562,7 +1592,12 @@ export default function BulkUploadPage() {
         name: "companies",
         displayName: "Companies",
         icon: <Building className="h-4 w-4" />,
-        data: companiesData,
+        data: companiesData.filter(
+          (c1) =>
+            !initialData.companies.some(
+              (c2) => c2.id === c1.id || c2.name === c1.name
+            )
+        ),
         columns: [
           {
             key: "name",
@@ -1655,11 +1690,10 @@ export default function BulkUploadPage() {
     const companiesData: BaseModel<NewCompany>[] = [];
 
     data.forEach((row, index) => {
+      const assetName = row["Asset Name Involved"];
+
       const dealId = generateId(row["Deal update"] || `deal-${index}`, "deal");
-      const projectId = generateId(
-        row["Asset Name Involved"] || `project-${index}`,
-        "project"
-      );
+      const projectId = generateId(assetName || `project-${index}`, "project");
 
       const countries = convertCountriesToCodes(
         row.Country?.split(";").map((s: string) => s.trim()) || []
@@ -1704,24 +1738,24 @@ export default function BulkUploadPage() {
         countries,
       });
 
-      if (row["Asset Name Involved"]) {
+      if (assetName) {
         dealsAssetsData.push({
           id: `${dealId}-${projectId}`,
           dealId,
           dealName: row["Deal update"],
           assetId: projectId,
-          assetName: row["Asset Name Involved"],
+          assetName,
         });
         if (
-          ![...projectsData, ...initialData.projects].find(
+          ![...new Set([...projectsData, ...initialData.projects])].find(
             (p) =>
               p.id === projectId ||
-              p.name.toLowerCase() === row["Asset Name Involved"].toLowerCase()
+              p.name.toLowerCase() === assetName.toLowerCase()
           )
         ) {
           projectsData.push({
             id: projectId,
-            name: row["Asset Name Involved"],
+            name: assetName,
             stage: parseEnum(
               row["Asset Life-Cycle"]?.toLowerCase().replaceAll(/\s+/g, "_"),
               projectStage.enumValues
@@ -1748,7 +1782,7 @@ export default function BulkUploadPage() {
           role: "offtaker",
         });
         if (
-          ![...companiesData, ...initialData.companies].find(
+          ![...new Set([...companiesData, ...initialData.companies])].find(
             (c) =>
               c.id === companyId ||
               c.name.toLowerCase() === row["Offtaker"].trim().toLowerCase()
@@ -1778,7 +1812,7 @@ export default function BulkUploadPage() {
             role: "supplier",
           });
           if (
-            ![...companiesData, ...initialData.companies].find(
+            ![...new Set([...companiesData, ...initialData.companies])].find(
               (c) =>
                 c.id === companyId ||
                 c.name.toLowerCase() === name.trim().toLowerCase()
@@ -1800,7 +1834,7 @@ export default function BulkUploadPage() {
             role: "grid_operator",
           });
           if (
-            ![...companiesData, ...initialData.companies].find(
+            ![...new Set([...companiesData, ...initialData.companies])].find(
               (c) =>
                 c.id === companyId ||
                 c.name.toLowerCase() === name.trim().toLowerCase()
@@ -1822,7 +1856,7 @@ export default function BulkUploadPage() {
             role: "advisor",
           });
           if (
-            ![...companiesData, ...initialData.companies].find(
+            ![...new Set([...companiesData, ...initialData.companies])].find(
               (c) =>
                 c.id === companyId ||
                 c.name.toLowerCase() === name.trim().toLowerCase()
@@ -1838,7 +1872,12 @@ export default function BulkUploadPage() {
         name: "deals",
         displayName: "PPA Deals",
         icon: <Briefcase className="h-4 w-4" />,
-        data: dealsData,
+        data: dealsData.filter(
+          ({ id, update }) =>
+            !initialData.deals.some(
+              ({ id: dealId, name }) => dealId === id || name === update
+            )
+        ),
         columns: [
           { key: "update", label: "Deal Update", type: "text" },
           {
@@ -1936,7 +1975,12 @@ export default function BulkUploadPage() {
         name: "projects",
         displayName: "Projects",
         icon: <Factory className="h-4 w-4" />,
-        data: projectsData,
+        data: projectsData.filter(
+          (p1) =>
+            !initialData.projects.some(
+              (p2) => p2.id === p1.id || p2.name === p1.name
+            )
+        ),
         columns: [
           {
             key: "name",
@@ -1987,7 +2031,12 @@ export default function BulkUploadPage() {
         name: "companies",
         displayName: "Companies",
         icon: <Building className="h-4 w-4" />,
-        data: companiesData,
+        data: companiesData.filter(
+          (c1) =>
+            !initialData.companies.some(
+              (c2) => c2.id === c1.id || c2.name === c1.name
+            )
+        ),
         columns: [
           {
             key: "name",
@@ -2089,7 +2138,7 @@ export default function BulkUploadPage() {
           assetName: row["Assets name"],
         });
         if (
-          ![...projectsData, ...initialData.projects].find(
+          ![...new Set([...projectsData, ...initialData.projects])].find(
             (p) =>
               p.id === projectId ||
               p.name.toLowerCase() === row["Assets name"].toLowerCase()
@@ -2136,7 +2185,7 @@ export default function BulkUploadPage() {
               role: "joint_venture",
             });
             if (
-              ![...companiesData, ...initialData.companies].find(
+              ![...new Set([...companiesData, ...initialData.companies])].find(
                 (c) =>
                   c.id === companyId ||
                   c.name.toLowerCase() === name.trim().toLowerCase()
@@ -2164,7 +2213,12 @@ export default function BulkUploadPage() {
         name: "deals",
         displayName: "JV Deals",
         icon: <Briefcase className="h-4 w-4" />,
-        data: dealsData,
+        data: dealsData.filter(
+          ({ id, update }) =>
+            !initialData.deals.some(
+              ({ id: dealId, name }) => dealId === id || name === update
+            )
+        ),
         columns: [
           { key: "update", label: "Deal Update", type: "text" },
           {
@@ -2254,7 +2308,12 @@ export default function BulkUploadPage() {
         name: "projects",
         displayName: "Projects",
         icon: <Factory className="h-4 w-4" />,
-        data: projectsData,
+        data: projectsData.filter(
+          (p1) =>
+            !initialData.projects.some(
+              (p2) => p2.id === p1.id || p2.name === p1.name
+            )
+        ),
         columns: [
           {
             key: "name",
@@ -2313,7 +2372,12 @@ export default function BulkUploadPage() {
         name: "companies",
         displayName: "Companies",
         icon: <Building className="h-4 w-4" />,
-        data: companiesData,
+        data: companiesData.filter(
+          (c1) =>
+            !initialData.companies.some(
+              (c2) => c2.id === c1.id || c2.name === c1.name
+            )
+        ),
         columns: [
           {
             key: "name",
@@ -2384,9 +2448,12 @@ export default function BulkUploadPage() {
     const companiesData: BaseModel<NewCompany>[] = [];
 
     data.forEach((row, index) => {
-      const dealId = generateId(row["Deal update"] || `deal-${index}`, "deal");
+      const dealUpdate = row["Deal update"];
+      const projectName = row["Project Name"];
+
+      const dealId = generateId(dealUpdate || `deal-${index}`, "deal");
       const projectId = generateId(
-        row["Project Name"] || `project-${index}`,
+        projectName || `project-${index}`,
         "project"
       );
 
@@ -2399,7 +2466,7 @@ export default function BulkUploadPage() {
 
       dealsData.push({
         id: dealId,
-        update: row["Deal update"],
+        update: dealUpdate,
         type: "project_update",
         subtype: parseEnum(
           row["Project stage"]?.toLowerCase().replaceAll(/\s+/g, "_"),
@@ -2424,98 +2491,111 @@ export default function BulkUploadPage() {
         numbers: evaluationCriteriaValues,
       } = parseCommaSeparatedWithNumbers(row["Evaluation criteria"] || "");
 
-      projectsData.push({
-        id: projectId,
-        name: row["Project Name"],
-        country: countries.length ? countries[0] : undefined,
-        sectors: parseSectors(row, projectSector.enumValues) as ProjectSector[],
-        technologies: parseTechnologies(row),
-        subSectors: parseSubSectors(row) as ProjectSubSector[],
-        segments: parseSegments(row),
-        investmentCosts: parseNumber(
-          parseFloat(row["Project Investment ($ million)"])
-        ),
-        plantCapacity: parseNumber(parseFloat(row["Plant capacity (MW)"])),
-        stage: parseEnum(
-          row["Project stage"]
+      if (
+        ![...new Set([...projectsData, ...initialData.projects])].find(
+          (p) =>
+            p.id === projectId ||
+            p.name.toLowerCase() === projectName.toLowerCase()
+        )
+      ) {
+        projectsData.push({
+          id: projectId,
+          name: projectName,
+          country: countries.length ? countries[0] : undefined,
+          sectors: parseSectors(
+            row,
+            projectSector.enumValues
+          ) as ProjectSector[],
+          technologies: parseTechnologies(row),
+          subSectors: parseSubSectors(row) as ProjectSubSector[],
+          segments: parseSegments(row),
+          investmentCosts: parseNumber(
+            parseFloat(row["Project Investment ($ million)"])
+          ),
+          plantCapacity: parseNumber(parseFloat(row["Plant capacity (MW)"])),
+          stage: parseEnum(
+            row["Project stage"]
+              ?.toLowerCase()
+              .replace("rtb", "ready_to_build")
+              .replaceAll(/\s+/g, "_"),
+            projectStage.enumValues
+          ),
+          milestone: parseProjectMilestone(row),
+          status: parseEnum(
+            row["Project status"]?.toLowerCase().replaceAll(/\s+/g, "_"),
+            projectStatus.enumValues
+          ),
+          ...parseRevenueModel(row),
+          onOffGrid,
+          onOffShore: row["Onshore/Offshore"]
             ?.toLowerCase()
-            .replace("rtb", "ready_to_build")
-            .replaceAll(/\s+/g, "_"),
-          projectStage.enumValues
-        ),
-        milestone: parseProjectMilestone(row),
-        status: parseEnum(
-          row["Project status"]?.toLowerCase().replaceAll(/\s+/g, "_"),
-          projectStatus.enumValues
-        ),
-        ...parseRevenueModel(row),
-        onOffGrid,
-        onOffShore: row["Onshore/Offshore"]?.toLowerCase().includes("onshore"),
-        financingStrategy: financingStrategyNames.reduce((acc, key, i) => {
-          const parsedKey = parseEnum(key.toLowerCase().trim(), [
-            ...PROJECT_FINANCING_STRATEGIES,
-          ]);
-          if (parsedKey) {
-            acc[parsedKey] = financingStrategyValues[i];
-          }
-          return acc;
-        }, {} as ProjectFinancingStrategy),
-        contractType: filterArray(
-          toArray(row["Contract type"]),
-          projectContractType.enumValues
-        ),
-        colocatedStorage: row["Co-located storage"]?.toLowerCase() === "yes",
-        colocatedStorageCapacity: row["Co-located storage capacity"],
-        // colocatedStorageCapacity: parseNumber(
-        //   parseFloat(row["Co-located storage capacity"])
-        // ),
-        fundingSecured: row["Financing secured"]?.toLowerCase() === "yes",
-        impacts: row.Impacts,
-        insights: row["Insights/Comments"],
-        features: row.Features,
-        constructionStart: row["Start Construction date"]
-          ? parseDate(new Date(row["Start Construction date"]))
-          : undefined,
-        operationalDate: row["Operational date"]
-          ? parseDate(new Date(row["Operational date"]))
-          : undefined,
-        location:
-          row.Latitude && row.Longitude
-            ? [parseFloat(row.Longitude), parseFloat(row.Latitude)]
+            .includes("onshore"),
+          financingStrategy: financingStrategyNames.reduce((acc, key, i) => {
+            const parsedKey = parseEnum(key.toLowerCase().trim(), [
+              ...PROJECT_FINANCING_STRATEGIES,
+            ]);
+            if (parsedKey) {
+              acc[parsedKey] = financingStrategyValues[i];
+            }
+            return acc;
+          }, {} as ProjectFinancingStrategy),
+          contractType: filterArray(
+            toArray(row["Contract type"]),
+            projectContractType.enumValues
+          ),
+          colocatedStorage: row["Co-located storage"]?.toLowerCase() === "yes",
+          colocatedStorageCapacity: row["Co-located storage capacity"],
+          // colocatedStorageCapacity: parseNumber(
+          //   parseFloat(row["Co-located storage capacity"])
+          // ),
+          fundingSecured: row["Financing secured"]?.toLowerCase() === "yes",
+          impacts: row.Impacts,
+          insights: row["Insights/Comments"],
+          features: row.Features,
+          constructionStart: row["Start Construction date"]
+            ? parseDate(new Date(row["Start Construction date"]))
             : undefined,
-        transmissionInfrastructureDetails:
-          row["Transmission infrastructure details"],
-        ppaSigned: row["PPA Signed"]?.toLowerCase() === "yes",
-        financialClosingDate: row["FInancial Close date"]
-          ? parseDate(new Date(row["FInancial Close date"]))
-          : undefined,
-        eiaApproved: row["EIA approval received"]?.toLowerCase() === "yes",
-        gridConnectionApproved:
-          row["Grid connection approved"]?.toLowerCase() === "yes",
-        tenderObjective: parseEnum(
-          row["Tender objective"]?.toLowerCase().replaceAll(/\s+/g, "_"),
-          projectTenderObjective.enumValues
-        ),
-        bidSubmissionDeadline: row["Bid submission deadline"]
-          ? parseDate(new Date(row["Bid submission deadline"]))
-          : undefined,
-        bidsReceived: parseNumber(parseInt(row["Nber of bids received"])),
-        winningBid: parseNumber(parseFloat(row["Winning bid price"])),
-        evaluationCriteria: evaluationCriteriaNames.reduce((acc, key, i) => {
-          const parsedKey = parseEnum(key.toLowerCase().trim(), [
-            ...PROPOSAL_EVALUATION_CRITERIA,
-          ]);
-          if (parsedKey) {
-            acc[parsedKey] = evaluationCriteriaValues[i];
-          }
-          return acc;
-        }, {} as ProposalEvaluationCriteria),
-      });
+          operationalDate: row["Operational date"]
+            ? parseDate(new Date(row["Operational date"]))
+            : undefined,
+          location:
+            row.Latitude && row.Longitude
+              ? [parseFloat(row.Longitude), parseFloat(row.Latitude)]
+              : undefined,
+          transmissionInfrastructureDetails:
+            row["Transmission infrastructure details"],
+          ppaSigned: row["PPA Signed"]?.toLowerCase() === "yes",
+          financialClosingDate: row["FInancial Close date"]
+            ? parseDate(new Date(row["FInancial Close date"]))
+            : undefined,
+          eiaApproved: row["EIA approval received"]?.toLowerCase() === "yes",
+          gridConnectionApproved:
+            row["Grid connection approved"]?.toLowerCase() === "yes",
+          tenderObjective: parseEnum(
+            row["Tender objective"]?.toLowerCase().replaceAll(/\s+/g, "_"),
+            projectTenderObjective.enumValues
+          ),
+          bidSubmissionDeadline: row["Bid submission deadline"]
+            ? parseDate(new Date(row["Bid submission deadline"]))
+            : undefined,
+          bidsReceived: parseNumber(parseInt(row["Nber of bids received"])),
+          winningBid: parseNumber(parseFloat(row["Winning bid price"])),
+          evaluationCriteria: evaluationCriteriaNames.reduce((acc, key, i) => {
+            const parsedKey = parseEnum(key.toLowerCase().trim(), [
+              ...PROPOSAL_EVALUATION_CRITERIA,
+            ]);
+            if (parsedKey) {
+              acc[parsedKey] = evaluationCriteriaValues[i];
+            }
+            return acc;
+          }, {} as ProposalEvaluationCriteria),
+        });
+      }
 
       dealsAssetsData.push({
         id: `${dealId}-${projectId}`,
         dealId,
-        dealName: row["Deal update"],
+        dealName: dealUpdate,
         assetId: projectId,
         assetName: row["Project Name"],
       });
@@ -2550,7 +2630,7 @@ export default function BulkUploadPage() {
               ...sponsor,
             });
             if (
-              ![...companiesData, ...initialData.companies].find(
+              ![...new Set([...companiesData, ...initialData.companies])].find(
                 (c) =>
                   c.id === companyId ||
                   c.name.toLowerCase() === name.trim().toLowerCase() ||
@@ -2579,7 +2659,12 @@ export default function BulkUploadPage() {
         name: "deals",
         displayName: "Project Updates (Deals)",
         icon: <Briefcase className="h-4 w-4" />,
-        data: dealsData,
+        data: dealsData.filter(
+          ({ id, update }) =>
+            !initialData.deals.some(
+              ({ id: dealId, name }) => dealId === id || name === update
+            )
+        ),
         columns: [
           { key: "update", label: "Deal Update", type: "text" },
           {
@@ -2611,7 +2696,12 @@ export default function BulkUploadPage() {
         name: "projects",
         displayName: "Projects",
         icon: <Factory className="h-4 w-4" />,
-        data: projectsData,
+        data: projectsData.filter(
+          (p1) =>
+            !initialData.projects.some(
+              (p2) => p2.id === p1.id || p2.name === p1.name
+            )
+        ),
         columns: [
           {
             key: "name",
@@ -2831,7 +2921,12 @@ export default function BulkUploadPage() {
         name: "companies",
         displayName: "Companies",
         icon: <Building className="h-4 w-4" />,
-        data: companiesData,
+        data: companiesData.filter(
+          (c1) =>
+            !initialData.companies.some(
+              (c2) => c2.id === c1.id || c2.name === c1.name
+            )
+        ),
         columns: [
           {
             key: "name",
@@ -2889,95 +2984,108 @@ export default function BulkUploadPage() {
         numbers: evaluationCriteriaValues,
       } = parseCommaSeparatedWithNumbers(row["Evaluation criteria"] || "");
 
-      projectsData.push({
-        id: projectId,
-        name: row["Project Name"],
-        country: countries.length ? countries[0] : undefined,
-        sectors: parseSectors(row, projectSector.enumValues) as ProjectSector[],
-        technologies: parseTechnologies(row),
-        subSectors: parseSubSectors(row) as ProjectSubSector[],
-        segments: parseSegments(row),
-        investmentCosts: parseNumber(
-          parseFloat(row["Project Investment ($ million)"])
-        ),
-        plantCapacity: parseNumber(parseFloat(row["Plant capacity (MW)"])),
-        stage: parseEnum(
-          (row["Project stage"] ? row["Project stage"] : row["Project Stage"])
+      if (
+        ![...new Set([...projectsData, ...initialData.projects])].find(
+          (p) =>
+            p.id === projectId ||
+            p.name.toLowerCase() === row["Project Name"].toLowerCase()
+        )
+      ) {
+        projectsData.push({
+          id: projectId,
+          name: row["Project Name"],
+          country: countries.length ? countries[0] : undefined,
+          sectors: parseSectors(
+            row,
+            projectSector.enumValues
+          ) as ProjectSector[],
+          technologies: parseTechnologies(row),
+          subSectors: parseSubSectors(row) as ProjectSubSector[],
+          segments: parseSegments(row),
+          investmentCosts: parseNumber(
+            parseFloat(row["Project Investment ($ million)"])
+          ),
+          plantCapacity: parseNumber(parseFloat(row["Plant capacity (MW)"])),
+          stage: parseEnum(
+            (row["Project stage"] ? row["Project stage"] : row["Project Stage"])
+              ?.toLowerCase()
+              .replace("rtb", "ready_to_build")
+              .replaceAll(/\s+/g, "_"),
+            projectStage.enumValues
+          ),
+          milestone: parseProjectMilestone(row),
+          status: parseEnum(
+            row["Project status"]?.toLowerCase().replaceAll(/\s+/g, "_"),
+            projectStatus.enumValues
+          ),
+          ...parseRevenueModel(row),
+          onOffGrid:
+            row["On grid/Off grid"]?.toLowerCase().replace("-", " ").trim() ===
+            "on grid",
+          onOffShore: row["Onshore/Offshore"]
             ?.toLowerCase()
-            .replace("rtb", "ready_to_build")
-            .replaceAll(/\s+/g, "_"),
-          projectStage.enumValues
-        ),
-        milestone: parseProjectMilestone(row),
-        status: parseEnum(
-          row["Project status"]?.toLowerCase().replaceAll(/\s+/g, "_"),
-          projectStatus.enumValues
-        ),
-        ...parseRevenueModel(row),
-        onOffGrid:
-          row["On grid/Off grid"]?.toLowerCase().replace("-", " ").trim() ===
-          "on grid",
-        onOffShore: row["Onshore/Offshore"]?.toLowerCase().includes("onshore"),
-        financingStrategy: financingStrategyNames.reduce((acc, key, i) => {
-          const parsedKey = parseEnum(key.toLowerCase().trim(), [
-            ...PROJECT_FINANCING_STRATEGIES,
-          ]);
-          if (parsedKey) {
-            acc[parsedKey] = financingStrategyValues[i];
-          }
-          return acc;
-        }, {} as ProjectFinancingStrategy),
-        contractType: filterArray(
-          toArray(row["Contract type"]),
-          projectContractType.enumValues
-        ),
-        colocatedStorage: row["Co-located storage"]?.toLowerCase() === "yes",
-        colocatedStorageCapacity: row["Co-located storage capacity"],
-        // colocatedStorageCapacity: parseNumber(
-        //   parseFloat(row["Co-located storage capacity"])
-        // ),
-        fundingSecured: row["Financing secured"]?.toLowerCase() === "yes",
-        impacts: row.Impacts,
-        insights: row.Comments,
-        features: row.Features,
-        constructionStart: row["Start Construction date"]
-          ? parseDate(new Date(row["Start Construction date"]))
-          : undefined,
-        operationalDate: row["Operational date"]
-          ? parseDate(new Date(row["Operational date"]))
-          : undefined,
-        location:
-          row.Latitude && row.Longitude
-            ? [parseFloat(row.Longitude), parseFloat(row.Latitude)]
+            .includes("onshore"),
+          financingStrategy: financingStrategyNames.reduce((acc, key, i) => {
+            const parsedKey = parseEnum(key.toLowerCase().trim(), [
+              ...PROJECT_FINANCING_STRATEGIES,
+            ]);
+            if (parsedKey) {
+              acc[parsedKey] = financingStrategyValues[i];
+            }
+            return acc;
+          }, {} as ProjectFinancingStrategy),
+          contractType: filterArray(
+            toArray(row["Contract type"]),
+            projectContractType.enumValues
+          ),
+          colocatedStorage: row["Co-located storage"]?.toLowerCase() === "yes",
+          colocatedStorageCapacity: row["Co-located storage capacity"],
+          // colocatedStorageCapacity: parseNumber(
+          //   parseFloat(row["Co-located storage capacity"])
+          // ),
+          fundingSecured: row["Financing secured"]?.toLowerCase() === "yes",
+          impacts: row.Impacts,
+          insights: row.Comments,
+          features: row.Features,
+          constructionStart: row["Start Construction date"]
+            ? parseDate(new Date(row["Start Construction date"]))
             : undefined,
-        transmissionInfrastructureDetails:
-          row["Transmission infrastructure details"],
-        ppaSigned: row["PPA Signed"]?.toLowerCase() === "yes",
-        financialClosingDate: row["FInancial Close date"]
-          ? parseDate(new Date(row["FInancial Close date"]))
-          : undefined,
-        eiaApproved: row["EIA approval received"]?.toLowerCase() === "yes",
-        gridConnectionApproved:
-          row["Grid connection approved"]?.toLowerCase() === "yes",
-        tenderObjective: parseEnum(
-          row["Tender objective"]?.toLowerCase().replaceAll(/\s+/g, "_"),
-          projectTenderObjective.enumValues
-        ),
-        bidSubmissionDeadline: row["Bid submission deadline"]
-          ? parseDate(new Date(row["Bid submission deadline"]))
-          : undefined,
-        bidsReceived: parseNumber(parseInt(row["Nber of bids received"])),
-        winningBid: parseNumber(parseFloat(row["Winning bid price"])),
-        evaluationCriteria: evaluationCriteriaNames.reduce((acc, key, i) => {
-          const parsedKey = parseEnum(key.toLowerCase().trim(), [
-            ...PROPOSAL_EVALUATION_CRITERIA,
-          ]);
-          if (parsedKey) {
-            acc[parsedKey] = evaluationCriteriaValues[i];
-          }
-          return acc;
-        }, {} as ProposalEvaluationCriteria),
-      });
+          operationalDate: row["Operational date"]
+            ? parseDate(new Date(row["Operational date"]))
+            : undefined,
+          location:
+            row.Latitude && row.Longitude
+              ? [parseFloat(row.Longitude), parseFloat(row.Latitude)]
+              : undefined,
+          transmissionInfrastructureDetails:
+            row["Transmission infrastructure details"],
+          ppaSigned: row["PPA Signed"]?.toLowerCase() === "yes",
+          financialClosingDate: row["FInancial Close date"]
+            ? parseDate(new Date(row["FInancial Close date"]))
+            : undefined,
+          eiaApproved: row["EIA approval received"]?.toLowerCase() === "yes",
+          gridConnectionApproved:
+            row["Grid connection approved"]?.toLowerCase() === "yes",
+          tenderObjective: parseEnum(
+            row["Tender objective"]?.toLowerCase().replaceAll(/\s+/g, "_"),
+            projectTenderObjective.enumValues
+          ),
+          bidSubmissionDeadline: row["Bid submission deadline"]
+            ? parseDate(new Date(row["Bid submission deadline"]))
+            : undefined,
+          bidsReceived: parseNumber(parseInt(row["Nber of bids received"])),
+          winningBid: parseNumber(parseFloat(row["Winning bid price"])),
+          evaluationCriteria: evaluationCriteriaNames.reduce((acc, key, i) => {
+            const parsedKey = parseEnum(key.toLowerCase().trim(), [
+              ...PROPOSAL_EVALUATION_CRITERIA,
+            ]);
+            if (parsedKey) {
+              acc[parsedKey] = evaluationCriteriaValues[i];
+            }
+            return acc;
+          }, {} as ProposalEvaluationCriteria),
+        });
+      }
 
       const companyRoles: { field: string; role: ProjectCompanyRole }[] = [
         { field: "Grid Operator", role: "grid_operator" },
@@ -3009,7 +3117,7 @@ export default function BulkUploadPage() {
               ...sponsor,
             });
             if (
-              ![...companiesData, ...initialData.companies].find(
+              ![...new Set([...companiesData, ...initialData.companies])].find(
                 (c) =>
                   c.id === companyId ||
                   c.name.toLowerCase() === name.trim().toLowerCase() ||
@@ -3038,7 +3146,12 @@ export default function BulkUploadPage() {
         name: "projects",
         displayName: "Projects",
         icon: <Factory className="h-4 w-4" />,
-        data: projectsData,
+        data: projectsData.filter(
+          (p1) =>
+            !initialData.projects.some(
+              (p2) => p2.id === p1.id || p2.name === p1.name
+            )
+        ),
         columns: [
           {
             key: "name",
@@ -3255,7 +3368,12 @@ export default function BulkUploadPage() {
         name: "companies",
         displayName: "Companies",
         icon: <Building className="h-4 w-4" />,
-        data: companiesData,
+        data: companiesData.filter(
+          (c1) =>
+            !initialData.companies.some(
+              (c2) => c2.id === c1.id || c2.name === c1.name
+            )
+        ),
         columns: [
           {
             key: "name",
@@ -3354,7 +3472,12 @@ export default function BulkUploadPage() {
         name: "companies",
         displayName: "Companies",
         icon: <Building className="h-4 w-4" />,
-        data: companiesData,
+        data: companiesData.filter(
+          (c1) =>
+            !initialData.companies.some(
+              (c2) => c2.id === c1.id || c2.name === c1.name
+            )
+        ),
         columns: [
           {
             key: "name",
@@ -3831,11 +3954,15 @@ export default function BulkUploadPage() {
         switch (field.type) {
           case "link":
             const options = [
-              ...initialData[field.linkTo!],
-              ...(tableData
-                .find((t) => t.name === field.linkTo)
-                ?.data.map((item: any) => ({ id: item.id, name: item.name })) ||
-                []),
+              ...new Set([
+                ...initialData[field.linkTo!],
+                ...(tableData
+                  .find((t) => t.name === field.linkTo)
+                  ?.data.map((item: any) => ({
+                    id: item.id,
+                    name: item.name,
+                  })) || []),
+              ]),
             ];
             return (
               <Select

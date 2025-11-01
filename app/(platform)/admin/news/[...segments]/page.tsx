@@ -164,10 +164,10 @@ export default function CreateEditNewsPage({
                     required
                     maxLength={72}
                     defaultValue={article?.title}
-                    onChange={({target: {value}}) => {
+                    onChange={({ target: { value } }) => {
                       if (mode === "create") {
-                        setSlug(generateSlug(value))
-                      } 
+                        setSlug(generateSlug(value));
+                      }
                     }}
                   />
                   {state.errors?.title && (
@@ -249,9 +249,11 @@ export default function CreateEditNewsPage({
                     maxLength={200}
                     defaultValue={article?.slug}
                     value={mode === "create" ? slug ?? undefined : undefined}
-                    onChange={({ target: { value } }) =>
-                      (value = generateSlug(value))
-                    }
+                    onChange={({ target: { value } }) => {
+                      const newSlug = generateSlug(value);
+                      value = newSlug;
+                      setSlug(newSlug);
+                    }}
                   />
                   {state.errors?.slug && (
                     <p className="text-sm text-destructive mt-1">
@@ -261,7 +263,10 @@ export default function CreateEditNewsPage({
                 </div>
                 <div>
                   <Label htmlFor="status">Status</Label>
-                  <Select name="status" defaultValue={article?.status ?? "published"}>
+                  <Select
+                    name="status"
+                    defaultValue={article?.status ?? "published"}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -280,7 +285,7 @@ export default function CreateEditNewsPage({
                     name="isFeatured"
                     defaultChecked={article?.featured ?? undefined}
                   />
-                  <Label htmlFor="isFeatured">Feature this article</Label>
+                  <Label htmlFor="isFeatured">Feature article</Label>
                 </div>
                 <Button type="submit" disabled={isPending} className="w-full">
                   {isPending ? "Saving..." : "Save Article"}

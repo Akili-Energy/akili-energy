@@ -237,5 +237,5 @@ export type NewCompany = NewInsertModel<typeof companies.$inferInsert>;
 export type ActionState = {
   success: boolean;
   message: string;
-  errors?: Record<string, string[]>;
+  errors?: Record<string, string[] | undefined>;
 }

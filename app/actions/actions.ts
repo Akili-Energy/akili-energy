@@ -93,7 +93,7 @@ export async function fetchProjects() {
             columns: { technology: true },
           },
         },
-        orderBy: (projects, { asc }) => [asc(projects.name)]
+        orderBy: (projects, { asc }) => [asc(projects.name)],
       })
     ).map(({ country, projectsSectors, projectsTechnologies, ...project }) => ({
       ...project,
@@ -126,7 +126,7 @@ export async function fetchCompanies() {
             columns: { technology: true },
           },
         },
-        orderBy: (companies, { asc }) => [asc(companies.name)]
+        orderBy: (companies, { asc }) => [asc(companies.name)],
       })
     ).map(({ companiesSectors, companiesTechnologies, ...company }) => ({
       ...company,
@@ -136,6 +136,86 @@ export async function fetchCompanies() {
   } catch (error) {
     console.error("Error fetching companies:", error);
     throw new Error("Failed to fetch companies");
+  }
+}
+
+export async function getProjectsCompanies() {
+  try {
+    return (
+      await db.query.projectsCompanies.findMany({
+        columns: {
+          projectId: true,
+          companyId: true,
+          role: true,
+        },
+        with: {
+          project: { columns: { name: true } },
+          company: { columns: { name: true } },
+        },
+      })
+    ).map(
+      ({
+        project: { name: projectName },
+        company: { name: companyName },
+        ...projectsCompanies
+      }) => ({ ...projectsCompanies, projectName, companyName })
+    );
+  } catch (error) {
+    console.error("Error fetching projects-companies:", error);
+    throw new Error("Failed to fetch projects-companies");
+  }
+}
+
+export async function getDealsCompanies() {
+  try {
+    return (
+      await db.query.dealsCompanies.findMany({
+        columns: {
+          dealId: true,
+          companyId: true,
+          role: true,
+        },
+        with: {
+          deal: { columns: { update: true } },
+          company: { columns: { name: true } },
+        },
+      })
+    ).map(
+      ({
+        deal: { update: dealUpdate },
+        company: { name: companyName },
+        ...dealsCompanies
+      }) => ({ ...dealsCompanies, dealUpdate, companyName })
+    );
+  } catch (error) {
+    console.error("Error fetching Deals-Companies:", error);
+    throw new Error("Failed to fetch Deals-Companies");
+  }
+}
+
+export async function getDealsAssets() {
+  try {
+    return (
+      await db.query.dealsAssets.findMany({
+        columns: {
+          dealId: true,
+          assetId: true,
+        },
+        with: {
+          deal: { columns: { update: true } },
+          asset: { columns: { name: true } },
+        },
+      })
+    ).map(
+      ({
+        deal: { update: dealUpdate },
+        asset: { name: assetName },
+        ...dealsAssets
+      }) => ({ ...dealsAssets, dealUpdate, assetName })
+    );
+  } catch (error) {
+    console.error("Error fetching Deals-Assets:", error);
+    throw new Error("Failed to fetch Deals-Assets");
   }
 }
 
@@ -178,9 +258,15 @@ export async function seedDatabase(payload: {
 
         const value: string = row[field];
         if (countries && acc.countries)
-          acc.countries[value] = countries as Country[];
-        acc.sectors[value] = sectors as Sector[];
-        acc.technologies[value] = technologies as Technology[];
+          acc.countries[value] = Array.isArray(countries)
+            ? ([...new Set(countries)] as Country[])
+            : [];
+        acc.sectors[value] = Array.isArray(sectors)
+          ? ([...new Set(sectors)] as Sector[])
+          : [];
+        acc.technologies[value] = Array.isArray(technologies)
+          ? ([...new Set(technologies)] as Technology[])
+          : [];
 
         return acc;
       },
@@ -221,7 +307,8 @@ export async function seedDatabase(payload: {
       const insertData = <T extends PgTableWithColumns<any>>(
         table: T,
         data: Array<T["$inferInsert"]>
-      ) => tx.insert(table).values(data).onConflictDoNothing();
+      ) => tx.insert(table).values(data);
+      // .onConflictDoNothing();
 
       const insertLinkedData = <
         T extends PgTableWithColumns<any>,
@@ -304,6 +391,11 @@ export async function seedDatabase(payload: {
           .filter((row) => row[id1 as string] && row[id2 as string]);
         if (tableData.length) return await insertData(table, tableData);
       };
+
+      //
+      const allDeals = await fetchDeals();
+      const allProjects = await fetchProjects();
+      const allCompanies = await fetchCompanies();
 
       // 1. Insert core entities first (Companies, Projects, Deals)
       // Using onConflictDoNothing to avoid errors if an entity already exists.
@@ -449,39 +541,66 @@ export async function seedDatabase(payload: {
       }
 
       // 4. Insert relationship data
+      const newDeals = [...allDeals, ...insertedDeals];
+      const newProjects = [...allProjects, ...insertedProjects];
+      const newCompanies = [...allCompanies, ...insertedCompanies];
+      const companiesProjects = await getProjectsCompanies();
+      const companiesDeals = await getDealsCompanies();
+      const projectsDeals = await getDealsAssets();
       await insertRelationship(
         projectsCompanies,
-        getTableData("projects_companies"),
+        getTableData("projects_companies").filter(
+          (dp1) =>
+            !companiesProjects.some(
+              (dp2) =>
+                dp2.projectName === dp1.projectName ||
+                dp2.companyName === dp1.companyName
+            )
+        ),
         "projectId",
-        insertedProjects,
+        newProjects,
         "name",
         "projectName",
         "companyId",
-        insertedCompanies,
+        newCompanies,
         "name",
         "companyName"
       );
       await insertRelationship(
         dealsAssets,
-        getTableData("deals_assets"),
+        getTableData("deals_assets").filter(
+          (da1) =>
+            !projectsDeals.some(
+              (da2) =>
+                da2.dealUpdate === da1.dealName ||
+                da2.assetName === da1.assetName
+            )
+        ),
         "dealId",
-        insertedDeals,
+        newDeals,
         "update",
         "dealName",
         "assetId",
-        insertedProjects,
+        newProjects,
         "name",
         "assetName"
       );
       await insertRelationship(
         dealsCompanies,
-        getTableData("deals_companies"),
+        getTableData("deals_companies").filter(
+          (dc1) =>
+            !companiesDeals.some(
+              (dc2) =>
+                dc2.dealUpdate === dc1.dealName ||
+                dc2.companyName === dc1.companyName
+            )
+        ),
         "dealId",
-        insertedDeals,
+        newDeals,
         "update",
         "dealName",
         "companyId",
-        insertedCompanies,
+        newCompanies,
         "name",
         "companyName"
       );

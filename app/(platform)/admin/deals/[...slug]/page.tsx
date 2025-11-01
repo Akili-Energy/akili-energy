@@ -6,6 +6,7 @@ import React, {
   useEffect,
   use,
   useTransition,
+  useMemo,
 } from "react";
 import { notFound, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ import {
   countryCode,
   dealCompanyRole,
   dealFinancingType,
+  dealSubtype,
   dealType,
   financingInvestorType,
   financingObjective,
@@ -95,6 +97,7 @@ import {
 } from "@/lib/constants";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useLanguage } from "@/components/language-context";
 
 const initialState: ActionState = {
   success: false,
@@ -105,7 +108,7 @@ type Projects = Awaited<ReturnType<typeof fetchProjects>>;
 type Companies = Awaited<ReturnType<typeof fetchCompanies>>;
 
 // Define simpler state types for client-side UI management
-interface Asset {
+type Asset = {
   id: string;
   name: string;
   capacity: number;
@@ -113,8 +116,8 @@ interface Asset {
   country?: Country | null;
   maturity?: number;
   equity?: number;
-}
-interface Company {
+};
+type Company = {
   id: string;
   name: string;
   categories: CompanyClassification[];
@@ -123,7 +126,7 @@ interface Company {
   investorType?: FinancingInvestorType;
   equityTransactedPercentage?: number;
   details?: string;
-}
+};
 
 interface Financial {
   year: number;
@@ -152,6 +155,8 @@ export default function CreateEditDealPage({
     upsertDeal,
     initialState
   );
+
+  const { t } = useLanguage();
 
   const [mode, setMode] = useState<"create" | "edit" | null>(null);
   const [projects, setProjects] = useState<Projects>([]);
@@ -224,7 +229,7 @@ export default function CreateEditDealPage({
         );
         setSegments(fetchedDeal?.segments.filter((ss) => ss !== null) ?? []);
         setAssets(
-          deal?.assets.map(
+          fetchedDeal?.assets.map(
             ({ maturity, equityTransactedPercentage, ...a }) => ({
               ...a,
               equity: equityTransactedPercentage ?? undefined,
@@ -232,17 +237,8 @@ export default function CreateEditDealPage({
             })
           ) ?? []
         );
-        console.log(
-          deal?.assets.map(
-            ({ maturity, equityTransactedPercentage, ...a }) => ({
-              ...a,
-              equity: equityTransactedPercentage ?? undefined,
-              maturity: maturity ?? undefined,
-            })
-          )
-        );
         setDealCompanies(
-          deal?.companies.map(
+          fetchedDeal?.companies.map(
             ({ classification, commitment, investorType, ...c }) => ({
               ...c,
               categories: classification ?? [],
@@ -252,10 +248,11 @@ export default function CreateEditDealPage({
           ) ?? []
         );
         setDealDetails({
-          maSpecifics: deal?.mergerAcquisition?.specifics ?? [],
-          maFinancingStrategy: deal?.mergerAcquisition?.financingStrategy ?? [],
-          financingType: deal?.financing?.financingType ?? [],
-          financingSubtype: deal?.financing?.financingSubtype ?? [],
+          maSpecifics: fetchedDeal?.mergerAcquisition?.specifics ?? [],
+          maFinancingStrategy:
+            fetchedDeal?.mergerAcquisition?.financingStrategy ?? [],
+          financingType: fetchedDeal?.financing?.financingType ?? [],
+          financingSubtype: fetchedDeal?.financing?.financingSubtype ?? [],
         });
       });
     } else {
@@ -384,6 +381,75 @@ export default function CreateEditDealPage({
     );
   };
 
+  const SelectDealSubtype = useMemo(() => {
+    const label =
+      selectedDealType === "power_purchase_agreement"
+        ? "PPA Category"
+        : selectedDealType
+        ? `${t(`deals.types.${selectedDealType}`)} Type`
+        : "Deal Subtype";
+    return (
+      <div className="space-y-2">
+        <Label>{label} *</Label>
+        <Select
+          name="subtype"
+          value={selectedDealSubtype}
+          required
+          onValueChange={(value) =>
+            setSelectedDealSubtype(value as DealSubtype)
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={`Select ${label}...`} />
+          </SelectTrigger>
+          <SelectContent>
+            {(selectedDealType
+              ? DEAL_TYPES_SUBTYPES[selectedDealType]
+              : dealSubtype.enumValues
+            ).map((subtype) => (
+              <SelectItem key={subtype} value={subtype}>
+                {t(`deals.subtypes.${subtype}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }, [selectedDealType]);
+
+  const CompletedDatedInput = useMemo(() => {
+    const label =
+      selectedDealType === "power_purchase_agreement"
+        ? "assetOperationalDate"
+        : "completionDate";
+    return (
+      <div className="space-y-2">
+        <Label htmlFor={label}>
+          {selectedDealType === "power_purchase_agreement"
+            ? "Asset Operational Date"
+            : "Completion Date"}
+        </Label>
+        <Input
+          type="date"
+          name={label}
+          id={label}
+          defaultValue={
+            mode === "edit"
+              ? (selectedDealType === "power_purchase_agreement"
+                  ? deal?.powerPurchaseAgreement?.assetOperationalDate
+                  : deal?.completionDate
+                )?.toLocaleDateString() ?? undefined
+              : undefined
+          }
+        />
+      </div>
+    );
+  }, [
+    selectedDealType,
+    deal?.completionDate,
+    deal?.powerPurchaseAgreement?.assetOperationalDate,
+  ]);
+
   if (pending) {
     return (
       <div className="flex justify-center items-center h-96">
@@ -436,7 +502,7 @@ export default function CreateEditDealPage({
               <CollapsibleContent>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                   <div className="space-y-2 col-span-full">
-                    <Label htmlFor="update">Deal Title *</Label>
+                    <Label htmlFor="update">Deal Update *</Label>
                     <Input
                       id="update"
                       name="update"
@@ -475,7 +541,7 @@ export default function CreateEditDealPage({
                           .filter((type) => type !== "project_update")
                           .map((type) => (
                             <SelectItem key={type} value={type}>
-                              {type}
+                              {t(`deals.types.${type}`)}
                             </SelectItem>
                           ))}
                       </SelectContent>
@@ -486,9 +552,24 @@ export default function CreateEditDealPage({
                       </p>
                     )}
                   </div>
+                  {SelectDealSubtype}
+                  <div className="space-y-2">
+                    <Label htmlFor="dealDate">Deal Date</Label>
+                    <Input
+                      type="date"
+                      name="dealDate"
+                      id="dealDate"
+                      required
+                      defaultValue={
+                        mode === "edit"
+                          ? deal?.date?.toLocaleDateString() ?? undefined
+                          : undefined
+                      }
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="amount">
-                      Amount (Millions){" "}
+                      Amount (Millions USD){" "}
                       {selectedDealType === "financing" && "*"}
                     </Label>
                     <Input
@@ -528,7 +609,7 @@ export default function CreateEditDealPage({
                         );
                       }}
                       options={geographicRegion.enumValues.map((region) => ({
-                        label: region,
+                        label: t(`common.regions.${region}`),
                         value: region,
                       }))}
                       placeholder="Select regions..."
@@ -540,7 +621,7 @@ export default function CreateEditDealPage({
                       selected={countries}
                       onChange={onCountriesChange}
                       options={countryCode.enumValues.map((c) => ({
-                        label: c,
+                        label: t(`common.countries.${c}`),
                         value: c,
                       }))}
                       placeholder="Select countries..."
@@ -552,7 +633,7 @@ export default function CreateEditDealPage({
                       selected={sectors}
                       onChange={onSectorsChange}
                       options={SECTORS.map((s) => ({
-                        label: s,
+                        label: t(`common.sectors.${s}`),
                         value: s,
                       }))}
                       placeholder="Select sectors..."
@@ -563,9 +644,9 @@ export default function CreateEditDealPage({
                     <MultiSelect
                       selected={technologies}
                       onChange={onTechnologiesChange}
-                      options={technology.enumValues.map((t) => ({
-                        label: t,
-                        value: t,
+                      options={technology.enumValues.map((tech) => ({
+                        label: t(`common.technologies.${tech}`),
+                        value: tech,
                       }))}
                       placeholder="Select technologies..."
                     />
@@ -578,7 +659,7 @@ export default function CreateEditDealPage({
                         setSubSectors(selected as SubSector[])
                       }
                       options={SUB_SECTORS.map((ss) => ({
-                        label: ss,
+                        label: t(`common.subSectors.${ss}`),
                         value: ss,
                       }))}
                       placeholder="Select sub-sectors..."
@@ -592,7 +673,7 @@ export default function CreateEditDealPage({
                         setSegments(selected as Segment[])
                       }
                       options={segment.enumValues.map((s) => ({
-                        label: s,
+                        label: t(`common.segments.${s}`),
                         value: s,
                       }))}
                       placeholder="Select segments..."
@@ -657,7 +738,13 @@ export default function CreateEditDealPage({
                               {name}
                             </h4>
                             <p className="text-sm text-gray-600 mt-1">
-                              {`${capacity}MW • ${lifecycle} • ${country}`}
+                              {[
+                                !!capacity && `${capacity}MW`,
+                                lifecycle,
+                                country,
+                              ]
+                                .filter(Boolean)
+                                .join(" • ")}
                             </p>
                           </div>
                           <Button
@@ -681,7 +768,7 @@ export default function CreateEditDealPage({
                             <Input
                               id={`asset-${id}-maturity`}
                               type="number"
-                              min={0}
+                              min=""
                               name="assetMaturity"
                               value={maturity}
                               onChange={({ target: { value } }) =>
@@ -706,7 +793,7 @@ export default function CreateEditDealPage({
                               id={`equity-${id}-equity`}
                               type="number"
                               step={0.1}
-                              min={0}
+                              min=""
                               max={100}
                               value={equity}
                               name="assetEquity"
@@ -820,7 +907,7 @@ export default function CreateEditDealPage({
                             />
                             <SearchableSelect
                               options={dealCompanyRole.enumValues.map((r) => ({
-                                label: r,
+                                label: t(`companies.roles.deals.${r}`),
                                 value: r,
                               }))}
                               value={role ?? ""}
@@ -842,7 +929,7 @@ export default function CreateEditDealPage({
                               name="companyCommitment"
                               type="number"
                               step={0.1}
-                              min={0}
+                              min=""
                               value={commitment}
                               onChange={({ target: { value } }) =>
                                 updateEntry(
@@ -1002,7 +1089,7 @@ export default function CreateEditDealPage({
                               name="financialEnterpriseValue"
                               type="number"
                               step={0.1}
-                              min={0}
+                              min=""
                               value={enterpriseValue}
                               onChange={({ target: { value } }) =>
                                 updateEntry(
@@ -1056,7 +1143,7 @@ export default function CreateEditDealPage({
                               name="financialDebt"
                               type="number"
                               step={0.1}
-                              min={0}
+                              min=""
                               value={debt}
                               onChange={({ target: { value } }) =>
                                 updateEntry(
@@ -1083,7 +1170,7 @@ export default function CreateEditDealPage({
                               name="financialCash"
                               type="number"
                               step={0.1}
-                              min={0}
+                              min=""
                               value={cash}
                               onChange={({ target: { value } }) =>
                                 updateEntry(
@@ -1110,7 +1197,6 @@ export default function CreateEditDealPage({
                               name="financialRevenue"
                               type="number"
                               step={0.1}
-                              min={0}
                               value={revenue}
                               onChange={({ target: { value } }) =>
                                 updateEntry(
@@ -1167,24 +1253,13 @@ export default function CreateEditDealPage({
                       id="announcementDate"
                       defaultValue={
                         mode === "edit"
-                          ? deal?.announcementDate?.toISOString() ?? undefined
+                          ? deal?.announcementDate?.toLocaleDateString() ??
+                            undefined
                           : undefined
                       }
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="completionDate">Completion Date</Label>
-                    <Input
-                      type="date"
-                      name="completionDate"
-                      id="completionDate"
-                      defaultValue={
-                        mode === "edit"
-                          ? deal?.completionDate?.toISOString() ?? undefined
-                          : undefined
-                      }
-                    />
-                  </div>
+                  {CompletedDatedInput}
                 </CardContent>
               </CollapsibleContent>
             </Collapsible>
@@ -1218,6 +1293,7 @@ export default function CreateEditDealPage({
                       placeholder="Summary"
                       name="description"
                       id="description"
+                      rows={5}
                       defaultValue={
                         mode === "edit"
                           ? deal?.description ?? undefined
@@ -1231,6 +1307,7 @@ export default function CreateEditDealPage({
                       placeholder="Insights"
                       name="insights"
                       id="insights"
+                      rows={5}
                       defaultValue={
                         mode === "edit"
                           ? deal?.insights ?? undefined
@@ -1244,6 +1321,7 @@ export default function CreateEditDealPage({
                       placeholder="Impact"
                       name="impacts"
                       id="impacts"
+                      rows={5}
                       defaultValue={
                         mode === "edit" ? deal?.impacts ?? undefined : undefined
                       }
@@ -1282,21 +1360,22 @@ export default function CreateEditDealPage({
                         <div className="space-y-2">
                           <Label>M&A Type</Label>
                           <Select
-                            name="subtype"
+                            name="maType"
                             value={selectedDealSubtype}
-                            required
-                            onValueChange={(value) =>
-                              setSelectedDealSubtype(value as DealSubtype)
-                            }
+                            // required
+                            // onValueChange={(value) =>
+                            //   setSelectedDealSubtype(value as DealSubtype)
+                            // }
+                            disabled
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Select M&A Type..." />
+                              <SelectValue placeholder="Select M&A type..." />
                             </SelectTrigger>
                             <SelectContent>
                               {DEAL_TYPES_SUBTYPES[selectedDealType].map(
                                 (subtype) => (
                                   <SelectItem key={subtype} value={subtype}>
-                                    {subtype}
+                                    {t(`deals.subtypes.${subtype}`)}
                                   </SelectItem>
                                 )
                               )}
@@ -1315,12 +1394,12 @@ export default function CreateEditDealPage({
                             }
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Select M&A Structure..." />
+                              <SelectValue placeholder="Select M&A structure..." />
                             </SelectTrigger>
                             <SelectContent>
                               {maStructure.enumValues.map((structure) => (
                                 <SelectItem key={structure} value={structure}>
-                                  {structure}
+                                  {t(`deals.ma.structures.${structure}`)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -1338,7 +1417,7 @@ export default function CreateEditDealPage({
                             }
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Select Revenue Model..." />
+                              <SelectValue placeholder="Select revenue model..." />
                             </SelectTrigger>
                             <SelectContent>
                               {revenueModel.enumValues.map((model) => (
@@ -1375,7 +1454,7 @@ export default function CreateEditDealPage({
                           />
                           <MultiSelect
                             options={maSpecifics.enumValues.map((specific) => ({
-                              label: specific,
+                              label: t(`deals.ma.specifics.${specific}`),
                               value: specific,
                             }))}
                             selected={dealDetails?.maSpecifics ?? []}
@@ -1398,7 +1477,7 @@ export default function CreateEditDealPage({
                           <MultiSelect
                             options={dealFinancingType.enumValues.map(
                               (financingType) => ({
-                                label: financingType,
+                                label: t(`deals.financing.types.${financingType}`),
                                 value: financingType,
                               })
                             )}
@@ -1465,7 +1544,7 @@ export default function CreateEditDealPage({
                               {financingObjective.enumValues.map(
                                 (objective) => (
                                   <SelectItem key={objective} value={objective}>
-                                    {objective}
+                                    {t(`deals.financing.objectives.${objective}`)}
                                   </SelectItem>
                                 )
                               )}
@@ -1481,7 +1560,7 @@ export default function CreateEditDealPage({
                           />
                           <MultiSelect
                             options={dealFinancingType.enumValues.map((ft) => ({
-                              label: ft,
+                              label: t(`deals.financing.types.${ft}`),
                               value: ft,
                             }))}
                             selected={dealDetails?.financingType ?? []}
@@ -1503,7 +1582,7 @@ export default function CreateEditDealPage({
                           />
                           <MultiSelect
                             options={financingSubtype.enumValues.map((fs) => ({
-                              label: fs,
+                              label: t(`deals.financing.subtypes.${fs}`),
                               value: fs,
                             }))}
                             selected={dealDetails?.financingSubtype ?? []}
@@ -1515,6 +1594,121 @@ export default function CreateEditDealPage({
                               }))
                             }
                             placeholder="Select financing subtype..."
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {selectedDealType === "power_purchase_agreement" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>PPA Specific</Label>
+                          <Select
+                            name="ppaSpecific"
+                            defaultValue={
+                              mode === "edit"
+                                ? deal?.powerPurchaseAgreement?.details?.toString()
+                                : undefined
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select PPA term length..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem key="false" value="">
+                                Short-term
+                              </SelectItem>
+                              <SelectItem key="true" value="true">
+                                Long-term
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="ppaDuration">PPA Duration</Label>
+                          <Input
+                            placeholder="20 Years"
+                            type="number"
+                            name="ppaDuration"
+                            id="ppaDuration"
+                            defaultValue={
+                              mode === "edit"
+                                ? deal?.powerPurchaseAgreement?.duration ??
+                                  undefined
+                                : undefined
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="ppaCapacity">
+                            Capacity Off-taken (MW)
+                          </Label>
+                          <Input
+                            placeholder="PPA Capacity"
+                            type="number"
+                            name="ppaCapacity"
+                            id="ppaCapacity"
+                            defaultValue={
+                              mode === "edit"
+                                ? deal?.powerPurchaseAgreement?.capacity ??
+                                  undefined
+                                : undefined
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="ppaGeneratedPower">
+                            Generated Power Offtaken (GWh/year)
+                          </Label>
+                          <Input
+                            placeholder="e.g, 150 GWh/year"
+                            type="number"
+                            name="ppaGeneratedPower"
+                            id="ppaGeneratedPower"
+                            defaultValue={
+                              mode === "edit"
+                                ? deal?.powerPurchaseAgreement
+                                    ?.generatedPower ?? undefined
+                                : undefined
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Onsite/Offsite</Label>
+                          <Select
+                            name="onOffsite"
+                            defaultValue={
+                              mode === "edit"
+                                ? deal?.powerPurchaseAgreement?.onOffSite?.toString()
+                                : undefined
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select PPA On-/Off-site..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem key="false" value="">
+                                Offsite
+                              </SelectItem>
+                              <SelectItem key="true" value="true">
+                                Onsite
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="ppaSupplyStart">
+                            PPA Supply Start
+                          </Label>
+                          <Input
+                            type="date"
+                            name="ppaSupplyStart"
+                            id="ppaSupplyStart"
+                            defaultValue={
+                              mode === "edit"
+                                ? deal?.powerPurchaseAgreement?.supplyStart?.toLocaleDateString() ??
+                                  undefined
+                                : undefined
+                            }
                           />
                         </div>
                       </div>
@@ -1534,7 +1728,7 @@ export default function CreateEditDealPage({
               Cancel
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : "Create Deal"}
+              {isPending ? "Saving..." : "Save Deal"}
             </Button>
           </div>
         </form>
