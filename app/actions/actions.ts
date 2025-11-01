@@ -553,7 +553,7 @@ export async function seedDatabase(payload: {
           (dp1) =>
             !companiesProjects.some(
               (dp2) =>
-                dp2.projectName === dp1.projectName ||
+                dp2.projectName === dp1.projectName &&
                 dp2.companyName === dp1.companyName
             )
         ),
@@ -572,7 +572,7 @@ export async function seedDatabase(payload: {
           (da1) =>
             !projectsDeals.some(
               (da2) =>
-                da2.dealUpdate === da1.dealName ||
+                da2.dealUpdate === da1.dealName &&
                 da2.assetName === da1.assetName
             )
         ),
@@ -591,7 +591,7 @@ export async function seedDatabase(payload: {
           (dc1) =>
             !companiesDeals.some(
               (dc2) =>
-                dc2.dealUpdate === dc1.dealName ||
+                dc2.dealUpdate === dc1.dealName &&
                 dc2.companyName === dc1.companyName
             )
         ),
