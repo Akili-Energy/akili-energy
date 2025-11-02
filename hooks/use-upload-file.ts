@@ -29,8 +29,8 @@ export function useUploadFile({
 
   async function uploadFile(file: File) {
     try {
-    if (file.size > 5 * 1024 * 1024) {
-      throw new Error("File size must be under 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error("File size must be under 10MB");
     }
 
     setIsUploading(true);

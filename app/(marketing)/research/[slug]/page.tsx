@@ -66,7 +66,7 @@ export default async function ResearchReportPage({ params }: { params: Promise<{
             </Link>
             <span className="text-gray-400">/</span>
             <Link
-              href="/research"
+              href="/news-research"
               className="text-akili-blue hover:text-akili-green transition-colors"
             >
               Research Centre
