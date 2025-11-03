@@ -2031,7 +2031,7 @@ export const projectsByMonthAndSector = pgMaterializedView(
         projectId: projects.id,
         effectiveDate: sql`
           COALESCE(
-            MAX(${deals.date}) FILTER (WHERE ${deals.type} = 'project_update'),
+            MIN(${deals.date}),
             ${projects.createdAt}::date
           )
         `.as("effective_date"),
@@ -2039,6 +2039,7 @@ export const projectsByMonthAndSector = pgMaterializedView(
       .from(projects)
       .leftJoin(dealsAssets, eq(projects.id, dealsAssets.assetId))
       .leftJoin(deals, eq(dealsAssets.dealId, deals.id))
+      .where(eq(deals.type, "project_update"))
       .groupBy(projects.id)
   );
 
@@ -2073,7 +2074,7 @@ export const projectsByMonthAndStage = pgMaterializedView(
         projectId: projects.id,
         effectiveDate: sql`
           COALESCE(
-            MAX(${deals.date}) FILTER (WHERE ${deals.type} = 'project_update'),
+            MIN(${deals.date}),
             ${projects.createdAt}::date
           )
         `.as("effective_date"),
@@ -2081,6 +2082,7 @@ export const projectsByMonthAndStage = pgMaterializedView(
       .from(projects)
       .leftJoin(dealsAssets, eq(projects.id, dealsAssets.assetId))
       .leftJoin(deals, eq(dealsAssets.dealId, deals.id))
+      .where(eq(deals.type, "project_update"))
       .groupBy(projects.id)
   );
 

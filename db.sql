@@ -910,13 +910,13 @@ WITH project_dates AS (
     SELECT 
         p.id AS project_id,
         COALESCE(
-            MAX(d.date) FILTER (WHERE d.type = 'project_update'),
+            MAX(d.date),
             p.created_at::date
         ) AS effective_date
     FROM projects p
     LEFT JOIN deals_assets da ON p.id = da.asset_id
-    LEFT JOIN deals d ON da.deal_id = d.id
-    GROUP BY p.id
+    LEFT JOIN deals d ON da.deal_id = d.id WHERE d.type = 'project_update'
+    GROUP BY p.id, TO_CHAR(d.date, 'YYYY-MM')
 )
 SELECT
     TO_CHAR(pd.effective_date, 'YYYY-MM') AS month,
@@ -926,6 +926,7 @@ SELECT
 FROM project_dates pd
 JOIN projects p ON pd.project_id = p.id
 JOIN projects_sectors ps ON p.id = ps.project_id
+WHERE EXTRACT(YEAR FROM pd.effective_date) >= 2025
 GROUP BY month, ps.sector
 ORDER BY month, ps.sector;
 
@@ -936,13 +937,13 @@ WITH project_dates AS (
     SELECT 
         p.id AS project_id,
         COALESCE(
-            MAX(d.date) FILTER (WHERE d.type = 'project_update'),
+            MAX(d.date),
             p.created_at::date
         ) AS effective_date
     FROM projects p
     LEFT JOIN deals_assets da ON p.id = da.asset_id
-    LEFT JOIN deals d ON da.deal_id = d.id
-    GROUP BY p.id
+    LEFT JOIN deals d ON da.deal_id = d.id WHERE d.type = 'project_update'
+    GROUP BY p.id, TO_CHAR(d.date, 'YYYY-MM')
 )
 SELECT
     TO_CHAR(pd.effective_date, 'YYYY-MM') AS month,

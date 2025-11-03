@@ -313,8 +313,7 @@ export async function seedDatabase(payload: {
       const insertData = <T extends PgTableWithColumns<any>>(
         table: T,
         data: Array<T["$inferInsert"]>
-      ) => tx.insert(table).values(data);
-      // .onConflictDoNothing();
+      ) => tx.insert(table).values(data).onConflictDoNothing();
 
       const insertLinkedData = <
         T extends PgTableWithColumns<any>,
@@ -911,7 +910,7 @@ export async function getEventById(id: string) {
     });
     if (event) {
       const location = parseLocation(event?.location);
-      return {...event, location};
+      return { ...event, location };
     }
     return event;
   } catch (error) {
