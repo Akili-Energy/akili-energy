@@ -618,9 +618,9 @@ export async function seedDatabase(payload: {
     await db.refreshMaterializedView(ppaDealsByOfftakerSector).concurrently();
     await db.refreshMaterializedView(ppaDealsBySubtype).concurrently();
     await db.refreshMaterializedView(ppaDealsByDuration).concurrently();
-    await db.refreshMaterializedView(projectsByMonthAndSector).concurrently();
+    await db.refreshMaterializedView(projectsByMonthAndSector);
     await db.refreshMaterializedView(projectsBySector).concurrently();
-    await db.refreshMaterializedView(projectsByMonthAndStage).concurrently();
+    await db.refreshMaterializedView(projectsByMonthAndStage);
     await db.refreshMaterializedView(topCountriesByDealValue).concurrently();
     await db
       .refreshMaterializedView(topCompaniesByFinancingAndCapacity)
@@ -842,9 +842,8 @@ export async function getProjectsAnalytics() {
     return {
       projectsByMonthAndSector: Object.values(
         (await db.select().from(projectsByMonthAndSector))
-          .toSorted(({ month: a }, { month: b }) => a.localeCompare(b)).filter(
-            ({month}) => (new Date(month)).getFullYear() >= 2025
-          )
+          .toSorted(({ month: a }, { month: b }) => a.localeCompare(b))
+          .filter(({ month }) => new Date(month).getFullYear() >= 2025)
           .reduce((acc, { month, sector, totalCapacity, totalAmount }) => {
             if (!acc[month]) {
               acc[month] = { month, amount: totalAmount };
