@@ -842,7 +842,9 @@ export async function getProjectsAnalytics() {
     return {
       projectsByMonthAndSector: Object.values(
         (await db.select().from(projectsByMonthAndSector))
-          .toSorted(({ month: a }, { month: b }) => a.localeCompare(b))
+          .toSorted(({ month: a }, { month: b }) => a.localeCompare(b)).filter(
+            ({month}) => (new Date(month)).getFullYear() >= 2025
+          )
           .reduce((acc, { month, sector, totalCapacity, totalAmount }) => {
             if (!acc[month]) {
               acc[month] = { month, amount: totalAmount };

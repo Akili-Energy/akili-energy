@@ -926,7 +926,6 @@ SELECT
 FROM project_dates pd
 JOIN projects p ON pd.project_id = p.id
 JOIN projects_sectors ps ON p.id = ps.project_id
-WHERE EXTRACT(YEAR FROM pd.effective_date) >= 2025
 GROUP BY month, ps.sector
 ORDER BY month, ps.sector;
 
