@@ -11,7 +11,17 @@ import { createClient } from "@/lib/supabase/client";
  * @param {string} options.bucketName - The bucket name in Supabase where files are stored.
  * @returns {Object} uppy - Uppy instance with configured upload settings.
  */
-export const useUppyWithSupabase = ({ bucketName }: { bucketName: string }) => {
+export const useUppyWithSupabase = ({
+  bucketName,
+  folder,
+  upsert = false,
+  onUploadSuccess,
+}: {
+  bucketName: string;
+  folder?: string;
+  upsert?: boolean;
+  onUploadSuccess?: (fileUrl: string) => void;
+}) => {
   // Initialize Uppy instance only once
   const [uppy] = useState(() => new Uppy());
   // Initialize Supabase client
@@ -30,6 +40,7 @@ export const useUppyWithSupabase = ({ bucketName }: { bucketName: string }) => {
           headers: {
             authorization: `Bearer ${session?.access_token}`, // User session access token
             apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, // API key for Supabase
+            "x-upsert": upsert ? "true" : "false", // Custom header to indicate upsert behavior
           },
           uploadDataDuringCreation: true, // Send metadata with file chunks
           removeFingerprintOnSuccess: true, // Remove fingerprint after successful upload
@@ -48,18 +59,31 @@ export const useUppyWithSupabase = ({ bucketName }: { bucketName: string }) => {
           file.meta = {
             ...file.meta,
             bucketName, // Bucket specified by the user of the hook
-            objectName: file.name, // Use file name as object name
+            objectName: folder ? `${folder}/${file.name}` : file.name, // Use file name as object name
             contentType: file.type, // Set content type based on file MIME type
             metadata: JSON.stringify({
               // custom metadata passed to the user_metadata column
               yourCustomMetadata: true,
             }),
           };
+        })
+        .on("file-removed", async (file) => {
+          await supabase.storage
+            .from(bucketName)
+            .remove([
+              (file.meta.objectName as string) ?? folder
+                ? `${folder}/${file.name}`
+                : (file.name as string),
+            ]);
+        }).on("upload-success", (file, response) => {
+          console.log("Upload successful:", file, response);
+          console.log(file);
+          console.log(response);
         });
     };
     // Initialize Uppy with Supabase settings
     initializeUppy();
-  }, [uppy, bucketName]);
+  }, [uppy, bucketName, folder]);
   // Return the configured Uppy instance
   return uppy;
 };

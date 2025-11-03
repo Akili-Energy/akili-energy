@@ -28,6 +28,10 @@ import { contentCategory, contentStatus } from "@/lib/db/schema";
 import TagsInput from "@/components/admin/tags-input";
 import { Editorial } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useUppyWithSupabase } from "@/hooks/use-uppy-with-supabase";
+import Dashboard from "@uppy/dashboard";
+import "@uppy/core/css/style.min.css";
+import "@uppy/dashboard/css/style.min.css";
 
 const initialState: ContentActionState = {
   success: false,
@@ -72,9 +76,9 @@ export default function CreateEditResearchPage({
         setReport(fetchedReport);
         setTags(fetchedReport.tags.map((tag) => tag.name) || []);
         setImageUrl(fetchedReport.imageUrl || "");
-        const reportUrl = fetchedReport.researchReport?.reportUrl ?? ""; 
-         setFileUrl(reportUrl);
-         setFileName(reportUrl.split("/").pop());
+        const reportUrl = fetchedReport.researchReport?.reportUrl ?? "";
+        setFileUrl(reportUrl);
+        setFileName(reportUrl.split("/").pop());
       } else {
         toast.error("Research report not found.");
         router.push("/admin/research");
@@ -110,6 +114,27 @@ export default function CreateEditResearchPage({
       toast.error(state.message);
     }
   }, [state]);
+
+  // Initialize Uppy instance with the 'sample' bucket specified for uploads
+  const uppy = useUppyWithSupabase({
+    bucketName: "documents",
+    folder: "research",
+    upsert: true,
+  });
+  useEffect(() => {
+    if (!isLoading || (report && mode === "edit")) {
+      // Set up Uppy Dashboard to display as an inline component within a specified target
+      uppy.use(Dashboard, {
+        inline: true, // Ensures the dashboard is rendered inline
+        limit: 1,
+        height: 200,
+        target: "#drag-drop-area", // HTML element where the dashboard renders
+        showProgressDetails: true, // Show progress details for file uploads
+        proudlyDisplayPoweredByUppy: false,
+        showRemoveButtonAfterComplete: true,
+      });
+    }
+  }, [report, isLoading, mode]);
 
   const generateSlug = (title: string) => {
     return title
@@ -310,9 +335,10 @@ export default function CreateEditResearchPage({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="pdf_upload">PDF Document</Label>
+                  <Label>PDF Document</Label>
                   <input type="hidden" name="fileDocument" value={fileUrl} />
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    <div id="drag-drop-area" className="flex w-full" />
+                  {/* <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                     <div className="text-center">
                       <Upload className="mx-auto h-12 w-12 text-gray-400" />
                       <div className="mt-4">
@@ -360,7 +386,7 @@ export default function CreateEditResearchPage({
                         {state.errors.fileDocument[0]}
                       </p>
                     )}
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* SEO Section */}

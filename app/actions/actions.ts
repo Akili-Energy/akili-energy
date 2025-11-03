@@ -31,6 +31,8 @@ import {
   proposals,
   topCountriesByDealValue,
   topCompaniesByFinancingAndCapacity,
+  eventOrganizers,
+  events,
 } from "@/lib/db/schema";
 import {
   Country,
@@ -41,9 +43,13 @@ import {
   Sector,
   Technology,
 } from "@/lib/types";
-import { getTableColumns } from "drizzle-orm";
+import { eq, getTableColumns } from "drizzle-orm";
 import { PgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 import { revalidatePath, cacheTag, updateTag } from "next/cache";
+import z from "zod";
+import { createClient } from "@/lib/supabase/server";
+import type { ActionState } from "@/lib/types";
+import { parseLocation } from "@/lib/utils";
 
 export async function fetchDeals() {
   "use cache";
@@ -873,4 +879,166 @@ export async function getProjectsAnalytics() {
     console.error("Error fetching projects:", error);
     throw new Error("Failed to fetch projects");
   }
+}
+
+// Action to fetch all organizers for the dropdown
+export async function getOrganizers() {
+  try {
+    return await db.query.eventOrganizers.findMany({
+      orderBy: (organizers, { asc }) => [asc(organizers.name)],
+    });
+  } catch (error) {
+    console.error("Failed to fetch organizers:", error);
+    return [];
+  }
+}
+
+// Action to fetch a single event for the edit page
+export async function getEventById(id: string) {
+  try {
+    const event = await db.query.events.findFirst({
+      where: (events, { eq }) => eq(events.id, id),
+      columns: {
+        location: false,
+      },
+      with: {
+        organizer: true,
+      },
+      extras: (events, { sql }) => ({
+        // Convert PostGIS point back to a "lng,lat" string for the form
+        location: sql<string>`ST_AsText(${events.location})`.as("location"),
+      }),
+    });
+    if (event) {
+      const location = parseLocation(event?.location);
+      return {...event, location};
+    }
+    return event;
+  } catch (error) {
+    console.error("Failed to fetch event:", error);
+    return null;
+  }
+}
+
+// Zod schema for validation
+const upsertEventSchema = z
+  .object({
+    eventId: z.uuid().optional(),
+    title: z.string().min(3, "Title is required."),
+    description: z.string().min(10, "Description is required."),
+    virtual: z.preprocess((val) => val === "on" || val === true, z.boolean()),
+    start: z.coerce.date({ error: "Start date is required." }),
+    endDate: z.coerce.date({ error: "End date is required." }),
+    address: z.string().min(3, "Address or 'Online' is required."),
+    location: z.string().optional(), // "lng,lat"
+    website: z.url().or(z.literal("")).optional(),
+    registrationUrl: z.url().or(z.literal("")).optional(),
+    imageUrl: z
+      .url("A valid image URL is required.")
+      .optional()
+      .or(z.literal("")),
+
+    // Organizer fields - either an existing ID or data for a new one
+    organizerId: z.uuid().optional(),
+    newOrganizerName: z.string().optional(),
+    newOrganizerBio: z.string().optional(),
+    newOrganizerWebsite: z.string().url().or(z.literal("")).optional(),
+  })
+  .refine((data) => data.organizerId || data.newOrganizerName, {
+    message:
+      "You must either select an existing organizer or create a new one.",
+    path: ["organizerId"], // Attach error to the main organizer field
+  });
+
+export async function upsertEvent(
+  prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { auth } = await createClient();
+
+  const {
+    data: { user },
+  } = await auth.getUser();
+  if (!user) {
+    return { success: false, message: "Authentication failed." };
+  }
+
+  const validatedFields = upsertEventSchema.safeParse(
+    Object.fromEntries(formData.entries())
+  );
+  if (!validatedFields.success) {
+    return {
+      success: false,
+      message: "Invalid form data.",
+      errors: z.flattenError(validatedFields.error).fieldErrors,
+    };
+  }
+
+  const data = validatedFields.data;
+  const isEditMode = !!data.eventId;
+
+  try {
+    await db.transaction(async (tx) => {
+      let finalOrganizerId = data.organizerId;
+
+      // 1. If new organizer data is present, create it first
+      if (data.newOrganizerName) {
+        const [newOrganizer] = await tx
+          .insert(eventOrganizers)
+          .values({
+            name: data.newOrganizerName,
+            bio: data.newOrganizerBio,
+            website: data.newOrganizerWebsite,
+          })
+          .returning({ id: eventOrganizers.id });
+        finalOrganizerId = newOrganizer.id;
+      }
+
+      if (!finalOrganizerId) {
+        throw new Error("Organizer ID is missing.");
+      }
+
+      // 2. Prepare event data, including PostGIS location
+      const location =
+        (data.location?.split(",").map(parseFloat) as [number, number]) ||
+        undefined;
+
+      const eventPayload = {
+        title: data.title,
+        description: data.description,
+        virtual: data.virtual,
+        start: data.start,
+        endDate: data.endDate,
+        address: data.address,
+        location,
+        website: data.website,
+        registrationUrl: data.registrationUrl,
+        imageUrl: data.imageUrl,
+        organizerId: finalOrganizerId,
+      };
+
+      // 3. Insert or Update the event
+      if (isEditMode) {
+        await tx
+          .update(events)
+          .set(eventPayload)
+          .where(eq(events.id, data.eventId!));
+      } else {
+        await tx.insert(events).values(eventPayload);
+      }
+    });
+  } catch (error: any) {
+    return { success: false, message: `Database Error: ${error.message}` };
+  }
+
+  revalidatePath("/admin/events");
+  // If you have a public events page, revalidate it too
+  // revalidatePath("/events");
+
+  return {
+    success: true,
+    message: `Event has been successfully ${
+      isEditMode ? "updated" : "created"
+    }.`,
+  };
 }
