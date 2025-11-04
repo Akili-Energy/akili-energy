@@ -857,6 +857,7 @@ export async function getProjectsAnalytics() {
       projectsByMonthAndStage: Object.values(
         (await db.select().from(projectsByMonthAndStage))
           .toSorted(({ month: a }, { month: b }) => a.localeCompare(b))
+          .filter(({ month }) => new Date(month).getFullYear() >= 2025)
           .reduce((acc, { month, projectStage, projectCount }) => {
             if (!acc[month]) acc[month] = { month };
             if (projectStage) acc[month][projectStage] = projectCount;
