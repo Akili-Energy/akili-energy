@@ -117,7 +117,7 @@ export async function signup(
 }
 
 
-export async function getRole() {
+export async function getUserRole() {
   const { auth } = await createClient();
   const {
     data: { session },

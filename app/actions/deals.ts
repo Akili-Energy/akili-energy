@@ -51,6 +51,7 @@ import z from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
+import { getUserRole } from "./auth";
 
 function getSectors(sectors: { sector: Sector }[]) {
   return sectors.map((s) => s.sector);
@@ -83,7 +84,15 @@ export async function getDeals({
       const jwt = jwtDecode(session.access_token);
       console.log("JWT:", jwt);
       const userRole = jwt.user_role;
+      console.log("User Role:", userRole);
     }
+    const { data, error } = await auth.getClaims();
+    console.log("Claims Data:", data);
+    if (data) {
+      console.log("Claims:", data?.claims);
+    }
+
+    const userRole = await getUserRole();
 
     const where: SQL[] = [];
     if (search) {
