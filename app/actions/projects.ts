@@ -20,15 +20,10 @@ export async function getProjects(
     const where =
       whereFilters && Object.values(whereFilters).filter(Boolean).length
         ? and(
-            ...Object.entries(projectFilters)
+            ...Object.entries(whereFilters)
               .filter(([v]) => v !== undefined)
               .map(([k, v]) =>
-                eq(
-                  projects[
-                    k as keyof typeof whereFilters
-                  ],
-                  v as any
-                )
+                eq(projects[k as keyof typeof whereFilters], v as any)
               )
           )
         : undefined;
