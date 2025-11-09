@@ -17,8 +17,6 @@ export async function getLanguage() {
 }
 
 export const getDictionary = async () => {
-  'use cache: private';
-  cacheTag(LOCALE_KEY);
   let locale = await getLanguage();
   return dictionaries[locale]?.() ?? dictionaries.fr();
 };

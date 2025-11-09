@@ -1,6 +1,5 @@
 "use client";
 
-import { updateCacheTag } from "@/app/actions/actions";
 import { Locale } from "@/i18n-config";
 import { LOCALE_KEY } from "@/lib/constants";
 import type React from "react";
@@ -12,6 +11,7 @@ import {
   useCallback,
 } from "react";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 
 // Define types for better type safety
 type Translations = { [key: string]: string | Translations }; // Allows for nested objects
@@ -49,6 +49,7 @@ const getNestedTranslation = (
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Locale>("fr"); // Default to French
   const [translations, setTranslations] = useState<Translations>({});
+const router = useRouter();
 
   useEffect(() => {
     // On initial load, check for saved language preference in localStorage
@@ -79,10 +80,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const handleSetLanguage = (lang: Locale) => {
     setLanguage(lang);
     localStorage.setItem(LOCALE_KEY, lang);
-    document.cookie = `${LOCALE_KEY}=${lang}; path=/; max-age=31536000; SameSite=Lax`;
+    // document.cookie = `${LOCALE_KEY}=${lang}; path=/; max-age=31536000; SameSite=Lax`;
     Cookies.remove(LOCALE_KEY);
-    Cookies.set(LOCALE_KEY, lang, { expires: 365});
-    updateCacheTag(LOCALE_KEY);
+    Cookies.set(LOCALE_KEY, lang, { expires: 365 });
+    router.refresh();
   };
 
   const t = useCallback(
