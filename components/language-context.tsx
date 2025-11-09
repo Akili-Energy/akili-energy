@@ -1,5 +1,8 @@
 "use client";
 
+import { updateCacheTag } from "@/app/actions/actions";
+import { Locale } from "@/i18n-config";
+import { LOCALE_KEY } from "@/lib/constants";
 import type React from "react";
 import {
   createContext,
@@ -8,14 +11,14 @@ import {
   useEffect,
   useCallback,
 } from "react";
+import Cookies from "js-cookie";
 
 // Define types for better type safety
-type Language = "en" | "fr";
 type Translations = { [key: string]: string | Translations }; // Allows for nested objects
 
 interface LanguageContextType {
-  language: Language;
-  setLanguage: (lang: Language) => void;
+  language: Locale;
+  setLanguage: (lang: Locale) => void;
   t: (key: string) => string;
 }
 
@@ -44,12 +47,12 @@ const getNestedTranslation = (
 };
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>("fr"); // Default to French
+  const [language, setLanguage] = useState<Locale>("fr"); // Default to French
   const [translations, setTranslations] = useState<Translations>({});
 
   useEffect(() => {
     // On initial load, check for saved language preference in localStorage
-    const savedLanguage = localStorage.getItem("akili-language") as Language;
+    const savedLanguage = localStorage.getItem(LOCALE_KEY) as Locale;
     if (savedLanguage && (savedLanguage === "en" || savedLanguage === "fr")) {
       setLanguage(savedLanguage);
     }
@@ -73,9 +76,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     loadTranslations();
   }, [language]);
 
-  const handleSetLanguage = (lang: Language) => {
+  const handleSetLanguage = (lang: Locale) => {
     setLanguage(lang);
-    localStorage.setItem("akili-language", lang);
+    localStorage.setItem(LOCALE_KEY, lang);
+    document.cookie = `${LOCALE_KEY}=${lang}; path=/; max-age=31536000; SameSite=Lax`;
+    Cookies.remove(LOCALE_KEY);
+    Cookies.set(LOCALE_KEY, lang, { expires: 365});
+    updateCacheTag(LOCALE_KEY);
   };
 
   const t = useCallback(

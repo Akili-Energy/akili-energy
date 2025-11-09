@@ -348,6 +348,7 @@ CREATE TABLE IF NOT EXISTS companies (
     facebook_profile VARCHAR(255) UNIQUE,
     email VARCHAR(64) UNIQUE,
     phone_number VARCHAR(20) UNIQUE,
+    auto_generated BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -416,6 +417,7 @@ CREATE TABLE IF NOT EXISTS projects (
     impacts TEXT, -- (UN) Sustainable Development Goals
     insights TEXT, -- Insights/Comments
     features TEXT, --e.g., "Greenfield (PPP)"
+    auto_generated BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

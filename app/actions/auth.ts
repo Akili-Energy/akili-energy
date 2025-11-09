@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import z from "zod";
+import { db } from "@/lib/db/drizzle";
+import { userRole, users } from "@/lib/db/schema";
+import { jwtDecode } from "jwt-decode";
 
 const authSchema = z.object({
   email: z.string().email(),
@@ -26,7 +29,7 @@ export async function login(
     password: formData.get("password"),
   });
   if (!validation.success) {
-    return { error: validation.error.errors[0].message };
+    return { error: z.flattenError(validation.error).formErrors[0] };
   }
 
   const { email, password } = validation.data;
@@ -73,7 +76,7 @@ export async function signup(
     lastName: formData.get("lastName"),
   });
   if (!validation.success) {
-    return { error: validation.error.errors[0].message };
+    return { error: z.flattenError(validation.error).formErrors[0] };
   }
 
   const { email, password, firstName, lastName } = validation.data;
@@ -97,18 +100,48 @@ export async function signup(
     return { error: error.message };
   }
 
-  // if (user) {
-  //   await db.insert(users).values({
-  //     id: user.id,
-  //     email: user.email ?? email,
-  //     name: user.user_metadata.full_name ?? `${firstName} ${lastName}`,
-  //     profilePictureUrl: user.user_metadata.avatar_url
-  //   });
-  // }
+  if (user && process.env.NODE_ENV === "development") {
+    await db.insert(users).values({
+      id: user.id,
+      email: user.email ?? email,
+      name: user.user_metadata.full_name ?? `${firstName} ${lastName}`,
+      profilePictureUrl: user.user_metadata.avatar_url,
+    });
+  }
 
   revalidatePath("/", "layout");
   return {
     success:
       "Account created successfully! Please check your email to confirm your account.",
   };
+}
+
+
+export async function getRole() {
+  const { auth } = await createClient();
+  const {
+    data: { session },
+  } = await auth.getSession();
+  console.log("Session:", session);
+  if (session) {
+    const jwt = jwtDecode(session.access_token);
+    console.log("JWT:", jwt);
+    const role = jwt.user_role;
+    if (role) return role as (typeof userRole)[number];
+    return (await getCurrentUser())?.role;
+  }
+  return null;
+}
+
+export async function getCurrentUser() {
+  const { auth } = await createClient();
+  const {
+    data: { user },
+  } = await auth.getUser();
+  if (user) {
+    return db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.id, user?.id ?? ""),
+    });
+  }
+  return null;
 }

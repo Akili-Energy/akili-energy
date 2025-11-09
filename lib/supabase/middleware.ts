@@ -1,10 +1,45 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { match as matchLocale } from "@formatjs/intl-localematcher";
+import Negotiator from "negotiator";
+import { LOCALE_KEY } from "../constants";
+import { i18n } from "@/i18n-config";
+import { cookies } from "next/headers";
+
+function getLocale(request: NextRequest): string | undefined {
+  // Negotiator expects plain object so we need to transform headers
+  const negotiatorHeaders: Record<string, string> = {};
+  request.headers.forEach((value, key) => (negotiatorHeaders[key] = value));
+
+  const locales = Array.from(i18n.locales);
+
+  // Use negotiator and intl-localematcher to get best locale
+  let languages = new Negotiator({ headers: negotiatorHeaders }).languages(
+    locales
+  );
+
+  const locale = matchLocale(languages, locales, i18n.defaultLocale);
+
+  return locale;
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
+
+  if (
+    !supabaseResponse.cookies.get(LOCALE_KEY)?.value &&
+    !(await cookies()).get(LOCALE_KEY)?.value
+  ) {
+    const locale = getLocale(request) || i18n.defaultLocale;
+    supabaseResponse.cookies.set(LOCALE_KEY, locale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,8 +76,8 @@ export async function updateSession(request: NextRequest) {
 
   if (
     !user &&
-    (request.nextUrl.pathname.startsWith("/platform") || 
-    request.nextUrl.pathname.startsWith("/admin"))
+    (request.nextUrl.pathname.startsWith("/platform") ||
+      request.nextUrl.pathname.startsWith("/admin"))
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();

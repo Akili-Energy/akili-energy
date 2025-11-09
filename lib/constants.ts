@@ -17,6 +17,8 @@ import {
   projectSubSector,
 } from "./db/schema";
 
+export const LOCALE_KEY = "akili-language";
+
 export const DEFAULT_PAGE_SIZE = 10;
 export const BLOG_PAGE_SIZE = 6;
 export const NEWS_PAGE_SIZE = 4;

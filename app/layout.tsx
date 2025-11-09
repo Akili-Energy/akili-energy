@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description: "Strategic intelligence platform for the African energy sector",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;

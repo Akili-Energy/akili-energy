@@ -1043,3 +1043,7 @@ export async function upsertEvent(
     }.`,
   };
 }
+
+export async function updateCacheTag(tag: string) {
+  updateTag(tag);
+}

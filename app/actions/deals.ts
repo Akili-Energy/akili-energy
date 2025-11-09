@@ -50,6 +50,7 @@ import {
 import z from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
 
 function getSectors(sectors: { sector: Sector }[]) {
   return sectors.map((s) => s.sector);
@@ -73,6 +74,17 @@ export async function getDeals({
   pageSize?: number;
 }) {
   try {
+    const { auth } = await createClient();
+    const {
+      data: { session },
+    } = await auth.getSession();
+    console.log("Session:", session);
+    if (session) {
+      const jwt = jwtDecode(session.access_token);
+      console.log("JWT:", jwt);
+      const userRole = jwt.user_role;
+    }
+
     const where: SQL[] = [];
     if (search) {
       where.push(
