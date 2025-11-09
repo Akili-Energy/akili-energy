@@ -97,11 +97,15 @@ const getNewsResearch = cache(getContent);
 export default async function LandingPage() {
   const dict = await getDictionary();
 
-  const { content: [article, ...articles]  } = await getNewsResearch({
+  const {
+    content: [article, ...articles],
+  } = await getNewsResearch({
     type: "news",
     limit: 3,
   });
-  const { content: [report, ...reports] } = await getNewsResearch({
+  const {
+    content: [report, ...reports],
+  } = await getNewsResearch({
     type: "research",
     limit: 3,
   });
@@ -112,12 +116,15 @@ export default async function LandingPage() {
         (b.publicationDate?.getTime() ?? 0) -
         (a.publicationDate?.getTime() ?? 0)
     )
-    .slice(0, 1);
-  
-  const recentContent = [...recent, article, report].toSorted(
-    (a, b) =>
-      (b.publicationDate?.getTime() ?? 0) - (a.publicationDate?.getTime() ?? 0)
-  );
+    .slice(0, 2);
+
+  const recentContent = [...recent, article, report]
+    .toSorted(
+      (a, b) =>
+        (b.publicationDate?.getTime() ?? 0) -
+        (a.publicationDate?.getTime() ?? 0)
+    )
+    .filter((x) => Boolean(x) && Object.keys(x).length !== 0).slice(0, 3);
 
   return (
     <div className="bg-background">
@@ -538,85 +545,87 @@ export default async function LandingPage() {
       </section>
 
       {/* News & Research Section */}
-      <section className="py-20 bg-gradient-soft dark:bg-gradient-soft">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-akili-blue dark:text-akili-green">
-                Actualités & Recherche
-              </h2>
-              <p className="text-xl text-gray-600 dark:text-gray-300 mt-2">
-                Restez informé des dernières tendances du marché énergétique
-                africain
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              asChild
-              className="border-akili-blue text-akili-blue hover:bg-akili-blue hover:text-white dark:border-akili-green dark:text-akili-green dark:hover:bg-akili-green"
-            >
-              <Link href="/news-research">Voir tout</Link>
-            </Button>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {recentContent.map((newsResearch) => (
-              <Card
-                key={newsResearch.slug}
-                className="hover:shadow-lg transition-all duration-300 bg-card hover:scale-105"
+      {recentContent.filter((x) => Boolean(x) && Object.keys(x).length !== 0).length > 0 && (
+        <section className="py-20 bg-gradient-soft dark:bg-gradient-soft">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-12">
+              <div>
+                <h2 className="text-3xl lg:text-4xl font-bold text-akili-blue dark:text-akili-green">
+                  Actualités & Recherche
+                </h2>
+                <p className="text-xl text-gray-600 dark:text-gray-300 mt-2">
+                  Restez informé des dernières tendances du marché énergétique
+                  africain
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                asChild
+                className="border-akili-blue text-akili-blue hover:bg-akili-blue hover:text-white dark:border-akili-green dark:text-akili-green dark:hover:bg-akili-green"
               >
-                <div className="relative h-48">
-                  <Image
-                    src={newsResearch.imageUrl || "/placeholder.svg"}
-                    alt={`${newsResearch.title}`}
-                    fill
-                    className="object-cover w-full h-48 bg-gradient-to-br from-akili-blue/10 to-akili-green/10 rounded-t-lg flex items-center justify-center"
-                  />
-                  <Badge className="absolute top-3 left-3 bg-akili-blue text-white">
-                    {newsResearch.category}
-                  </Badge>
-                </div>
-                <CardHeader>
-                  <CardTitle className="text-lg leading-tight">
-                    {newsResearch.title}
-                  </CardTitle>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
-                      <Calendar className="w-4 h-4" />
-                      <span>
-                        {newsResearch.publicationDate?.toLocaleDateString()}
-                      </span>
-                    </div>
-                    {newsResearch.researchReport?.reportUrl ? (
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="border-akili-green text-akili-green hover:bg-akili-green hover:text-white"
-                      >
-                        <Link
-                          href={newsResearch.researchReport?.reportUrl ?? ""}
-                          target="_blank"
-                          download
-                        >
-                          <Download className="w-4 h-4 mr-1" />
-                          Download
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/news/${newsResearch.slug}`}>
-                          Read More
-                        </Link>
-                      </Button>
-                    )}
+                <Link href="/news-research">Voir tout</Link>
+              </Button>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {recentContent.map((newsResearch) => (
+                <Card
+                  key={newsResearch?.slug}
+                  className="hover:shadow-lg transition-all duration-300 bg-card hover:scale-105"
+                >
+                  <div className="relative h-48">
+                    <Image
+                      src={newsResearch?.imageUrl || "/placeholder.svg"}
+                      alt={`${newsResearch?.title}`}
+                      fill
+                      className="object-cover w-full h-48 bg-gradient-to-br from-akili-blue/10 to-akili-green/10 rounded-t-lg flex items-center justify-center"
+                    />
+                    <Badge className="absolute top-3 left-3 bg-akili-blue text-white">
+                      {newsResearch?.category}
+                    </Badge>
                   </div>
-                </CardHeader>
-              </Card>
-            ))}
+                  <CardHeader>
+                    <CardTitle className="text-lg leading-tight">
+                      {newsResearch?.title}
+                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
+                        <Calendar className="w-4 h-4" />
+                        <span>
+                          {newsResearch?.publicationDate?.toLocaleDateString()}
+                        </span>
+                      </div>
+                      {newsResearch?.researchReport?.reportUrl ? (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="border-akili-green text-akili-green hover:bg-akili-green hover:text-white"
+                        >
+                          <Link
+                            href={newsResearch?.researchReport?.reportUrl ?? ""}
+                            target="_blank"
+                            download
+                          >
+                            <Download className="w-4 h-4 mr-1" />
+                            Download
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/news/${newsResearch?.slug}`}>
+                            Read More
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Final CTA Section */}
       <section className="py-20 bg-gradient-akili">

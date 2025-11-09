@@ -40,7 +40,7 @@ const userTypes = [
     title: "Développeurs/IPPs",
     subtitle: "Producteurs Indépendants",
     description:
-      "Analysez la concurrence, suivez les pipelines de projets et identifiez les opportunités de partenariat pour maximiser vos investissements.",
+      "Analysez la concurrence, suivez les pipelines de projets et identifiez les opportunités de partenariat.",
     benefits: [
       "Intelligence concurrentielle",
       "Suivi de pipeline",
@@ -55,9 +55,9 @@ const userTypes = [
     title: "Investisseurs",
     subtitle: "Fonds & Institutions",
     description:
-      "Évaluez les dynamiques de marché, suivez les performances de portefeuille et identifiez les opportunités d'investissement stratégiques.",
+      "Évaluez les dynamiques de marché, suivez les performances de portefeuille et identifiez les opportunités.",
     benefits: [
-      "Analyse ROI détaillée",
+      "Analyse ROI",
       "Suivi de portefeuille",
       "Sourcing de deals",
       "Évaluation des risques",
@@ -70,10 +70,10 @@ const userTypes = [
     title: "EPC/O&M",
     subtitle: "Ingénierie & Construction",
     description:
-      "Suivez les projets à venir, surveillez les concurrents et identifiez les opportunités de développement dans le secteur énergétique.",
+      "Suivez les projets à venir, surveillez les concurrents et identifiez les opportunités de développement.",
     benefits: [
-      "Pipeline de projets détaillé",
-      "Suivi concurrentiel avancé",
+      "Pipeline de projets",
+      "Suivi concurrentiel",
       "Expansion marché",
       "Analyse des appels d'offres",
       "Optimisation des coûts",
@@ -85,9 +85,9 @@ const userTypes = [
     title: "Particuliers",
     subtitle: "Professionnels & Passionnés",
     description:
-      "Accédez à la veille sectorielle, explorez les projets en temps réel et montez en compétence sur les tendances énergétiques mondiales.",
+      "Accédez à la veille sectorielle, explorez les projets en temps réel et montez en compétence sur les tendances énergétiques.",
     benefits: [
-      "Veille sectorielle complète",
+      "Veille sectorielle",
       "Exploration interactive",
       "Analyse des tendances",
       "Données en temps réel",
@@ -132,56 +132,33 @@ export default function HomeCarousel() {
     setCurrentSlide(index);
   };
 
-  // Background color classes with proper dark mode variants
-  const getBackgroundClass = (color: string) => {
-    const baseClasses =
-      "min-h-[380px] flex flex-col transition-all duration-300";
-
-    if (color === "akili-blue") {
-      return `${baseClasses} bg-blue-50/80 dark:bg-blue-950/30 border-blue-200/50 dark:border-blue-800/30`;
-    } else if (color === "akili-green") {
-      return `${baseClasses} bg-green-50/80 dark:bg-green-950/30 border-green-200/50 dark:border-green-800/30`;
-    } else {
-      return `${baseClasses} bg-orange-50/80 dark:bg-orange-950/30 border-orange-200/50 dark:border-orange-800/30`;
-    }
-  };
-
-  const getHoverClass = (color: string) => {
-    if (color === "akili-blue") {
-      return "hover:border-akili-blue/40 hover:bg-blue-100/90 dark:hover:bg-blue-900/40";
-    } else if (color === "akili-green") {
-      return "hover:border-akili-green/40 hover:bg-green-100/90 dark:hover:bg-green-900/40";
-    } else {
-      return "hover:border-akili-orange/40 hover:bg-orange-100/90 dark:hover:bg-orange-900/40";
-    }
-  };
-
   return (
     <div className="relative">
       {/* Carousel Controls */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg rounded-full p-3 hover:bg-white dark:hover:bg-gray-700 transition-all duration-300 hover:scale-110 border border-gray-200 dark:border-gray-600"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-gray-800 shadow-lg rounded-full p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-110"
         aria-label="Previous slide"
       >
         <ChevronLeft className="w-6 h-6 text-akili-blue dark:text-akili-green" />
       </button>
       <button
         onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg rounded-full p-3 hover:bg-white dark:hover:bg-gray-700 transition-all duration-300 hover:scale-110 border border-gray-200 dark:border-gray-600"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-gray-800 shadow-lg rounded-full p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-110"
         aria-label="Next slide"
       >
         <ChevronRight className="w-6 h-6 text-akili-blue dark:text-akili-green" />
       </button>
 
-      {/* Carousel Container */}
-      <div className="overflow-hidden py-8 mx-16">
+      {/* Carousel Container - Fixed to show exactly 3 cards */}
+      <div className="overflow-hidden py-6 mx-16">
         <div
           ref={carouselRef}
           className="flex transition-transform duration-500 ease-in-out"
           style={{
             transform: `translateX(-${currentSlide * 33}%)`,
             width: "100%",
+            height: "300%",
           }}
           onMouseEnter={() => setIsAutoPlaying(false)}
           onMouseLeave={() => setIsAutoPlaying(true)}
@@ -189,67 +166,78 @@ export default function HomeCarousel() {
           {Array.from({ length: totalSlides }).map((_, slideIndex) => (
             <div
               key={slideIndex}
-              className="flex-shrink-0 w-full grid grid-cols-3 gap-8 px-4"
+              className="flex-shrink-0 w-full grid grid-cols-3 gap-6 px-4"
             >
               {userTypes
                 .slice(slideIndex * 3, slideIndex * 3 + 3)
                 .map((userType, index) => {
                   const Icon = userType.icon;
-                  const backgroundClass = getBackgroundClass(userType.color);
-                  const hoverClass = getHoverClass(userType.color);
-
                   return (
                     <Card
                       key={index}
-                      className={`border-2 shadow-lg hover:shadow-xl transition-all duration-500 group hover:scale-105 ${backgroundClass} ${hoverClass}`}
+                      className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 group hover:scale-105 min-h-[420px] flex flex-col ${
+                        userType.color === "akili-blue"
+                          ? "bg-[#021455]/5 dark:bg-[#021455]/20 hover:bg-[#021455]/8 dark:hover:bg-[#021455]/30"
+                          : userType.color === "akili-green"
+                          ? "bg-[#12B99A]/5 dark:bg-[#12B99A]/20 hover:bg-[#12B99A]/8 dark:hover:bg-[#12B99A]/30"
+                          : "bg-orange-500/5 dark:bg-orange-500/20 hover:bg-orange-500/8 dark:hover:bg-orange-500/30"
+                      }`}
                     >
-                      <CardHeader className="text-center pb-6 pt-8">
+                      <CardHeader className="text-center pb-6">
                         <div
-                          className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 ${
+                          className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform duration-300 ${
                             userType.color === "akili-blue"
-                              ? "bg-akili-blue/15 group-hover:bg-akili-blue/20"
+                              ? "bg-[#021455]/15 group-hover:bg-[#021455]/25 dark:bg-[#021455]/30 dark:group-hover:bg-[#021455]/40"
                               : userType.color === "akili-green"
-                              ? "bg-akili-green/15 group-hover:bg-akili-green/20"
-                              : "bg-akili-orange/15 group-hover:bg-akili-orange/20"
+                              ? "bg-[#12B99A]/15 group-hover:bg-[#12B99A]/25 dark:bg-[#12B99A]/30 dark:group-hover:bg-[#12B99A]/40"
+                              : "bg-orange-500/15 group-hover:bg-orange-500/25 dark:bg-orange-500/30 dark:group-hover:bg-orange-500/40"
                           }`}
                         >
                           <Icon
                             className={`w-8 h-8 ${
                               userType.color === "akili-blue"
-                                ? "text-akili-blue"
+                                ? "text-[#021455] dark:text-[#021455]"
                                 : userType.color === "akili-green"
-                                ? "text-akili-green"
-                                : "text-akili-orange"
+                                ? "text-[#12B99A] dark:text-[#12B99A]"
+                                : "text-orange-500 dark:text-orange-400"
                             }`}
                           />
                         </div>
-                        <CardTitle className="text-xl mb-3 text-akili-blue dark:text-akili-green font-bold">
+                        <CardTitle
+                          className={`text-xl mb-3 font-semibold ${
+                            userType.color === "akili-blue"
+                              ? "text-[#021455] dark:text-[#021455]"
+                              : userType.color === "akili-green"
+                              ? "text-[#12B99A] dark:text-[#12B99A]"
+                              : "text-orange-600 dark:text-orange-400"
+                          }`}
+                        >
                           {userType.title}
                         </CardTitle>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 font-semibold">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
                           {userType.subtitle}
                         </p>
                       </CardHeader>
-                      <CardContent className="space-y-6 flex-1">
-                        <CardDescription className="text-gray-700 dark:text-gray-300 leading-relaxed text-center text-base">
+                      <CardContent className="space-y-6 flex-1 flex flex-col">
+                        <CardDescription className="text-gray-700 dark:text-gray-200 leading-relaxed text-center text-base flex-1">
                           {userType.description}
                         </CardDescription>
-                        <div className="space-y-3">
+                        <div className="space-y-3 pt-4 border-t border-gray-200/50 dark:border-gray-600/50">
                           {userType.benefits.map((benefit, idx) => (
                             <div
                               key={idx}
-                              className="flex items-center text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors duration-300"
+                              className="flex items-center text-sm text-gray-700 dark:text-gray-200 font-medium"
                             >
                               <div
                                 className={`w-2 h-2 rounded-full mr-3 flex-shrink-0 ${
                                   userType.color === "akili-blue"
-                                    ? "bg-akili-blue"
+                                    ? "bg-[#021455]"
                                     : userType.color === "akili-green"
-                                    ? "bg-akili-green"
-                                    : "bg-akili-orange"
+                                    ? "bg-[#12B99A]"
+                                    : "bg-orange-500"
                                 }`}
                               ></div>
-                              <span className="font-medium">{benefit}</span>
+                              {benefit}
                             </div>
                           ))}
                         </div>
@@ -263,14 +251,14 @@ export default function HomeCarousel() {
       </div>
 
       {/* Enhanced Carousel Dots */}
-      <div className="flex justify-center items-center space-x-2 mt-10">
+      <div className="flex justify-center items-center space-x-2 mt-8">
         {Array.from({ length: totalSlides }).map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
             className={`transition-all duration-300 rounded-full ${
               currentSlide === index
-                ? "w-8 h-3 bg-akili-blue dark:bg-akili-green shadow-md"
+                ? "w-8 h-3 bg-[#021455] dark:bg-[#12B99A]"
                 : "w-3 h-3 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500"
             }`}
             aria-label={`Go to slide ${index + 1}`}
