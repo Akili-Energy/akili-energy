@@ -49,11 +49,16 @@ import {
 } from "@/lib/types";
 import { Countries } from "@/components/countries-flags";
 import { SectorsIconsTooltip } from "@/components/sector-icon";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { getUserRole } from "@/app/actions/auth";
 
 const PAGE_SIZE = 12; // divisible by 3 for card view
 
 export default function CompaniesPage() {
   const { t } = useLanguage();
+  const router = useRouter();
+
   const [isPending, startTransition] = useTransition();
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
 
@@ -64,6 +69,19 @@ export default function CompaniesPage() {
   const [cursors, setCursors] = useState<{ next?: Cursor; previous?: Cursor }>(
     {}
   );
+  const [isGuestUser, setIsGuestUser] = useState(true);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const userRole = await getUserRole();
+      if (userRole === null || userRole === undefined) {
+        toast.error("Invalid user. Please log in again.");
+        router.replace("/login");
+      }
+      setIsGuestUser(userRole === "guest");
+    };
+    fetchUserRole();
+  }, []);
 
   // Ref for the observer target element
   const observerRef = useRef<HTMLDivElement>(null);
@@ -111,7 +129,7 @@ export default function CompaniesPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         // If the observer target is visible, fetch more data
-        if (entries[0].isIntersecting) {
+        if (entries[0].isIntersecting && !isPending && !isGuestUser) {
           fetchCompanies("next", true);
         }
       },
@@ -129,7 +147,14 @@ export default function CompaniesPage() {
         observer.unobserve(currentObserverRef);
       }
     };
-  }, [viewMode, companies, cursors.next, isPending, fetchCompanies]);
+  }, [
+    viewMode,
+    companies,
+    cursors.next,
+    isPending,
+    isGuestUser,
+    fetchCompanies,
+  ]);
 
   const handleFilterChange = <K extends keyof CompanyFilters>(
     key: K,
@@ -178,6 +203,7 @@ export default function CompaniesPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
+                disabled={isGuestUser}
               />
             </div>
             <Select
@@ -188,6 +214,7 @@ export default function CompaniesPage() {
                   v as CompanyClassification | "all"
                 )
               }
+              disabled={isGuestUser}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Classification" />
@@ -206,6 +233,7 @@ export default function CompaniesPage() {
               onValueChange={(v) =>
                 handleFilterChange("sector", v as CompanySector | "all")
               }
+              disabled={isGuestUser}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sector" />
@@ -224,6 +252,7 @@ export default function CompaniesPage() {
               onValueChange={(v) =>
                 handleFilterChange("country", v as Country | "all")
               }
+              disabled={isGuestUser}
             >
               <SelectTrigger>
                 <SelectValue placeholder="HQ Country" />
@@ -506,7 +535,7 @@ export default function CompaniesPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => fetchCompanies("previous")}
-                  disabled={isPending || !cursors.previous}
+                  disabled={isPending || !cursors.previous || isGuestUser}
                 >
                   Previous
                 </Button>
@@ -514,7 +543,7 @@ export default function CompaniesPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => fetchCompanies("next")}
-                  disabled={isPending || !cursors.next}
+                  disabled={isPending || !cursors.next || isGuestUser}
                 >
                   Next
                 </Button>

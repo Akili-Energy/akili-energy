@@ -50,6 +50,9 @@ import {
 } from "@/lib/types";
 import { Countries } from "@/components/countries-flags";
 import { useLanguage } from "@/components/language-context";
+import { getUserRole } from "@/app/actions/auth";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const ProjectsMap = dynamic(() => import("@/components/projects-map"), {
   ssr: false,
@@ -72,6 +75,7 @@ const getStageColor = (stage: string | null) => {
 };
 
 export default function ProjectsPage() {
+  const router = useRouter();
   const { t } = useLanguage();
 
   const [projects, setProjects] = useState<FetchProjectsResults>([]);
@@ -84,6 +88,19 @@ export default function ProjectsPage() {
   const [cursors, setCursors] = useState<{ next?: Cursor; previous?: Cursor }>(
     {}
   );
+  const [isGuestUser, setIsGuestUser] = useState(true);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const userRole = await getUserRole();
+      if (userRole === null || userRole === undefined) {
+        toast.error("Invalid user. Please log in again.");
+        router.replace("/login");
+      }
+      setIsGuestUser(userRole === "guest");
+    };
+    fetchUserRole();
+  }, []);
 
   const fetchAndSetProjects = (
     newFilter?: ProjectFilters,
@@ -217,10 +234,15 @@ export default function ProjectsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 className="pl-10"
+                disabled={isGuestUser}
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             </div>
-            <Select value={filters.region} onValueChange={onRegionChange}>
+            <Select
+              value={filters.region}
+              onValueChange={onRegionChange}
+              disabled={isGuestUser}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select Region" />
               </SelectTrigger>
@@ -233,7 +255,11 @@ export default function ProjectsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filters.country} onValueChange={onCountryChange}>
+            <Select
+              value={filters.country}
+              onValueChange={onCountryChange}
+              disabled={isGuestUser}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select Country" />
               </SelectTrigger>
@@ -254,6 +280,7 @@ export default function ProjectsPage() {
             <Select
               value={filters.sector}
               onValueChange={(v) => onFilterChange("sector", v)}
+              disabled={isGuestUser}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Sector" />
@@ -270,6 +297,7 @@ export default function ProjectsPage() {
             <Select
               value={filters.stage}
               onValueChange={(v) => onFilterChange("stage", v)}
+              disabled={isGuestUser}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Project Stage" />
@@ -422,7 +450,9 @@ export default function ProjectsPage() {
                     onClick={() =>
                       fetchAndSetProjects(filters, "previous", searchTerm)
                     }
-                    disabled={cursors.previous === undefined || isPending}
+                    disabled={
+                      cursors.previous === undefined || isPending || isGuestUser
+                    }
                   >
                     Previous
                   </Button>
@@ -432,7 +462,9 @@ export default function ProjectsPage() {
                     onClick={() =>
                       fetchAndSetProjects(filters, "next", searchTerm)
                     }
-                    disabled={cursors.next === undefined || isPending}
+                    disabled={
+                      cursors.next === undefined || isPending || isGuestUser
+                    }
                   >
                     Next
                   </Button>

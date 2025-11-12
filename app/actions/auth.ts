@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/server";
 import z from "zod";
 import { db } from "@/lib/db/drizzle";
 import { userRole, users } from "@/lib/db/schema";
-import { jwtDecode } from "jwt-decode";
 
 const authSchema = z.object({
   email: z.string().email(),
@@ -119,15 +118,15 @@ export async function signup(
 
 export async function getUserRole() {
   const { auth } = await createClient();
-  const {
-    data: { session },
-  } = await auth.getSession();
-  console.log("Session:", session);
-  if (session) {
-    const jwt = jwtDecode(session.access_token);
-    console.log("JWT:", jwt);
-    const role = jwt.user_role;
-    if (role) return role as (typeof userRole)[number];
+  const { data, error } = await auth.getClaims();
+  if (error) {
+    console.error("Get claims (user role) error:", error.message);
+    return null;
+  }
+  if (data?.claims?.user_role) return data.claims.user_role as (typeof userRole.enumValues)[number];
+  if (data) {
+    const role = data.claims?.user_role;
+    if (role) return role as (typeof userRole.enumValues)[number];
     return (await getCurrentUser())?.role;
   }
   return null;
@@ -136,8 +135,12 @@ export async function getUserRole() {
 export async function getCurrentUser() {
   const { auth } = await createClient();
   const {
-    data: { user },
+    data: { user }, error,
   } = await auth.getUser();
+  if (error) {
+    console.error("Get user error:", error.message);
+    return null;
+  }
   if (user) {
     return db.query.users.findFirst({
       where: (users, { eq }) => eq(users.id, user?.id ?? ""),

@@ -56,6 +56,8 @@ import { useEffect, useState, useTransition } from "react";
 import { useLanguage } from "@/components/language-context";
 import { Countries } from "@/components/countries-flags";
 import { useDebounce } from "@/hooks/use-debounce";
+import { getUserRole } from "@/app/actions/auth";
+import { toast } from "sonner";
 
 const DEAL_TYPE_COLORS: Record<DealType, string> = {
   merger_acquisition: "bg-blue-100 text-blue-800 border-blue-200",
@@ -79,6 +81,19 @@ export default function DealsPage() {
   const [filters, setFilters] = useState<DealFilters>();
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [keys, setKeys] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [isGuestUser, setIsGuestUser] = useState(true);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const userRole = await getUserRole();
+      if (userRole === null || userRole === undefined) {
+        toast.error("Invalid user. Please log in again.");
+        router.replace("/login");
+      }
+      setIsGuestUser(userRole === "guest");
+    };
+    fetchUserRole();
+  }, []);
 
   const fetchDeals = (newFilter?: DealFilters, order?: Pagination) =>
     startTransition(async () => {
@@ -224,12 +239,14 @@ export default function DealsPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
+                disabled={isGuestUser}
               />
             </div>
             <Select
               key={keys[0]}
               value={selectedRegion}
               onValueChange={onRegionChange}
+              disabled={isGuestUser}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Region" />
@@ -246,6 +263,7 @@ export default function DealsPage() {
               key={keys[1]}
               value={selectedRegion}
               onValueChange={onCountryChange}
+              disabled={isGuestUser}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Country" />
@@ -267,6 +285,7 @@ export default function DealsPage() {
               key={keys[2]}
               value={filters?.type}
               onValueChange={onDealTypeChange}
+              disabled={isGuestUser}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Deal Type" />
@@ -283,6 +302,7 @@ export default function DealsPage() {
               key={keys[3]}
               value={filters?.subtype}
               onValueChange={onDealSubtypeChange}
+              disabled={isGuestUser}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Deal Subtype" />
@@ -302,6 +322,7 @@ export default function DealsPage() {
               key={keys[4]}
               value={filters?.sector}
               onValueChange={(value) => fetchDeals({ sector: value as Sector })}
+              disabled={isGuestUser}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Sector" />
@@ -318,6 +339,7 @@ export default function DealsPage() {
               variant="outline"
               className="border-akili-orange text-akili-orange hover:bg-akili-orange hover:text-white"
               onClick={resetFilters}
+              disabled={isGuestUser}
             >
               <FilterX className="w-4 h-4 mr-2" />
               Reset Filters
@@ -441,7 +463,7 @@ export default function DealsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => fetchDeals(undefined, "previous")}
-                  disabled={currentPage === 1}
+                  disabled={currentPage === 1 || isGuestUser}
                   className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Previous
@@ -451,7 +473,8 @@ export default function DealsPage() {
                   size="sm"
                   onClick={() => fetchDeals(undefined, "next")}
                   disabled={
-                    currentPage === Math.ceil(count / DEFAULT_PAGE_SIZE)
+                    currentPage === Math.ceil(count / DEFAULT_PAGE_SIZE) ||
+                    isGuestUser
                   }
                   className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
@@ -474,8 +497,10 @@ export default function DealsPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => fetchDeals(undefined, "previous")}
-                    disabled={currentPage === 1}
+                    onClick={() =>
+                      fetchDeals(undefined, "previous")
+                    }
+                    disabled={currentPage === 1 || isGuestUser}
                     className="px-3 py-1 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >
                     Previous
@@ -485,7 +510,7 @@ export default function DealsPage() {
                     size="sm"
                     onClick={() => fetchDeals(undefined, "next")}
                     disabled={
-                      currentPage === Math.ceil(count / DEFAULT_PAGE_SIZE)
+                      currentPage === Math.ceil(count / DEFAULT_PAGE_SIZE) || isGuestUser
                     }
                     className="px-3 py-1 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >

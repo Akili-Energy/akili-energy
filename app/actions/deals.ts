@@ -75,32 +75,20 @@ export async function getDeals({
   pageSize?: number;
 }) {
   try {
-    const { auth } = await createClient();
-    const {
-      data: { session },
-    } = await auth.getSession();
-    console.log("Session:", session);
-    if (session) {
-      const jwt = jwtDecode(session.access_token);
-      console.log("JWT:", jwt);
-      const userRole = jwt.user_role;
-      console.log("User Role:", userRole);
-    }
-    const { data, error } = await auth.getClaims();
-    console.log("Claims Data:", data);
-    if (data) {
-      console.log("Claims:", data?.claims);
-    }
-
     const userRole = await getUserRole();
+    if (userRole === null || userRole === undefined) {
+      console.log("User role not found, redirecting to login.");
+      redirect("/login");
+    }
+    const isGuestUser = userRole === "guest";
 
     const where: SQL[] = [];
-    if (search) {
+    if (search && !isGuestUser) {
       where.push(
         sql`to_tsvector('franglais', ${deals.update}) @@ plainto_tsquery('franglais', ${search})`
       );
     }
-    if (filters) {
+    if (filters && !isGuestUser) {
       const { type, subtype } = filters;
       if (type) where.push(eq(deals.type, type));
       if (subtype) where.push(eq(deals.subtype, subtype));
@@ -151,7 +139,8 @@ export async function getDeals({
                       filters?.sector &&
                       projectSector.enumValues.includes(
                         filters.sector as ProjectSector
-                      )
+                      ) &&
+                      !isGuestUser
                         ? (projectsSectors, { eq }) =>
                             eq(
                               projectsSectors.sector,
@@ -182,7 +171,8 @@ export async function getDeals({
                       filters?.sector &&
                       companySector.enumValues.includes(
                         filters.sector as CompanySector
-                      )
+                      ) &&
+                      !isGuestUser
                         ? (companiesSectors, { eq }) =>
                             eq(
                               companiesSectors.sector,
@@ -201,7 +191,7 @@ export async function getDeals({
           },
         },
         where: (deals, { gt, lt, or, and, eq }) =>
-          and(
+          isGuestUser ? undefined: and(
             ...[
               where.length ? and(...where) : undefined,
               cursor
@@ -223,10 +213,11 @@ export async function getDeals({
           order === "previous"
             ? [asc(deals.date), asc(deals.announcementDate)]
             : [desc(deals.date), desc(deals.announcementDate)],
-        limit: pageSize,
+        limit: isGuestUser ? DEFAULT_PAGE_SIZE : pageSize,
       }),
       dealsCount,
     ]);
+    const totalDeals = (total as { count: number }[])[0]?.count ?? 0;
     return {
       deals: results.map(
         ({ dealsCountries, dealsCompanies, dealsAssets, date, ...deal }) => {
@@ -280,7 +271,7 @@ export async function getDeals({
           };
         }
       ),
-      total: (total as { count: number }[])[0]?.count ?? 0,
+      total: isGuestUser ? Math.min(DEFAULT_PAGE_SIZE, totalDeals) : totalDeals,
     };
   } catch (error) {
     console.error("Error fetching deals:", error);
