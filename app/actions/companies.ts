@@ -62,7 +62,7 @@ export async function getCompanies(
 
     // Clause for cursor-based pagination
     let cursorClause;
-    if (cursor) {
+    if (cursor && !isGuestUser) {
       const op = order === "previous" ? gt : lt;
       cursorClause = or(
         op(companies.createdAt, cursor.createdAt),

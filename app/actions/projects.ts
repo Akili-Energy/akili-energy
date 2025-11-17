@@ -104,7 +104,7 @@ export async function getProjects(
         },
       },
       where: isGuestUser
-        ? undefined
+        ? where
         : (projects, { or, gt, lt }) =>
             and(
               where,
