@@ -366,7 +366,13 @@
                 "project_pipeline": "Project Pipeline",
                 "market_intelligence": "Market Intelligence",
                 "yoy_growth": "YoY Growth",
-                "investments": "Investments"
+                "investments": "Investments",
+                "solar_amount": "$38.4M",
+                "hydro_amount": "$600M",
+                "in_construction_gw": "2.5GW",
+                "operational_gw": "1.8GW",
+                "in_development_gw": "3.2GW",
+                "live": "Live"
             }
         },
         "stats": {
@@ -381,6 +387,141 @@
         "carousel": {
             "title": "Designed for Energy Professionals",
             "subtitle": "Solutions tailored to each player in the African energy ecosystem"
+        },
+        "platform": {
+            "title": "The Akili Platform",
+            "subtitle": "A comprehensive toolkit for energy market intelligence and strategic decision-making.",
+            "tabs": {
+                "deal_tracking": "Deal Tracking",
+                "data_visualization": "Data Visualization",
+                "financial_modeling": "Financial Modeling",
+                "market_research": "Market Research"
+            },
+            "deal_tracking": {
+                "title": "Comprehensive Deal Intelligence",
+                "description": "Track every significant energy transaction across Africa with detailed analytics and insights.",
+                "features": {
+                    "database": {
+                        "title": "Rich Transaction Database",
+                        "description": "Access detailed records of M&A activities, project updates, financing rounds, and PPAs."
+                    },
+                    "filtering": {
+                        "title": "Advanced Filtering & Search",
+                        "description": "Find exactly what you need with filters for region, country, technology, deal type, and investment size."
+                    },
+                    "alerts": {
+                        "title": "Custom Alerts & Notifications",
+                        "description": "Stay informed with real-time alerts when new deals match your criteria or interests."
+                    }
+                },
+                "cta": "Explore Deal Tracking",
+                "table": {
+                    "title": "Recent Energy Deals",
+                    "headers": {
+                        "deal": "DEAL",
+                        "sector": "SECTOR",
+                        "country": "COUNTRY",
+                        "type": "TYPE",
+                        "value": "VALUE (£M)",
+                        "date": "DATE"
+                    },
+                    "mobile_labels": {
+                        "sector": "Sector:",
+                        "country": "Country:",
+                        "value": "Value:",
+                        "date": "Date:"
+                    },
+                    "actions": {
+                        "refresh": "Refresh",
+                        "settings": "Settings"
+                    },
+                    "view_all": "View all deals"
+                }
+            },
+            "coming_soon": {
+                "data_visualization": "Data Visualization content coming soon!",
+                "financial_modeling": "Financial Modeling content coming soon!",
+                "market_research": "Market Research content coming soon!"
+            }
+        },
+        "geographic_intelligence": {
+            "title": "Geographic Intelligence",
+            "subtitle": "Comprehensive mapping of energy opportunities across Africa"
+        },
+        "key_facts": {
+            "title": "Key Facts",
+            "subtitle": "Comprehensive data coverage across Africa's energy ecosystem",
+            "cards": {
+                "companies": {
+                    "count": "500+",
+                    "title": "Company Profiles",
+                    "description": "Energy companies across Africa"
+                },
+                "projects": {
+                    "count": "2,856",
+                    "title": "Project Profiles",
+                    "description": "Active energy infrastructure projects"
+                },
+                "deals": {
+                    "count": "10,247",
+                    "title": "Total Deals",
+                    "description": "Transactions tracked since inception"
+                },
+                "financing": {
+                    "count": "$12.5B+",
+                    "title": "Project Finance in 2025",
+                    "description": "Total financing deals this year"
+                },
+                "ma": {
+                    "count": "247",
+                    "title": "M&A Deals in 2025",
+                    "description": "Mergers & acquisitions this year"
+                },
+                "green_bonds": {
+                    "count": "$3.8B+",
+                    "title": "Green Bond Deals in 2025",
+                    "description": "Sustainable financing this year"
+                }
+            }
+        },
+        "news_research": {
+            "title": "News & Research",
+            "subtitle": "Stay informed on the latest trends in the African energy market",
+            "cta": "View All",
+            "read_more": "Read More",
+            "download": "Download"
+        },
+        "final_cta": {
+            "title": "Ready to Accelerate Your Energy Strategy?",
+            "subtitle": "Join the companies and professionals who trust Akili Energy for their investment decisions in the African energy sector.",
+            "primary_cta": "Explore Transactions",
+            "secondary_cta": "Request Demo"
+        },
+        "footer": {
+            "description": "Strategic intelligence for the African energy sector.",
+            "sections": {
+                "platform": {
+                    "title": "Platform",
+                    "links": {
+                        "dashboard": "Dashboard",
+                        "deals": "Transactions",
+                        "projects": "Projects",
+                        "companies": "Companies"
+                    }
+                },
+                "resources": {
+                    "title": "Resources",
+                    "links": {
+                        "research": "Research",
+                        "blog": "Blog",
+                        "contact": "Contact"
+                    }
+                },
+                "contact": {
+                    "title": "Contact"
+                }
+            },
+            "copyright": "© 2025 Akili Energy. All rights reserved."
         }
     }
 }

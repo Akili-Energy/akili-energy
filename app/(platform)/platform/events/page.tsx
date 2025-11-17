@@ -1,144 +1,126 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Calendar, MapPin, Users, Clock, ExternalLink } from "lucide-react"
+import { Search, Calendar, MapPin, ExternalLink, Loader2 } from "lucide-react"
 import Link from "next/link"
-
-const events = [
-  {
-    id: 1,
-    title: "Africa Energy Forum 2025",
-    type: "Conference",
-    date: "2025-06-15",
-    endDate: "2025-06-17",
-    location: "Cape Town, South Africa",
-    organizer: "EnergyNet",
-    attendees: 1200,
-    status: "Upcoming",
-    description:
-      "The premier gathering for Africa's energy sector, bringing together investors, developers, and policymakers.",
-    topics: ["Solar", "Wind", "Hydro", "Investment"],
-    price: "€1,995",
-    website: "https://africa-energy-forum.com",
-  },
-  {
-    id: 2,
-    title: "West Africa Power Summit",
-    type: "Summit",
-    date: "2025-05-20",
-    endDate: "2025-05-22",
-    location: "Lagos, Nigeria",
-    organizer: "Power Africa",
-    attendees: 800,
-    status: "Upcoming",
-    description: "Focused on accelerating power sector development across West Africa.",
-    topics: ["Grid Infrastructure", "Mini-grids", "Policy"],
-    price: "$1,200",
-    website: "https://west-africa-power.com",
-  },
-  {
-    id: 3,
-    title: "Solar Power Africa Webinar Series",
-    type: "Webinar",
-    date: "2025-05-08",
-    endDate: "2025-05-08",
-    location: "Virtual",
-    organizer: "Solar Power Europe",
-    attendees: 500,
-    status: "Upcoming",
-    description: "Monthly webinar series covering latest trends in African solar markets.",
-    topics: ["Solar", "Technology", "Market Trends"],
-    price: "Free",
-    website: "https://solarpowereurope.org",
-  },
-  {
-    id: 4,
-    title: "East Africa Renewable Energy Conference",
-    type: "Conference",
-    date: "2025-04-10",
-    endDate: "2025-04-12",
-    location: "Nairobi, Kenya",
-    organizer: "EABC",
-    attendees: 600,
-    status: "Past",
-    description: "Regional conference focusing on renewable energy opportunities in East Africa.",
-    topics: ["Geothermal", "Solar", "Wind", "Hydro"],
-    price: "$800",
-    website: "https://eabc.info",
-  },
-  {
-    id: 5,
-    title: "African Energy Investment Summit",
-    type: "Summit",
-    date: "2025-07-25",
-    endDate: "2025-07-26",
-    location: "London, UK",
-    organizer: "African Energy",
-    attendees: 400,
-    status: "Upcoming",
-    description: "High-level summit connecting African energy projects with international investors.",
-    topics: ["Investment", "Project Finance", "M&A"],
-    price: "£2,500",
-    website: "https://african-energy.com",
-  },
-]
+import { getUserRole } from "@/app/actions/auth"
+import { getEvents } from "@/app/actions/events"
+import { useLanguage } from "@/components/language-context"
+import { FetchEventsResults } from "@/lib/types"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export default function EventsPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedType, setSelectedType] = useState("all")
-  const [selectedTopic, setSelectedTopic] = useState("all")
+  const { t } = useLanguage();
+  const router = useRouter();
+
+  const [isPending, startTransition] = useTransition();
+
+  const [events, setEvents] = useState<FetchEventsResults>([]);
+  const [total, setTotal] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [cursor, setCursor] = useState<Date>();
+  const [isGuestUser, setIsGuestUser] = useState(true);
   const [selectedDateRange, setSelectedDateRange] = useState("all")
 
-  const filteredEvents = events.filter((event) => {
-    const matchesSearch =
-      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.organizer.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesType = selectedType === "all" || event.type === selectedType
-    const matchesTopic =
-      selectedTopic === "all" || event.topics.some((topic) => topic.toLowerCase() === selectedTopic.toLowerCase())
 
-    // Simple date filtering
-    let matchesDate = true
-    if (selectedDateRange !== "all") {
-      const eventDate = new Date(event.date)
-      const now = new Date()
-      const diffTime = eventDate.getTime() - now.getTime()
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-      switch (selectedDateRange) {
-        case "next-month":
-          matchesDate = diffDays >= 0 && diffDays <= 30
-          break
-        case "next-3-months":
-          matchesDate = diffDays >= 0 && diffDays <= 90
-          break
-        case "next-6-months":
-          matchesDate = diffDays >= 0 && diffDays <= 180
-          break
-        default:
-          matchesDate = true
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const userRole = await getUserRole();
+      if (userRole === null || userRole === undefined) {
+        toast.error("Invalid user. Please log in again.");
+        router.replace("/login");
       }
+      setIsGuestUser(userRole === "guest");
+    };
+    fetchUserRole();
+  }, []);
+
+  // Ref for the observer target element
+  const observerRef = useRef<HTMLDivElement>(null);
+
+  const fetchEvents = useCallback(
+    () => {
+      startTransition(async () => {
+
+        const {
+          events: fetchedEvents,
+          total: totalCount,
+        } = (await getEvents({cursor, search: searchTerm}))!;
+
+                  setEvents((prev) => [...prev, ...fetchedEvents]);
+
+
+        setTotal(totalCount);
+        setCursor(fetchedEvents[fetchedEvents.length - 1].start);
+      });
+    },
+    [searchTerm, cursor]
+  );
+
+  // Effect for initial load and when filters/search change
+  useEffect(() => {
+    // This fetches the first page and resets the list
+    fetchEvents();
+  }, [searchTerm]);
+
+  // Effect for infinite scrolling
+  useEffect(() => {
+    if (isPending || !cursor) {
+      return;
     }
 
-    return matchesSearch && matchesType && matchesTopic && matchesDate
-  })
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // If the observer target is visible, fetch more data
+        if (entries[0].isIntersecting && !isPending && !isGuestUser) {
+          fetchEvents();
+        }
+      },
+      { threshold: 1.0 } // Trigger when the element is fully visible
+    );
 
-  const upcomingEvents = filteredEvents.filter((event) => event.status === "Upcoming")
-  const pastEvents = filteredEvents.filter((event) => event.status === "Past")
+    const currentObserverRef = observerRef.current;
+    if (currentObserverRef) {
+      observer.observe(currentObserverRef);
+    }
+
+    // Cleanup observer on component unmount or dependency change
+    return () => {
+      if (currentObserverRef) {
+        observer.unobserve(currentObserverRef);
+      }
+    };
+  }, [
+    events,
+    cursor,
+    isPending,
+    isGuestUser,
+    fetchEvents,
+  ]);
+
+  const getUpcoming = (allEvents: FetchEventsResults) => {
+    return allEvents.filter(({ start }) => start.getTime() >= Date.now());
+  }
+
+  const getPast = (allEvents: FetchEventsResults) => {
+    return allEvents.filter(({ start }) => start.getTime() < Date.now());
+  }
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Events</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Events
+          </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Discover conferences, summits, and webinars in the energy sector
           </p>
@@ -146,7 +128,7 @@ export default function EventsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Events</CardTitle>
@@ -192,13 +174,15 @@ export default function EventsPage() {
             <p className="text-xs text-muted-foreground">Host countries</p>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* Filters */}
       <Card>
         <CardHeader>
           <CardTitle>Filters</CardTitle>
-          <CardDescription>Find events that match your interests</CardDescription>
+          <CardDescription>
+            Find events that match your interests
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -211,32 +195,10 @@ export default function EventsPage() {
                 className="pl-10"
               />
             </div>
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Event Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="Conference">Conference</SelectItem>
-                <SelectItem value="Summit">Summit</SelectItem>
-                <SelectItem value="Webinar">Webinar</SelectItem>
-                <SelectItem value="Workshop">Workshop</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={selectedTopic} onValueChange={setSelectedTopic}>
-              <SelectTrigger>
-                <SelectValue placeholder="Topic" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Topics</SelectItem>
-                <SelectItem value="solar">Solar</SelectItem>
-                <SelectItem value="wind">Wind</SelectItem>
-                <SelectItem value="hydro">Hydro</SelectItem>
-                <SelectItem value="investment">Investment</SelectItem>
-                <SelectItem value="policy">Policy</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={selectedDateRange} onValueChange={setSelectedDateRange}>
+            <Select
+              value={selectedDateRange}
+              onValueChange={setSelectedDateRange}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Date Range" />
               </SelectTrigger>
@@ -254,60 +216,65 @@ export default function EventsPage() {
       {/* Events */}
       <Tabs defaultValue="upcoming" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="upcoming">Upcoming Events ({upcomingEvents.length})</TabsTrigger>
-          <TabsTrigger value="past">Past Events ({pastEvents.length})</TabsTrigger>
+          <TabsTrigger value="upcoming">
+            Upcoming Events ({getUpcoming(events).length})
+          </TabsTrigger>
+          <TabsTrigger value="past">
+            Past Events ({getPast(events).length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="upcoming">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {upcomingEvents.map((event) => (
-              <Card key={event.id} className="hover:shadow-lg transition-shadow duration-300">
+            {getUpcoming(events).map((event) => (
+              <Card
+                key={event.id}
+                className="hover:shadow-lg transition-shadow duration-300"
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <CardTitle className="text-lg"><Link href={`/platform/events/${event.id}`}>{event.title}</Link></CardTitle>
-                      <Badge variant="outline">{event.type}</Badge>
+                      <CardTitle className="text-lg">
+                        <Link href={`/platform/events/${event.id}`}>
+                          {event.title}
+                        </Link>
+                      </CardTitle>
                     </div>
-                    <Badge variant="default" className="bg-green-100 text-green-800">
-                      {event.status}
+                    <Badge
+                      variant="default"
+                      className="bg-green-100 text-green-800"
+                    >
+                      Upcoming
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{event.description}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {event.description}
+                  </p>
 
                   <div className="space-y-2">
                     <div className="flex items-center text-sm">
                       <Calendar className="w-4 h-4 mr-2 text-gray-500" />
                       <span>
-                        {new Date(event.date).toLocaleDateString()} - {new Date(event.endDate).toLocaleDateString()}
+                        {new Date(event.start).toLocaleDateString()} -{" "}
+                        {new Date(event.endDate).toLocaleDateString()}
                       </span>
                     </div>
                     <div className="flex items-center text-sm">
                       <MapPin className="w-4 h-4 mr-2 text-gray-500" />
-                      <span>{event.location}</span>
+                      <span>{event.address}</span>
                     </div>
-                    <div className="flex items-center text-sm">
-                      <Users className="w-4 h-4 mr-2 text-gray-500" />
-                      <span>{event.attendees} attendees</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1">
-                    {event.topics.map((topic, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {topic}
-                      </Badge>
-                    ))}
                   </div>
 
                   <div className="flex items-center justify-between pt-4 border-t">
-                    <div>
-                      <p className="text-sm text-gray-500">Price</p>
-                      <p className="font-semibold">{event.price}</p>
-                    </div>
+                    <div />
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={event.website} target="_blank" rel="noopener noreferrer">
+                      <Link
+                        href={event.website || ""}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <ExternalLink className="w-4 h-4 mr-1" />
                         Visit
                       </Link>
@@ -321,52 +288,50 @@ export default function EventsPage() {
 
         <TabsContent value="past">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pastEvents.map((event) => (
-              <Card key={event.id} className="hover:shadow-lg transition-shadow duration-300 opacity-75">
+            {getPast(events).map((event) => (
+              <Card
+                key={event.id}
+                className="hover:shadow-lg transition-shadow duration-300 opacity-75"
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <CardTitle className="text-lg"><Link href={`/platform/events/${event.id}`}>{event.title}</Link></CardTitle>
-                      <Badge variant="outline">{event.type}</Badge>
+                      <CardTitle className="text-lg">
+                        <Link href={`/platform/events/${event.id}`}>
+                          {event.title}
+                        </Link>
+                      </CardTitle>
                     </div>
-                    <Badge variant="secondary">{event.status}</Badge>
+                    <Badge variant="secondary">Past</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{event.description}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {event.description}
+                  </p>
 
                   <div className="space-y-2">
                     <div className="flex items-center text-sm">
                       <Calendar className="w-4 h-4 mr-2 text-gray-500" />
                       <span>
-                        {new Date(event.date).toLocaleDateString()} - {new Date(event.endDate).toLocaleDateString()}
+                        {new Date(event.start).toLocaleDateString()} -{" "}
+                        {new Date(event.endDate).toLocaleDateString()}
                       </span>
                     </div>
                     <div className="flex items-center text-sm">
                       <MapPin className="w-4 h-4 mr-2 text-gray-500" />
-                      <span>{event.location}</span>
+                      <span>{event.address}</span>
                     </div>
-                    <div className="flex items-center text-sm">
-                      <Users className="w-4 h-4 mr-2 text-gray-500" />
-                      <span>{event.attendees} attendees</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1">
-                    {event.topics.map((topic, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {topic}
-                      </Badge>
-                    ))}
                   </div>
 
                   <div className="flex items-center justify-between pt-4 border-t">
-                    <div>
-                      <p className="text-sm text-gray-500">Price</p>
-                      <p className="font-semibold">{event.price}</p>
-                    </div>
+                    <div />
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={event.website} target="_blank" rel="noopener noreferrer">
+                      <Link
+                        href={event.website || ""}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <ExternalLink className="w-4 h-4 mr-1" />
                         Visit
                       </Link>
@@ -378,6 +343,13 @@ export default function EventsPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Observer Target and Loading Indicator for Card View */}
+      <div ref={observerRef} className="h-10 flex items-center justify-center">
+        {isPending && events.length > 0 && (
+          <Loader2 className="h-8 w-8 animate-spin text-akili-blue" />
+        )}
+      </div>
     </div>
-  )
+  );
 }

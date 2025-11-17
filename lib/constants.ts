@@ -24,6 +24,8 @@ export const BLOG_PAGE_SIZE = 6;
 export const NEWS_PAGE_SIZE = 4;
 export const RESEARCH_PAGE_SIZE = 3;
 
+export const IMAGE_BUCKET = "images";
+
 export const PROJECT_COMPANY_ROLES = [
   "special_purpose_vehicle",
   "sponsor",

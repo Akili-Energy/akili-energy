@@ -21,10 +21,9 @@ import type {
   ContentType,
 } from "@/lib/types";
 import { and, desc, eq, lt, ne, sql } from "drizzle-orm";
-import { BLOG_PAGE_SIZE } from "@/lib/constants";
+import { BLOG_PAGE_SIZE, IMAGE_BUCKET } from "@/lib/constants";
 import { headers } from "next/headers";
 
-const IMAGE_BUCKET = "images";
 const DOCUMENT_BUCKET = "documents";
 
 export type ContentActionState = ActionState & {

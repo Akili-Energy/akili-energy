@@ -74,11 +74,12 @@ export async function getDeals({
   search?: string;
   pageSize?: number;
 }) {
+  let redirectPath: string | undefined;
   try {
     const userRole = await getUserRole();
     if (userRole === null || userRole === undefined) {
       console.log("User role not found, redirecting to login.");
-      redirect("/login");
+      redirectPath = "/login";
     }
     const isGuestUser = userRole === "guest";
 
@@ -191,24 +192,26 @@ export async function getDeals({
           },
         },
         where: (deals, { gt, lt, or, and, eq }) =>
-          isGuestUser ? undefined: and(
-            ...[
-              where.length ? and(...where) : undefined,
-              cursor
-                ? or(
-                    order === "previous"
-                      ? gt(deals.date, cursor)
-                      : lt(deals.date, cursor),
-                    and(
-                      eq(deals.date, cursor),
-                      order === "previous"
-                        ? gt(deals.announcementDate, cursor)
-                        : lt(deals.announcementDate, cursor)
-                    )
-                  )
-                : undefined,
-            ].filter(Boolean)
-          ),
+          isGuestUser
+            ? undefined
+            : and(
+                ...[
+                  where.length ? and(...where) : undefined,
+                  cursor
+                    ? or(
+                        order === "previous"
+                          ? gt(deals.date, cursor)
+                          : lt(deals.date, cursor),
+                        and(
+                          eq(deals.date, cursor),
+                          order === "previous"
+                            ? gt(deals.announcementDate, cursor)
+                            : lt(deals.announcementDate, cursor)
+                        )
+                      )
+                    : undefined,
+                ].filter(Boolean)
+              ),
         orderBy: (deals, { asc, desc }) =>
           order === "previous"
             ? [asc(deals.date), asc(deals.announcementDate)]
@@ -218,64 +221,72 @@ export async function getDeals({
       dealsCount,
     ]);
     const totalDeals = (total as { count: number }[])[0]?.count ?? 0;
-    return {
-      deals: results.map(
-        ({ dealsCountries, dealsCompanies, dealsAssets, date, ...deal }) => {
-          const isCorporate =
-            deal.type === "merger_acquisition" &&
-            deal.subtype === "ma_corporate";
-          const sectors = [
-            ...new Set(
-              isCorporate
-                ? dealsCompanies.flatMap((c) =>
-                    getSectors(c.company.companiesSectors)
-                  )
-                : dealsAssets.flatMap((a) =>
-                    getSectors(a.asset.projectsSectors)
-                  )
-            ),
-          ];
-          const companiesTechnologies = dealsCompanies.flatMap((c) =>
-            getTechnologies(c.company.companiesTechnologies)
-          );
-          const technologies = [
-            ...new Set(
-              isCorporate
-                ? companiesTechnologies
-                : dealsAssets.flatMap((a) =>
-                    getTechnologies(a.asset.projectsTechnologies)
-                  )
-            ),
-          ];
-          if (deal.type === "financing" && technologies.length === 0)
-            technologies.push(...companiesTechnologies);
-          return {
-            ...deal,
-            date: new Date(date),
-            regions: [
+    if (!redirectPath) {
+      return {
+        deals: results.map(
+          ({ dealsCountries, dealsCompanies, dealsAssets, date, ...deal }) => {
+            const isCorporate =
+              deal.type === "merger_acquisition" &&
+              deal.subtype === "ma_corporate";
+            const sectors = [
               ...new Set(
-                dealsCountries.map(({ country: { region } }) => region)
+                isCorporate
+                  ? dealsCompanies.flatMap((c) =>
+                      getSectors(c.company.companiesSectors)
+                    )
+                  : dealsAssets.flatMap((a) =>
+                      getSectors(a.asset.projectsSectors)
+                    )
               ),
-            ],
-            countries: dealsCountries.map(({ country: { code } }) => code),
-            sectors:
-              sectors.length > 0
-                ? sectors
-                : technologies
-                    .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
-                    .filter(Boolean),
-            assets: dealsAssets.map(({ asset: { id, name } }) => ({
-              id,
-              name,
-            })),
-          };
-        }
-      ),
-      total: isGuestUser ? Math.min(DEFAULT_PAGE_SIZE, totalDeals) : totalDeals,
-    };
+            ];
+            const companiesTechnologies = dealsCompanies.flatMap((c) =>
+              getTechnologies(c.company.companiesTechnologies)
+            );
+            const technologies = [
+              ...new Set(
+                isCorporate
+                  ? companiesTechnologies
+                  : dealsAssets.flatMap((a) =>
+                      getTechnologies(a.asset.projectsTechnologies)
+                    )
+              ),
+            ];
+            if (deal.type === "financing" && technologies.length === 0)
+              technologies.push(...companiesTechnologies);
+            return {
+              ...deal,
+              date: new Date(date),
+              regions: [
+                ...new Set(
+                  dealsCountries.map(({ country: { region } }) => region)
+                ),
+              ],
+              countries: dealsCountries.map(({ country: { code } }) => code),
+              sectors:
+                sectors.length > 0
+                  ? sectors
+                  : technologies
+                      .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
+                      .filter(Boolean),
+              assets: dealsAssets.map(({ asset: { id, name } }) => ({
+                id,
+                name,
+              })),
+            };
+          }
+        ),
+        total: isGuestUser
+          ? Math.min(DEFAULT_PAGE_SIZE, totalDeals)
+          : totalDeals,
+      };
+    }
   } catch (error) {
     console.error("Error fetching deals:", error);
     throw new Error("Failed to fetch deals");
+  } finally {
+    if (redirectPath) {
+      redirect(redirectPath!);
+    }
   }
 }
 

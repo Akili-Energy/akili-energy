@@ -1,12 +1,12 @@
 "use client";
 
-import { EventForm } from "./../_components/event-form";
-import { getEventById } from "@/app/actions/actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { use, useEffect, useState } from "react";
+import { EventForm } from "../../_components/event-form";
+import { getEventById } from "@/app/actions/events";
 
 type Event = Awaited<ReturnType<typeof getEventById>>;
 

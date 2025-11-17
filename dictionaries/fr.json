@@ -362,11 +362,17 @@
             "cards": {
                 "deal_analysis": "Analyse des Transactions",
                 "ma_solar": "M&A Solaire",
+                "solar_amount": "38,4 M$",
+                "hydro_amount": "600 M$",
                 "hydro_financing": "Financement Hydro",
                 "project_pipeline": "Pipeline de Projets",
                 "market_intelligence": "Intelligence de Marché",
                 "yoy_growth": "Croissance YoY",
-                "investments": "Investissements"
+                "investments": "Investissements",
+                "in_construction_gw": "2,5 GW",
+                "operational_gw": "1,8 GW",
+                "in_development_gw": "3,2 GW",
+                "live": "En direct"
             }
         },
         "stats": {
@@ -381,6 +387,141 @@
         "carousel": {
             "title": "Conçu pour les Professionnels de l'Énergie",
             "subtitle": "Des solutions adaptées à chaque acteur de l'écosystème énergétique africain"
+        },
+        "platform": {
+            "title": "La Plateforme Akili",
+            "subtitle": "Une boîte à outils complète pour l'intelligence de marché énergétique et la prise de décision stratégique.",
+            "tabs": {
+                "deal_tracking": "Suivi des Transactions",
+                "data_visualization": "Visualisation de Données",
+                "financial_modeling": "Modélisation Financière",
+                "market_research": "Étude de Marché"
+            },
+            "deal_tracking": {
+                "title": "Intelligence Complète des Transactions",
+                "description": "Suivez chaque transaction énergétique significative en Afrique avec des analyses et insights détaillés.",
+                "features": {
+                    "database": {
+                        "title": "Base de Données Transactionnelle Riche",
+                        "description": "Accédez à des enregistrements détaillés des activités de M&A, mises à jour de projets, tours de financement et PPA."
+                    },
+                    "filtering": {
+                        "title": "Filtrage et Recherche Avancés",
+                        "description": "Trouvez exactement ce dont vous avez besoin avec des filtres par région, pays, technologie, type de transaction et taille d'investissement."
+                    },
+                    "alerts": {
+                        "title": "Alertes et Notifications Personnalisées",
+                        "description": "Restez informé avec des alertes en temps réel lorsque de nouvelles transactions correspondent à vos critères ou intérêts."
+                    }
+                },
+                "cta": "Explorer le Suivi des Transactions",
+                "table": {
+                    "title": "Transactions Énergétiques Récentes",
+                    "headers": {
+                        "deal": "TRANSACTION",
+                        "sector": "SECTEUR",
+                        "country": "PAYS",
+                        "type": "TYPE",
+                        "value": "VALEUR (£M)",
+                        "date": "DATE"
+                    },
+                    "mobile_labels": {
+                        "sector": "Secteur :",
+                        "country": "Pays :",
+                        "value": "Valeur :",
+                        "date": "Date :"
+                    },
+                    "actions": {
+                        "refresh": "Actualiser",
+                        "settings": "Paramètres"
+                    },
+                    "view_all": "Voir toutes les transactions"
+                }
+            },
+            "coming_soon": {
+                "data_visualization": "Contenu de visualisation de données bientôt disponible !",
+                "financial_modeling": "Contenu de modélisation financière bientôt disponible !",
+                "market_research": "Contenu d'étude de marché bientôt disponible !"
+            }
+        },
+        "geographic_intelligence": {
+            "title": "Intelligence Géographique",
+            "subtitle": "Cartographie complète des opportunités énergétiques à travers l'Afrique"
+        },
+        "key_facts": {
+            "title": "Chiffres Clés",
+            "subtitle": "Couverture complète des données de l'écosystème énergétique africain",
+            "cards": {
+                "companies": {
+                    "count": "500+",
+                    "title": "Profils d'Entreprises",
+                    "description": "Entreprises énergétiques à travers l'Afrique"
+                },
+                "projects": {
+                    "count": "2 856",
+                    "title": "Profils de Projets",
+                    "description": "Projets d'infrastructure énergétique actifs"
+                },
+                "deals": {
+                    "count": "10 247",
+                    "title": "Total des Transactions",
+                    "description": "Transactions suivies depuis le début"
+                },
+                "financing": {
+                    "count": "12,5 Md$ +",
+                    "title": "Financement de Projets en 2025",
+                    "description": "Total des transactions de financement cette année"
+                },
+                "ma": {
+                    "count": "247",
+                    "title": "Transactions M&A en 2025",
+                    "description": "Fusions & acquisitions cette année"
+                },
+                "green_bonds": {
+                    "count": "3,8 Md$ +",
+                    "title": "Obligations Vertes en 2025",
+                    "description": "Financement durable cette année"
+                }
+            }
+        },
+        "news_research": {
+            "title": "Actualités & Recherche",
+            "subtitle": "Restez informé des dernières tendances du marché énergétique africain",
+            "cta": "Voir tout",
+            "read_more": "Lire la suite",
+            "download": "Télécharger"
+        },
+        "final_cta": {
+            "title": "Prêt à Accélérer Votre Stratégie Énergétique ?",
+            "subtitle": "Rejoignez les entreprises et professionnels qui font confiance à Akili Energy pour leurs décisions d'investissement dans le secteur énergétique africain.",
+            "primary_cta": "Explorer les transactions",
+            "secondary_cta": "Demander une démo"
+        },
+        "footer": {
+            "description": "Intelligence stratégique pour le secteur énergétique africain.",
+            "sections": {
+                "platform": {
+                    "title": "Plateforme",
+                    "links": {
+                        "dashboard": "Tableau de Bord",
+                        "deals": "Transactions",
+                        "projects": "Projets",
+                        "companies": "Entreprises"
+                    }
+                },
+                "resources": {
+                    "title": "Ressources",
+                    "links": {
+                        "research": "Recherche",
+                        "blog": "Blog",
+                        "contact": "Contact"
+                    }
+                },
+                "contact": {
+                    "title": "Contact"
+                }
+            },
+            "copyright": "© 2025 Akili Energy. Tous droits réservés."
         }
     }
 }

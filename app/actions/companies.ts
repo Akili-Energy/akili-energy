@@ -21,11 +21,12 @@ export async function getCompanies(
   search = "",
   pageSize = 12
 ) {
+  let redirectPath: string | undefined;
   try {
     const userRole = await getUserRole();
     if (userRole === null || userRole === undefined) {
       console.log("User role not found, redirecting to login.");
-      redirect("/login");
+      redirectPath = "/login";
     }
     const isGuestUser = userRole === "guest";
 
@@ -54,8 +55,10 @@ export async function getCompanies(
       );
     }
 
-    const where = !isGuestUser
-      && filterClauses.length > 0 ? and(...filterClauses) : undefined;
+    const where =
+      !isGuestUser && filterClauses.length > 0
+        ? and(...filterClauses)
+        : undefined;
 
     // Clause for cursor-based pagination
     let cursorClause;
@@ -89,10 +92,11 @@ export async function getCompanies(
         with: {
           companiesSectors: {
             columns: { sector: true },
-            where: !isGuestUser && filters?.sector
-              ? (companiesSectors) =>
-                  eq(companiesSectors.sector, filters.sector!)
-              : undefined,
+            where:
+              !isGuestUser && filters?.sector
+                ? (companiesSectors) =>
+                    eq(companiesSectors.sector, filters.sector!)
+                : undefined,
           },
           companiesOperatingCountries: {
             columns: { countryCode: true },
@@ -141,15 +145,23 @@ export async function getCompanies(
     }));
 
     const companiesCount = totalResult[0]?.count ?? 0;
-    return {
-      companies: formattedCompanies,
-      total: isGuestUser ? Math.min(companiesCount, DEFAULT_PAGE_SIZE) : companiesCount,
-      nextCursor: isGuestUser ? undefined : nextCursor,
-      prevCursor: isGuestUser ? undefined : prevCursor,
-    };
+    if (!redirectPath) {
+      return {
+        companies: formattedCompanies,
+        total: isGuestUser
+          ? Math.min(companiesCount, DEFAULT_PAGE_SIZE)
+          : companiesCount,
+        nextCursor: isGuestUser ? undefined : nextCursor,
+        prevCursor: isGuestUser ? undefined : prevCursor,
+      };
+    }
   } catch (error) {
     console.error("Error fetching companies:", error);
     throw new Error("Failed to fetch companies");
+  } finally {
+    if (redirectPath) {
+      redirect(redirectPath!);
+    }
   }
 }
 

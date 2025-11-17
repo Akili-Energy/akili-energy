@@ -49,7 +49,7 @@ export function TypewriterEffect({ text, speed = 100, className = "" }: Typewrit
           </span>
         )
       })}
-      {showCursor && <span className="typewriter-cursor">|</span>}
+      {showCursor && <span className="typewriter-cursor animate-pulse">|</span>}
     </span>
   )
 }

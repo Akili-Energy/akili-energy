@@ -17,11 +17,25 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "./language-context";
 import { ThemeToggle } from "./theme-toggle";
 import { AkiliLogo } from "@/components/akili-logo";
+import { UserNav } from "./user-nav"; // Import the new component
+import type { User } from "@supabase/supabase-js";
+import { logout } from "@/app/actions/auth";
 
-export function UnifiedHeader() {
+// The component now accepts the user object, which can be null
+interface UnifiedHeaderProps {
+  user: User | null;
+}
+
+export function UnifiedHeader({ user }: UnifiedHeaderProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
+  const navLinks = [
+    { href: "/platform", label: t("nav.platform") },
+    { href: "/news-research", label: t("nav.research") },
+    { href: "/blog", label: t("nav.blog") },
+    { href: "/contact", label: t("nav.contact") },
+  ];
 
   return (
     <header className="border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm sticky top-0 z-50">
@@ -38,46 +52,19 @@ export function UnifiedHeader() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
-            <Link
-              href="/platform"
-              className={cn(
-                "text-gray-600 dark:text-gray-300 hover:text-akili-blue dark:hover:text-akili-green transition-colors font-medium",
-                pathname.startsWith("/platform") &&
-                  "text-akili-blue dark:text-akili-green font-semibold"
-              )}
-            >
-              {t("nav.platform")}
-            </Link>
-            <Link
-              href="/news-research"
-              className={cn(
-                "text-gray-600 dark:text-gray-300 hover:text-akili-blue dark:hover:text-akili-green transition-colors font-medium",
-                pathname.startsWith("/news-research") &&
-                  "text-akili-blue dark:text-akili-green font-semibold"
-              )}
-            >
-              {t("nav.research")}
-            </Link>
-            <Link
-              href="/blog"
-              className={cn(
-                "text-gray-600 dark:text-gray-300 hover:text-akili-blue dark:hover:text-akili-green transition-colors font-medium",
-                pathname.startsWith("/blog") &&
-                  "text-akili-blue dark:text-akili-green font-semibold"
-              )}
-            >
-              {t("nav.blog")}
-            </Link>
-            <Link
-              href="/contact"
-              className={cn(
-                "text-gray-600 dark:text-gray-300 hover:text-akili-blue dark:hover:text-akili-green transition-colors font-medium",
-                pathname.startsWith("/contact") &&
-                  "text-akili-blue dark:text-akili-green font-semibold"
-              )}
-            >
-              {t("nav.contact")}
-            </Link>
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "text-gray-600 dark:text-gray-300 hover:text-akili-blue dark:hover:text-akili-green transition-colors font-medium",
+                  pathname.startsWith(link.href) &&
+                    "text-akili-blue dark:text-akili-green font-semibold"
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
           {/* Desktop Actions */}
@@ -96,12 +83,17 @@ export function UnifiedHeader() {
               </SelectContent>
             </Select>
             <ThemeToggle />
-            <Button
-              asChild
-              className="bg-akili-blue hover:bg-akili-blue/90 dark:bg-akili-green dark:hover:bg-akili-green/90"
-            >
-              <Link href="/login">{t("nav.login")}</Link>
-            </Button>
+            {/* Conditional Rendering: UserNav or Login Button */}
+            {user ? (
+              <UserNav user={user} />
+            ) : (
+              <Button
+                asChild
+                className="bg-akili-blue hover:bg-akili-blue/90 dark:bg-akili-green dark:hover:bg-akili-green/90"
+              >
+                <Link href="/login">{t("nav.login")}</Link>
+              </Button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -120,9 +112,7 @@ export function UnifiedHeader() {
                   className="flex items-center space-x-3 pb-4 border-b border-gray-200 dark:border-gray-700"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <div className="w-8 h-8 bg-akili-green rounded-lg flex items-center justify-center">
-                    <Zap className="w-5 h-5 text-white" />
-                  </div>
+                  <AkiliLogo />
                   <span className="text-xl font-bold">
                     <span className="text-akili-blue dark:text-white">
                       Akili
@@ -133,50 +123,20 @@ export function UnifiedHeader() {
 
                 {/* Mobile Navigation */}
                 <nav className="flex flex-col space-y-4">
-                  <Link
-                    href="/platform"
-                    className={cn(
-                      "text-lg font-medium text-gray-600 dark:text-gray-300 hover:text-akili-blue dark:hover:text-akili-green transition-colors py-2",
-                      pathname.startsWith("/platform") &&
-                        "text-akili-blue dark:text-akili-green font-semibold"
-                    )}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {t("nav.platform")}
-                  </Link>
-                  <Link
-                    href="/research"
-                    className={cn(
-                      "text-lg font-medium text-gray-600 dark:text-gray-300 hover:text-akili-blue dark:hover:text-akili-green transition-colors py-2",
-                      pathname.startsWith("/research") &&
-                        "text-akili-blue dark:text-akili-green font-semibold"
-                    )}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {t("nav.research")}
-                  </Link>
-                  <Link
-                    href="/blog"
-                    className={cn(
-                      "text-lg font-medium text-gray-600 dark:text-gray-300 hover:text-akili-blue dark:hover:text-akili-green transition-colors py-2",
-                      pathname.startsWith("/blog") &&
-                        "text-akili-blue dark:text-akili-green font-semibold"
-                    )}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {t("nav.blog")}
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className={cn(
-                      "text-lg font-medium text-gray-600 dark:text-gray-300 hover:text-akili-blue dark:hover:text-akili-green transition-colors py-2",
-                      pathname.startsWith("/contact") &&
-                        "text-akili-blue dark:text-akili-green font-semibold"
-                    )}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {t("nav.contact")}
-                  </Link>
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        "text-lg font-medium text-gray-600 dark:text-gray-300 hover:text-akili-blue dark:hover:text-akili-green transition-colors py-2",
+                        pathname.startsWith(link.href) &&
+                          "text-akili-blue dark:text-akili-green font-semibold"
+                      )}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
                 </nav>
 
                 {/* Mobile Language & CTA */}
@@ -197,17 +157,40 @@ export function UnifiedHeader() {
                     </Select>
                     <ThemeToggle />
                   </div>
-                  <Button
-                    asChild
-                    className="w-full bg-akili-blue hover:bg-akili-blue/90 dark:bg-akili-green dark:hover:bg-akili-green/90"
-                  >
-                    <Link
-                      href="/login"
-                      onClick={() => setMobileMenuOpen(false)}
+                  {/* Mobile Conditional Rendering */}
+                  {user ? (
+                    <div className="space-y-2">
+                      <Button asChild className="w-full" variant="outline">
+                        <Link
+                          href="/profile"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          Profile
+                        </Link>
+                      </Button>
+                      <form action={logout} className="w-full">
+                        <Button
+                          type="submit"
+                          className="w-full"
+                          variant="ghost"
+                        >
+                          Log out
+                        </Button>
+                      </form>
+                    </div>
+                  ) : (
+                    <Button
+                      asChild
+                      className="w-full bg-akili-blue hover:bg-akili-blue/90 dark:bg-akili-green dark:hover:bg-akili-green/90"
                     >
-                      {t("nav.login")}
-                    </Link>
-                  </Button>
+                      <Link
+                        href="/login"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {t("nav.login")}
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               </div>
             </SheetContent>

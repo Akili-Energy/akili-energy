@@ -78,7 +78,7 @@ export default function Hero() {
                   <TypewriterEffect
                     text={t("home.hero.title")}
                     speed={50}
-                    className="inline"
+                    className="inline leading-10 md:leading-none"
                   />
                 ) : (
                   <span className="opacity-0">{t("home.hero.title")}</span>
@@ -132,7 +132,7 @@ export default function Hero() {
                       {t("home.hero.cards.deal_analysis")}
                     </h3>
                     <Badge className="bg-akili-green/10 text-akili-green animate-pulse">
-                      Live
+                      {t("home.hero.cards.live")}
                     </Badge>
                   </div>
                   <div className="space-y-3">
@@ -142,10 +142,12 @@ export default function Hero() {
                           {t("home.hero.cards.ma_solar")}
                         </p>
                         <p className="text-xs text-gray-600 dark:text-gray-400">
-                          Afrique du Sud
+                          {t("common.countries.ZA")}
                         </p>
                       </div>
-                      <span className="font-bold text-akili-green">$38.4M</span>
+                      <span className="font-bold text-akili-green">
+                        {t("home.hero.cards.solar_amount")}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-gradient-to-r from-akili-blue/5 to-akili-green/5 rounded-lg hover:from-akili-blue/10 hover:to-akili-green/10 transition-all duration-300">
                       <div>
@@ -153,10 +155,12 @@ export default function Hero() {
                           {t("home.hero.cards.hydro_financing")}
                         </p>
                         <p className="text-xs text-gray-600 dark:text-gray-400">
-                          Madagascar
+                          {t("common.countries.MG")}
                         </p>
                       </div>
-                      <span className="font-bold text-akili-green">$600M</span>
+                      <span className="font-bold text-akili-green">
+                        {t("home.hero.cards.hydro_amount")}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -183,7 +187,9 @@ export default function Hero() {
                         <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                           <div className="bg-akili-green h-2 rounded-full w-3/4 animate-pulse"></div>
                         </div>
-                        <span className="text-sm font-medium">2.5 GW</span>
+                        <span className="text-sm font-medium">
+                          {t("home.hero.cards.in_construction_gw")}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
@@ -194,7 +200,9 @@ export default function Hero() {
                         <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                           <div className="bg-akili-orange h-2 rounded-full w-1/2 animate-pulse delay-300"></div>
                         </div>
-                        <span className="text-sm font-medium">1.8 GW</span>
+                        <span className="text-sm font-medium">
+                          {t("home.hero.cards.operational_gw")}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
@@ -205,7 +213,9 @@ export default function Hero() {
                         <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                           <div className="bg-akili-blue h-2 rounded-full w-2/3 animate-pulse delay-500"></div>
                         </div>
-                        <span className="text-sm font-medium">3.2 GW</span>
+                        <span className="text-sm font-medium">
+                          {t("home.hero.cards.in_development_gw")}
+                        </span>
                       </div>
                     </div>
                   </div>

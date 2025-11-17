@@ -2,7 +2,7 @@ import { getProjectsAnalytics } from "@/app/actions/actions";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import type { Layer } from "leaflet";
 import "leaflet/dist/leaflet.css";
-// import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css";
+import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-defaulticon-compatibility";
 import africanCountries from "@/lib/africa.geo.json";
 import type { FeatureCollection, Feature } from "geojson";

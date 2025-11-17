@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import z from "zod";
 import { db } from "@/lib/db/drizzle";
 import { userRole, users } from "@/lib/db/schema";
+import { redirect } from "next/navigation";
 
 const authSchema = z.object({
   email: z.string().email(),
@@ -115,6 +116,19 @@ export async function signup(
   };
 }
 
+export async function logout() {
+  const {auth } = await createClient();
+  const { error } = await auth.signOut();
+
+  if (error) {
+    console.error("Error logging out:", error);
+    redirect("/error");
+  }
+
+  // Revalidate the entire layout to ensure the header updates everywhere
+  revalidatePath("/", "layout");
+  redirect("/");
+}
 
 export async function getUserRole() {
   const { auth } = await createClient();
@@ -123,7 +137,8 @@ export async function getUserRole() {
     console.error("Get claims (user role) error:", error.message);
     return null;
   }
-  if (data?.claims?.user_role) return data.claims.user_role as (typeof userRole.enumValues)[number];
+  if (data?.claims?.user_role)
+    return data.claims.user_role as (typeof userRole.enumValues)[number];
   if (data) {
     const role = data.claims?.user_role;
     if (role) return role as (typeof userRole.enumValues)[number];
@@ -135,7 +150,8 @@ export async function getUserRole() {
 export async function getCurrentUser() {
   const { auth } = await createClient();
   const {
-    data: { user }, error,
+    data: { user },
+    error,
   } = await auth.getUser();
   if (error) {
     console.error("Get user error:", error.message);

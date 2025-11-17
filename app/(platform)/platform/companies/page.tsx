@@ -43,7 +43,6 @@ import {
   CompanyClassification,
   CompanySector,
   Country,
-  CompanyOperatingStatus,
   Pagination,
   Cursor,
 } from "@/lib/types";
@@ -98,7 +97,7 @@ export default function CompaniesPage() {
           total: totalCount,
           nextCursor,
           prevCursor,
-        } = await getCompanies(filters, order, cursor, searchTerm, PAGE_SIZE);
+        } = (await getCompanies(filters, order, cursor, searchTerm, PAGE_SIZE))!;
 
         // Append new data or replace existing data
         if (append && order === "next") {

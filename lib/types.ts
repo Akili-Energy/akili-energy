@@ -43,6 +43,7 @@ import {
 } from "./db/schema";
 import { getCompanies, getCompanyById } from "@/app/actions/companies";
 import { getContent, getContentBySlug } from "@/app/actions/content";
+import { getEventById, getEvents } from "@/app/actions/events";
 
 export type Cursor = { id: string; createdAt: Date };
 export type Pagination = "next" | "previous";
@@ -122,16 +123,25 @@ export type FinancingSubtype = (typeof financingSubtype.enumValues)[number];
 export type FundraisingStatus = (typeof fundraisingStatus.enumValues)[number];
 export type FinancingObjective = (typeof financingObjective.enumValues)[number];
 
-export type FetchDealsResults = Awaited<ReturnType<typeof getDeals>>["deals"];
+export type FetchDealsResults = NonNullable<
+  Awaited<ReturnType<typeof getDeals>>
+>["deals"];
 export type FetchDealResult = Awaited<ReturnType<typeof getDealById>>;
 
-export type FetchProjectsResults = Awaited<ReturnType<typeof getProjects>>["projects"];
+export type FetchProjectsResults = NonNullable<
+  Awaited<ReturnType<typeof getProjects>>
+>["projects"];
 export type FetchProjectResult = Awaited<ReturnType<typeof getProjectById>>;
 
-export type FetchCompaniesResults = Awaited<
+export type FetchCompaniesResults = NonNullable<Awaited<
   ReturnType<typeof getCompanies>
->["companies"];
+>>["companies"];
 export type FetchCompanyResult = Awaited<ReturnType<typeof getCompanyById>>;
+
+export type FetchEventsResults = NonNullable<Awaited<
+  ReturnType<typeof getEvents>
+>>["events"];
+export type FetchEventResult = Awaited<ReturnType<typeof getEventById>>;
 
 
 export type Deal = NonNullable<FetchDealResult>;
