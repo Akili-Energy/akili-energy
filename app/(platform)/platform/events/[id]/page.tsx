@@ -133,12 +133,12 @@ export default function EventDetailPage() {
                 <Calendar className="w-5 h-5 text-blue-600" />
                 <div>
                   <p className="font-medium">
-                    {new Date(event.start).toLocaleDateString()} -{" "}
-                    {new Date(event.endDate).toLocaleDateString()}
+                    {event?.start.toLocaleDateString()} -{" "}
+                    {event?.endDate.toLocaleDateString()}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {new Date(event.start).toLocaleTimeString()} -{" "}
-                    {new Date(event.endDate).toLocaleTimeString()}
+                    {event?.start.toLocaleTimeString()} -{" "}
+                    {event?.endDate.toLocaleTimeString()}
                   </p>
                 </div>
               </div>

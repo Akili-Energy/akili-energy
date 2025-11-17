@@ -58,7 +58,7 @@ export default function EventsPage() {
 
 
         setTotal(totalCount);
-        setCursor(fetchedEvents[fetchedEvents.length - 1].start);
+        setCursor(fetchedEvents[fetchedEvents.length - 1]?.start);
       });
     },
     [searchTerm, cursor]
@@ -257,8 +257,8 @@ export default function EventsPage() {
                     <div className="flex items-center text-sm">
                       <Calendar className="w-4 h-4 mr-2 text-gray-500" />
                       <span>
-                        {new Date(event.start).toLocaleDateString()} -{" "}
-                        {new Date(event.endDate).toLocaleDateString()}
+                        {event?.start.toLocaleDateString()} -{" "}
+                        {event?.endDate.toLocaleDateString()}
                       </span>
                     </div>
                     <div className="flex items-center text-sm">
@@ -314,8 +314,8 @@ export default function EventsPage() {
                     <div className="flex items-center text-sm">
                       <Calendar className="w-4 h-4 mr-2 text-gray-500" />
                       <span>
-                        {new Date(event.start).toLocaleDateString()} -{" "}
-                        {new Date(event.endDate).toLocaleDateString()}
+                        {event?.start.toLocaleDateString()} -{" "}
+                        {event?.endDate.toLocaleDateString()}
                       </span>
                     </div>
                     <div className="flex items-center text-sm">
