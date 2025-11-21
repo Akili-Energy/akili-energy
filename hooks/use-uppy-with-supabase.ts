@@ -26,6 +26,7 @@ export const useUppyWithSupabase = ({
   const [uppy] = useState(
     () =>
       new Uppy({
+        id: Math.random().toString(36).substring(2),
         restrictions: {
           maxFileSize: 10485760, // 10 MB
           maxTotalFileSize: 20971520, // 20 MB

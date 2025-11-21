@@ -130,6 +130,7 @@ export default function CreateEditResearchPage({
     if (!isLoading || (report && mode === "edit")) {
       // Set up Uppy Dashboard to display as an inline component within a specified target
       uppy.use(Dashboard, {
+        id: slug ?? Math.random().toString(36).substring(2),
         inline: true, // Ensures the dashboard is rendered inline
         limit: 1,
         height: 200,
