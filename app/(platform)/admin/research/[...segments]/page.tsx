@@ -199,7 +199,7 @@ export default function CreateEditResearchPage({
                     id="title"
                     name="title"
                     required
-                    maxLength={72}
+                    maxLength={100}
                     defaultValue={report?.title}
                     onChange={({ target: { value } }) => {
                       if (mode === "create") {
@@ -283,6 +283,11 @@ export default function CreateEditResearchPage({
                         ))}
                       </SelectContent>
                     </Select>
+                    {state.errors?.status && (
+                      <p className="text-sm text-destructive mt-1">
+                        {state.errors.status[0]}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -337,7 +342,7 @@ export default function CreateEditResearchPage({
                 <div className="space-y-2">
                   <Label>PDF Document</Label>
                   <input type="hidden" name="fileDocument" value={fileUrl} />
-                    <div id="drag-drop-area" className="flex w-full" />
+                  <div id="drag-drop-area" className="flex w-full" />
                   {/* <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                     <div className="text-center">
                       <Upload className="mx-auto h-12 w-12 text-gray-400" />
@@ -387,6 +392,11 @@ export default function CreateEditResearchPage({
                       </p>
                     )}
                   </div> */}
+                  {state.errors?.fileDocument && (
+                    <p className="text-sm text-destructive mt-1">
+                      {state.errors.fileDocument[0]}
+                    </p>
+                  )}
                 </div>
 
                 {/* SEO Section */}
@@ -404,6 +414,11 @@ export default function CreateEditResearchPage({
                         defaultValue={report?.metaTitle || ""}
                         placeholder="Leave empty to use report title"
                       />
+                      {state.errors?.metaTitle && (
+                        <p className="text-sm text-destructive mt-1">
+                          {state.errors.metaTitle[0]}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="metaDescription">SEO Description</Label>
@@ -415,6 +430,11 @@ export default function CreateEditResearchPage({
                         defaultValue={report?.metaDescription || ""}
                         placeholder="Meta description for search engines"
                       />
+                      {state.errors?.metaDescription && (
+                        <p className="text-sm text-destructive mt-1">
+                          {state.errors.metaDescription[0]}
+                        </p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -427,6 +447,11 @@ export default function CreateEditResearchPage({
                       defaultChecked={report?.featured ?? undefined}
                     />
                     <Label htmlFor="isFeatured">Feature article</Label>
+                    {state.errors?.isFeatured && (
+                      <p className="text-sm text-destructive mt-1">
+                        {state.errors.isFeatured[0]}
+                      </p>
+                    )}
                   </div>
                 </div>
 

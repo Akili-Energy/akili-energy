@@ -1238,7 +1238,7 @@ export const content = pgTable(
   {
     slug: varchar("slug", { length: 200 }).primaryKey(),
     type: contentType("type").notNull(),
-    title: varchar("title", { length: 72 }).notNull(),
+    title: varchar("title", { length: 100 }).notNull(),
     summary: text("summary").notNull(),
     imageUrl: varchar("image_url", { length: 255 }).notNull().unique(),
     authorId: uuid("author_id")

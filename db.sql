@@ -614,7 +614,7 @@ CREATE TABLE IF NOT EXISTS authors (
 CREATE TABLE IF NOT EXISTS content (
     slug VARCHAR(200) PRIMARY KEY,
     type content_type NOT NULL,
-    title VARCHAR(72) NOT NULL,
+    title VARCHAR(100) NOT NULL,
     summary TEXT NOT NULL,
     image_url VARCHAR(255) UNIQUE NOT NULL,
     author_id UUID NOT NULL REFERENCES authors(id),

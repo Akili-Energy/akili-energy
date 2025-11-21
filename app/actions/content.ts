@@ -425,6 +425,7 @@ export async function saveContent(
     .safeParse(rawFormData);
 
   if (!validatedFields.success) {
+    console.error(validatedFields.error);
     return {
       success: false,
       message: "Invalid form data. Please check the fields.",
