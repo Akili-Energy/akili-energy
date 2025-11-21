@@ -365,7 +365,7 @@ export async function getContentBySlug(
 const contentSchema = z.object({
   type: z.enum(contentType.enumValues),
   slug: z.string().min(3, "Slug is required").max(256),
-  title: z.string().min(3, "Title must be at least 3 characters").max(72),
+  title: z.string().min(3, "Title must be at least 3 characters").max(100),
   summary: z.string().min(10, "Summary is required").max(1000),
   category: z.string().min(1, "Category is required"),
   tags: z.preprocess((val) => {
@@ -495,7 +495,7 @@ export async function saveContent(
         category: data.category as ContentCategory, // Cast because enum type is complex
         featured: data.isFeatured,
         status: data.status as ContentStatus,
-        metaTitle: data.metaTitle || data.title,
+        metaTitle: data.metaTitle || data.title.slice(0, 72),
         metaDescription: data.metaDescription || data.summary.slice(0, 160),
         publicationDate: new Date(),
       });
@@ -510,7 +510,7 @@ export async function saveContent(
             category: data.category as any,
             featured: data.isFeatured,
             status: data.status as ContentStatus,
-            metaTitle: data.metaTitle || data.title,
+            metaTitle: data.metaTitle || data.title.slice(0, 72),
             metaDescription: data.metaDescription || data.summary.slice(0, 160),
           },
         });
