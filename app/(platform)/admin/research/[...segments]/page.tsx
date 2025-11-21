@@ -120,6 +120,11 @@ export default function CreateEditResearchPage({
     bucketName: "documents",
     folder: "research",
     upsert: true,
+    onUploadSuccess: (uploadURL) => {
+      toast.success("File uploaded successfully.");
+      console.log("Uploaded file URL:", uploadURL);
+      setFileUrl(uploadURL);
+    },
   });
   useEffect(() => {
     if (!isLoading || (report && mode === "edit")) {

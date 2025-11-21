@@ -23,15 +23,37 @@ export const useUppyWithSupabase = ({
   onUploadSuccess?: (fileUrl: string) => void;
 }) => {
   // Initialize Uppy instance only once
-  const [uppy] = useState(() => new Uppy());
+  const [uppy] = useState(
+    () =>
+      new Uppy({
+        restrictions: {
+          maxFileSize: 10485760, // 10 MB
+          maxTotalFileSize: 20971520, // 20 MB
+          maxNumberOfFiles: 2, // Maximum 2 files
+          allowedFileTypes: [
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/msword",
+            "application/vnd.oasis.opendocument.text",
+            "application/rtf",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.oasis.opendocument.presentation",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-excel",
+            "application/vnd.oasis.opendocument.spreadsheet",
+          ],
+        },
+      })
+  );
   // Initialize Supabase client
-  const supabase = createClient();
+  const { auth, storage } = createClient();
   useEffect(() => {
     const initializeUppy = async () => {
       // Retrieve the current user's session for authentication
       const {
         data: { session },
-      } = await supabase.auth.getSession();
+      } = await auth.getSession();
       uppy
         .use(Tus, {
           // Supabase TUS endpoint (with direct storage hostname)
@@ -68,17 +90,26 @@ export const useUppyWithSupabase = ({
           };
         })
         .on("file-removed", async (file) => {
-          await supabase.storage
+          await storage
             .from(bucketName)
             .remove([
               (file.meta.objectName as string) ?? folder
                 ? `${folder}/${file.name}`
                 : (file.name as string),
             ]);
-        }).on("upload-success", (file, response) => {
+        })
+        .on("upload-success", (file, response) => {
           console.log("Upload successful:", file, response);
-          console.log(file);
-          console.log(response);
+          if (file?.name) {
+            onUploadSuccess?.(
+              storage
+                .from(bucketName)
+                .getPublicUrl(folder ? `${folder}/${file.name}` : file.name)
+                .data.publicUrl
+            );
+          } else if (response?.uploadURL || file?.uploadURL) {
+            onUploadSuccess?.(response.uploadURL || file?.uploadURL!);
+          }
         });
     };
     // Initialize Uppy with Supabase settings
