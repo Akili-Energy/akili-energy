@@ -109,7 +109,7 @@ export default function Research({
                   {report.category}
                 </Badge>
                 <CardTitle className="text-lg leading-tight">
-                  <Link href={`/research/${report?.slug}`}>
+                  <Link href={`/research/${report?.slug}`} className="hover:underline hover:text-akili-blue">
                     {report.title}
                   </Link>
                 </CardTitle>

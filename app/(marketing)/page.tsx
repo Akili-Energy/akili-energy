@@ -706,7 +706,16 @@ export default async function LandingPage() {
                   </div>
                   <CardHeader>
                     <CardTitle className="text-lg leading-tight">
-                      {newsResearch?.title}
+                      {newsResearch?.type === "research" ? (
+                        <Link
+                          href={`/research/${newsResearch?.slug}`}
+                          className="hover:underline hover:text-akili-blue"
+                        >
+                          {newsResearch?.title}
+                        </Link>
+                      ) : (
+                        newsResearch?.title
+                      )}
                     </CardTitle>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">

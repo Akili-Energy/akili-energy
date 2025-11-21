@@ -100,6 +100,7 @@ export async function getContent({
         featured: true,
         publicationDate: true,
         status: isAdmin,
+        type: true,
       },
       with: {
         author: {
