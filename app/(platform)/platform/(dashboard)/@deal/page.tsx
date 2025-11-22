@@ -535,7 +535,7 @@ export default function DealAnalyticsPage() {
               {analytics?.latestDeals.map((deal) => (
                 <Link
                   key={deal.id}
-                  href={`/platform/deals/${deal.id}`}
+                  href={deal.type === "project_update" && deal.assetIds.length > 0 ? `/platform/projects/${deal.assetIds[0]}` : `/platform/deals/${deal.id}`}
                   className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group gap-4 sm:gap-0"
                 >
                   <div className="space-y-2 flex-1 min-w-0">

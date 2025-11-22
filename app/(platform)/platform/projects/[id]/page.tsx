@@ -43,7 +43,7 @@ export default function ProjectDetailPage() {
 
   useEffect(() => {
     if (params?.id) {
-      console.log("Project ID from params:", decodeURIComponent(params.id));
+      console.log("Project ID from params:", params.id);
       const projectId = extractValidUUID(params, "id");
 
       if (!projectId) {

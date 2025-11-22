@@ -672,6 +672,7 @@ async function getLatestDeals() {
           with: {
             asset: {
               columns: {
+                id: true,
                 name: true,
                 stage: true,
               },
@@ -762,6 +763,7 @@ async function getLatestDeals() {
           type,
           subtype,
           asset,
+          assetIds: dealsAssets.map((a) => a.asset.id),
           sectors,
           // Prioritize the main deal date, fallback to announcement date
           date: new Date(date ?? announcementDate),
