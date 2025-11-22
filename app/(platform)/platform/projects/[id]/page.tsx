@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import { getProjectById } from "@/app/actions/projects";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,8 +28,10 @@ import { useLanguage } from "@/components/language-context";
 import { SectorsIconsTooltip } from "@/components/sector-icon";
 import { extractValidUUID } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 // Dynamically import the Map component to avoid SSR issues with Leaflet
-const Map = dynamic(() => import("@/components/map"), {
+const Map = dynamicImport(() => import("@/components/map"), {
   ssr: false,
   loading: () => <div className="h-full bg-gray-200 animate-pulse" />,
 });

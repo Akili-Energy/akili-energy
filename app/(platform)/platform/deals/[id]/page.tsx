@@ -33,11 +33,13 @@ import {
 import { useParams } from "next/navigation";
 import { SectorsIconsTooltip } from "@/components/sector-icon";
 import { useLanguage } from "@/components/language-context";
-import dynamic from "next/dynamic";
+import dynamicRender from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import { extractValidUUID } from "@/lib/utils";
 
-const Map = dynamic(() => import("@/components/map"), {
+export const dynamic = 'force-dynamic';
+
+const Map = dynamicRender(() => import("@/components/map"), {
   ssr: false,
   loading: () => <p>Loading map...</p>,
 });
