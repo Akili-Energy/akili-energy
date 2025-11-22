@@ -96,8 +96,8 @@ export default async function BlogPostPage({
                 <Image
                   src={post.imageUrl || "/placeholder.svg"}
                   alt={post.title}
-                  width={800}
-                  height={400}
+                  width={1600}
+                  height={800}
                   className="w-full h-64 lg:h-80 object-cover"
                 />
               </div>
@@ -256,8 +256,8 @@ export default async function BlogPostPage({
                     <Image
                       src={relatedPost.imageUrl || "/placeholder.svg"}
                       alt={relatedPost.title}
-                      width={300}
-                      height={200}
+                      width={600}
+                      height={400}
                       className="w-full h-48 object-cover rounded-t-lg"
                     />
                     <Badge className="absolute top-3 left-3 bg-white text-gray-900 capitalize">

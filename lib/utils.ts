@@ -142,3 +142,39 @@ export function formatDate(date: Date | null) {
     day: "numeric",
   }).format(new Date(date));
 };
+
+export function isValidUUID(id: string): boolean {
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const drpPattern = /%%drp:/i;
+  return uuidRegex.test(id) && !drpPattern.test(id);
+}
+
+export function extractValidUUID(
+  params: Record<string, string | string[]> | undefined,
+  key: string = "id"
+): string | null {
+  if (!params || !params[key]) return null;
+  const value = Array.isArray(params[key]) ? params[key][0] : params[key];
+  return typeof value === "string" && isValidUUID(value) ? value : null;
+}
+
+export function validateDatabaseUUID(
+  id: string | undefined | null,
+  fieldName: string = "ID"
+): string {
+  if (!id) {
+    throw new Error(`${fieldName} is required`);
+  }
+
+  if (id.includes("%%drp:")) {
+    console.error(`DRP redaction pattern detected in ${fieldName}:`, id);
+    throw new Error(`Invalid ${fieldName} format - redacted value detected`);
+  }
+
+  if (!isValidUUID(id)) {
+    throw new Error(`Invalid ${fieldName} format: ${id}`);
+  }
+
+  return id;
+}

@@ -4,7 +4,7 @@ import { db } from "@/lib/db/drizzle";
 import { projects } from "@/lib/db/schema";
 import { and, count, eq, or, sql } from "drizzle-orm";
 import type { Pagination, ProjectFilters } from "@/lib/types";
-import { parseLocation } from "@/lib/utils";
+import { parseLocation, validateDatabaseUUID } from "@/lib/utils";
 import { getUserRole } from "./auth";
 import { redirect } from "next/navigation";
 import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
@@ -196,9 +196,11 @@ export async function getProjects(
 
 export async function getProjectById(id: string) {
   try {
+    const validId = validateDatabaseUUID(id, 'Project ID');
+    
     const result = await db.query.projects.findFirst({
       columns: { location: false },
-      where: (projects, { eq }) => eq(projects.id, id),
+      where: (projects, { eq }) => eq(projects.id, validId),
       extras: (projects, { sql }) => ({
         location: sql<string>`ST_AsText(${projects.location})`.as("location"),
       }),

@@ -961,8 +961,8 @@ export default function DemoInteractiveMap() {
                 <Image
                   key={src}
                   src={`/images/${src}.jpg`}
-                  width={200}
-                  height={128}
+                  width={400}
+                  height={256}
                   className="object-cover rounded-lg h-32 transition-all duration-300 hover:scale-105"
                   alt="Energy sectors"
                 />

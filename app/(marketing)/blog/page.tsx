@@ -73,8 +73,8 @@ export default async function BlogPage({
                 <Image
                   src={featuredPost.imageUrl || "/placeholder.svg"}
                   alt={featuredPost.title}
-                  width={600}
-                  height={400}
+                  width={1200}
+                  height={800}
                   className="w-full h-full object-cover"
                 />
                 <Badge className="absolute top-4 left-4 bg-akili-blue text-white">

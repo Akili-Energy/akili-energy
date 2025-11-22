@@ -250,8 +250,8 @@ export default function AdminCompaniesPage() {
                       <Image
                         src={company.logo_url || "/placeholder.svg"}
                         alt={`${company.name} logo`}
-                        width={40}
-                        height={40}
+                        width={80}
+                        height={80}
                         className="rounded-lg"
                       />
                     )}
@@ -355,8 +355,8 @@ export default function AdminCompaniesPage() {
                           <Image
                             src={company.logo_url || "/placeholder.svg"}
                             alt={`${company.name} logo`}
-                            width={32}
-                            height={32}
+                            width={64}
+                            height={64}
                             className="rounded"
                           />
                         )}

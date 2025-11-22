@@ -116,8 +116,8 @@ export default async function NewsArticle({
                 // <Image
                   src={article.imageUrl || "/placeholder.svg"}
                   alt={article.title}
-                  width={800}
-                  height={400}
+                  width={1600}
+                  height={800}
                   className="w-full h-64 lg:h-80 object-cover"
                 />
                 <div className="absolute top-4 left-4">
@@ -346,8 +346,8 @@ export default async function NewsArticle({
                     // <Image
                       src={related.imageUrl || "/placeholder.svg"}
                       alt={related.title}
-                      width={300}
-                      height={200}
+                      width={600}
+                      height={400}
                       className="w-full h-48 object-cover rounded-t-lg"
                     />
                     <Badge className="absolute top-3 left-3 bg-white text-gray-900">

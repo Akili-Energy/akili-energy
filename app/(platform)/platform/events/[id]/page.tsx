@@ -73,6 +73,17 @@ export default function EventDetailPage() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Event Image Banner */}
+          {event.imageUrl && (
+            <div className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden shadow-sm bg-gray-100 dark:bg-gray-800">
+              <img
+                src={event.imageUrl}
+                alt={event.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
           {/* Event Description */}
           <Card>
             <CardHeader>
@@ -93,12 +104,12 @@ export default function EventDetailPage() {
             <CardContent>
               <div className="text-center">
                 {event.organizer.imageUrl ? (
-                  <Image
+                  <img
                     className="object-cover w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3"
                     src={event.organizer.imageUrl}
                     alt={event.organizer.name}
-                    height={64}
-                    width={64}
+                    height={128}
+                    width={128}
                   />
                 ) : (
                   <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">

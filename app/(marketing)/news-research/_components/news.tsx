@@ -57,8 +57,8 @@ export default function News({
               <img
                 src={article.imageUrl || "/placeholder.svg"}
                 alt={article.title}
-                width={300}
-                height={200}
+                width={600}
+                height={400}
                 className="w-full h-40 object-cover rounded-t-lg"
               />
               <Badge className="absolute top-3 left-3 bg-white text-gray-900 text-xs">

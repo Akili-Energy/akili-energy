@@ -28,12 +28,14 @@ import {
   Zap,
   Users,
   FileText,
+  AlertCircle,
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { SectorsIconsTooltip } from "@/components/sector-icon";
 import { useLanguage } from "@/components/language-context";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
+import { extractValidUUID } from "@/lib/utils";
 
 const Map = dynamic(() => import("@/components/map"), {
   ssr: false,
@@ -49,22 +51,51 @@ export default function DealDetailPage() {
 
   const [deal, setDeal] = useState<FetchDealResult>(null);
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Redirect Project Updates to project pages
-    startTransition(async () => {
-      const dealDetail = await getDealById(params?.id ?? "");
-      setDeal(dealDetail);
+    if (params?.id) {
+      const dealId = extractValidUUID(params, "id");
 
-      if (
-        dealDetail &&
-        dealDetail.type === "project_update" &&
-        dealDetail.assets?.length
-      ) {
-        router.push(`/platform/projects/${dealDetail.assets[0].id}`);
+      if (!dealId) {
+        setError("Invalid deal ID format");
+        return;
       }
-    });
+
+      startTransition(async () => {
+        const dealDetail = await getDealById(dealId);
+        setDeal(dealDetail);
+
+        if (
+          dealDetail &&
+          dealDetail.type === "project_update" &&
+          dealDetail.assets?.length
+        ) {
+          router.push(`/platform/projects/${dealDetail.assets[0].id}`);
+        }
+      });
+    }
   }, [router]);
+
+  if (error) {
+    return (
+      <Card className="border-destructive">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="w-5 h-5" />
+            Error Loading Deal
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>{error}</p>
+          <Button asChild>
+            <Link href="/platform/deals">Back to Deals</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isPending) {
     return (

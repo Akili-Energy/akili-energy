@@ -153,8 +153,8 @@ export default function ResearchAdmin() {
                   <Image
                     src={report.imageUrl || "/placeholder.svg"}
                     alt={report.title}
-                    width={64}
-                    height={80}
+                    width={128}
+                    height={160}
                     className="w-16 h-20 bg-gradient-to-br from-akili-blue/10 to-akili-green/10 rounded-lg flex items-center justify-center border object-cover"
                   />
                   <div className="flex-1">

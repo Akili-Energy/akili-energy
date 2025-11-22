@@ -70,8 +70,8 @@ export default function Blog({
               <Image
                 src={post.imageUrl || "/placeholder.svg"}
                 alt={post.title}
-                width={400}
-                height={300}
+                width={800}
+                height={600}
                 className="w-full h-64 object-cover rounded-t-lg"
               />
               <Badge className="absolute top-3 left-3 bg-white text-gray-900 capitalize">

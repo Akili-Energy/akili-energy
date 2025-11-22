@@ -150,8 +150,8 @@ export default function BlogAdmin() {
                   <Image
                     src={post.imageUrl || "/placeholder.svg"}
                     alt={post.title}
-                    width={128}
-                    height={80}
+                    width={256}
+                    height={160}
                     className="w-32 h-20 rounded-lg object-cover border"
                   />
                   <div className="flex-1">

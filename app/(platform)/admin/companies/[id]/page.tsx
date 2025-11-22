@@ -219,7 +219,7 @@ export default function CompanyDetailPage() {
                 src={company.logo_url || "/placeholder.svg"}
                 alt={`${company.name} logo`}
                 className="h-12 w-auto object-contain"
-                width={200}
+                width={400}
               />
               <div>
                 <h1 className="text-3xl font-bold">{company.name}</h1>

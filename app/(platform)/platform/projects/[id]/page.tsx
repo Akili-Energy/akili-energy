@@ -18,6 +18,7 @@ import {
   Zap,
   FileText,
   Newspaper,
+  AlertCircle,
 } from "lucide-react";
 import { Countries } from "@/components/countries-flags";
 import { PlatformLink } from "@/components/platform-link";
@@ -25,6 +26,7 @@ import { PROJECT_COMPANY_ROLES } from "@/lib/constants";
 import { type FetchProjectResult } from "@/lib/types";
 import { useLanguage } from "@/components/language-context";
 import { SectorsIconsTooltip } from "@/components/sector-icon";
+import { extractValidUUID } from "@/lib/utils";
 
 // Dynamically import the Map component to avoid SSR issues with Leaflet
 const Map = dynamic(() => import("@/components/map"), {
@@ -37,15 +39,42 @@ export default function ProjectDetailPage() {
   const { t } = useLanguage();
   const [project, setProject] = useState<FetchProjectResult | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (params?.id) {
+      const projectId = extractValidUUID(params, "id");
+
+      if (!projectId) {
+        setError("Invalid project ID format");
+        return;
+      }
+
       startTransition(async () => {
-        const projectData = await getProjectById(params.id);
+        const projectData = await getProjectById(projectId);
         setProject(projectData);
       });
     }
   }, [params?.id]);
+
+  if (error) {
+    return (
+      <Card className="border-destructive">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="w-5 h-5" />
+            Error Loading Project
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>{error}</p>
+          <Button asChild>
+            <Link href="/platform/projects">Back to Projects</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isPending) {
     return <div className="p-6">Loading project details...</div>;

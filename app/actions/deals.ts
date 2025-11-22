@@ -39,7 +39,7 @@ import {
   financingSubtype,
 } from "@/lib/db/schema";
 import { PgSelectBase, PgSelectWithout } from "drizzle-orm/pg-core";
-import { parseLocation } from "@/lib/utils";
+import { parseLocation, validateDatabaseUUID } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import {
   DEFAULT_PAGE_SIZE,
@@ -291,9 +291,12 @@ export async function getDeals({
 }
 
 export async function getDealById(id: string) {
+  let redirectPath: string | undefined;
   try {
+    const validId = validateDatabaseUUID(id, "Deal ID");
+
     const result = await db.query.deals.findFirst({
-      where: (deals, { eq }) => eq(deals.id, id),
+      where: (deals, { eq }) => eq(deals.id, validId),
       columns: {
         id: true,
         update: true,
@@ -446,100 +449,112 @@ export async function getDealById(id: string) {
       },
     });
 
-    const isCorporate =
-      result?.type === "merger_acquisition" &&
-      result?.subtype === "ma_corporate";
+    if (result?.type === "project_update" && result?.dealsAssets.length > 0) {
+      redirectPath = `/platform/projects/${result?.dealsAssets[0].asset.id}`;
+    }
 
-    const onOffGrids = result?.dealsAssets.map((a) => a.asset.onOffGrid);
+    if (!redirectPath) {
+      const isCorporate =
+        result?.type === "merger_acquisition" &&
+        result?.subtype === "ma_corporate";
 
-    const sectors = [
-      ...new Set(
-        isCorporate
-          ? result?.dealsCompanies.flatMap((c) =>
-              getSectors(c.company.companiesSectors)
-            )
-          : result?.dealsAssets.flatMap((a) =>
-              getSectors(a.asset.projectsSectors)
-            )
-      ),
-    ];
-    const companiesTechnologies =
-      result?.dealsCompanies.flatMap((c) =>
-        getTechnologies(c.company.companiesTechnologies)
-      ) ?? [];
-    const technologies = [
-      ...new Set(
-        isCorporate
-          ? companiesTechnologies
-          : result?.dealsAssets.flatMap((a) =>
-              getTechnologies(a.asset.projectsTechnologies)
-            )
-      ),
-    ];
-    if (result?.type === "financing" && technologies.length === 0)
-      technologies.push(...companiesTechnologies);
+      const onOffGrids = result?.dealsAssets.map((a) => a.asset.onOffGrid);
 
-    return result
-      ? {
-          ...result,
-          onOffGrid: onOffGrids?.every((v) => v === false)
-            ? true
-            : onOffGrids?.every((v) => v === false)
-            ? false
-            : onOffGrids != null && onOffGrids.length > 0
-            ? null
-            : undefined,
-          regions: [
-            ...new Set(
-              result?.dealsCountries.map(({ country: { region } }) => region)
+      const sectors = [
+        ...new Set(
+          isCorporate
+            ? result?.dealsCompanies.flatMap((c) =>
+                getSectors(c.company.companiesSectors)
+              )
+            : result?.dealsAssets.flatMap((a) =>
+                getSectors(a.asset.projectsSectors)
+              )
+        ),
+      ];
+      const companiesTechnologies =
+        result?.dealsCompanies.flatMap((c) =>
+          getTechnologies(c.company.companiesTechnologies)
+        ) ?? [];
+      const technologies = [
+        ...new Set(
+          isCorporate
+            ? companiesTechnologies
+            : result?.dealsAssets.flatMap((a) =>
+                getTechnologies(a.asset.projectsTechnologies)
+              )
+        ),
+      ];
+      if (result?.type === "financing" && technologies.length === 0)
+        technologies.push(...companiesTechnologies);
+
+      return result
+        ? {
+            ...result,
+            onOffGrid: onOffGrids?.every((v) => v === false)
+              ? true
+              : onOffGrids?.every((v) => v === false)
+              ? false
+              : onOffGrids != null && onOffGrids.length > 0
+              ? null
+              : undefined,
+            regions: [
+              ...new Set(
+                result?.dealsCountries.map(({ country: { region } }) => region)
+              ),
+            ],
+            countries: result.dealsCountries.map(
+              ({ country: { code } }) => code
             ),
-          ],
-          countries: result.dealsCountries.map(({ country: { code } }) => code),
-          sectors:
-            sectors.length > 0
-              ? sectors
-              : technologies
-                  .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
-                  .filter(Boolean),
-          technologies,
-          subSectors: [
-            ...new Set(
-              isCorporate
-                ? result.dealsCompanies.flatMap((c) => c.company.subSectors)
-                : result.dealsAssets.flatMap((a) => a.asset.subSectors)
+            sectors:
+              sectors.length > 0
+                ? sectors
+                : technologies
+                    .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
+                    .filter(Boolean),
+            technologies,
+            subSectors: [
+              ...new Set(
+                isCorporate
+                  ? result.dealsCompanies.flatMap((c) => c.company.subSectors)
+                  : result.dealsAssets.flatMap((a) => a.asset.subSectors)
+              ),
+            ],
+            segments: [
+              ...new Set(result.dealsAssets.flatMap((a) => a.asset.segments)),
+            ],
+            assets: result.dealsAssets.map(({ asset, ...dealAsset }) => ({
+              ...dealAsset,
+              ...asset,
+            })),
+            companies: result.dealsCompanies.map(
+              ({ company, ...dealCompany }) => ({
+                ...dealCompany,
+                ...company,
+              })
             ),
-          ],
-          segments: [
-            ...new Set(result.dealsAssets.flatMap((a) => a.asset.segments)),
-          ],
-          assets: result.dealsAssets.map(({ asset, ...dealAsset }) => ({
-            ...dealAsset,
-            ...asset,
-          })),
-          companies: result.dealsCompanies.map(
-            ({ company, ...dealCompany }) => ({
-              ...dealCompany,
-              ...company,
-            })
-          ),
-          locations: (isCorporate
-            ? result.dealsCompanies.map((c) => ({
-                name: c.company.name,
-                position: parseLocation(c.company.location),
-              }))
-            : result.dealsAssets.map((a) => ({
-                name: a.asset.name,
-                position: parseLocation(a.asset.location),
-              }))
-          ).filter(
-            ({ position }) =>
-              position != null && !isNaN(position[0]) && !isNaN(position[1])
-          ),
-        }
-      : null;
+            locations: (isCorporate
+              ? result.dealsCompanies.map((c) => ({
+                  name: c.company.name,
+                  position: parseLocation(c.company.location),
+                }))
+              : result.dealsAssets.map((a) => ({
+                  name: a.asset.name,
+                  position: parseLocation(a.asset.location),
+                }))
+            ).filter(
+              ({ position }) =>
+                position != null && !isNaN(position[0]) && !isNaN(position[1])
+            ),
+          }
+        : null;
+    }
   } catch (error) {
     console.error("Error fetching deal by ID:", error);
     throw new Error("Failed to fetch deal");
+  } finally {
+    if (redirectPath) {
+      redirect(redirectPath!);
+    }
   }
 }
 
