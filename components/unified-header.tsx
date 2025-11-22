@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/select";
 import { Menu, Globe, Zap } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./language-context";
 import { ThemeToggle } from "./theme-toggle";
@@ -20,13 +20,9 @@ import { AkiliLogo } from "@/components/akili-logo";
 import { UserNav } from "./user-nav"; // Import the new component
 import type { User } from "@supabase/supabase-js";
 import { logout } from "@/app/actions/auth";
+import { createClient } from "@/lib/supabase/client";
 
-// The component now accepts the user object, which can be null
-interface UnifiedHeaderProps {
-  user: User | null;
-}
-
-export function UnifiedHeader({ user }: UnifiedHeaderProps) {
+export function UnifiedHeader() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
@@ -36,6 +32,33 @@ export function UnifiedHeader({ user }: UnifiedHeaderProps) {
     { href: "/blog", label: t("nav.blog") },
     { href: "/contact", label: t("nav.contact") },
   ];
+  const [user, setUser] = useState<User | null>(null);
+  const { auth } = createClient();
+  const router = useRouter();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data, error } = await auth.getUser();
+      if (error) {
+        console.error("Error fetching user:", error.message);
+      } else {
+        setUser(data.user);
+      }
+    };
+    getUser();
+
+    const {
+      data: { subscription },
+    } = auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      router.refresh();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      setMobileMenuOpen(false);
+    };
+  }, []);
 
   return (
     <header className="border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm sticky top-0 z-50">

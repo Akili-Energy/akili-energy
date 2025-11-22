@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { GoogleAuth } from "@/components/google-auth";
+import { GoogleAuth } from "../_components/google-auth";
 import Link from "next/link";
 import LoginForm from "./login-form";
 import { Suspense } from "react";

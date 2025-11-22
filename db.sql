@@ -896,14 +896,20 @@ ORDER BY
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS ppa_deals_by_duration AS
 SELECT
-    duration,
-    COUNT(deal_id) AS deal_count
+    CASE
+        WHEN duration IS NULL THEN 'Undisclosed'
+        ELSE CONCAT(FLOOR(duration / 10) * 10, '-', (FLOOR(duration / 10) * 10) + 10)
+    END AS duration_range,
+    COUNT(DISTINCT deal_id) AS deal_count
 FROM
     power_purchase_agreements
 GROUP BY
-    duration
+    1 -- Groups by the defined 'duration_range' expression above
 ORDER BY
-    duration;
+    -- Custom sorting to ensure 'Unknown' is first/last and ranges sort numerically
+    -- (otherwise '10-20' would sort before '5-10' alphabetically)
+    CASE WHEN MIN(duration) IS NULL THEN 1 ELSE 0 END,
+    MIN(duration);
 
 -- View for: Combo chart of project investment and capacity, stacked by sector, over time
 

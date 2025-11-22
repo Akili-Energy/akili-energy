@@ -818,9 +818,7 @@ export async function getDealsAnalytics() {
             .padStart(6, "0")}`,
         })
       ),
-      ppaDealsByDuration: (await db.select().from(ppaDealsByDuration)).toSorted(
-        ({ duration: a }, { duration: b }) => (a ?? Infinity) - (b ?? Infinity)
-      ),
+      ppaDealsByDuration: (await db.select().from(ppaDealsByDuration)),
       topCountriesByDealValue: await db.select().from(topCountriesByDealValue),
       topCompaniesByFinancingAndCapacity: await db
         .select()

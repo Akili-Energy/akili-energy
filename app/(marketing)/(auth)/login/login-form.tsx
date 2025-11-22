@@ -18,11 +18,21 @@ export default function LoginForm() {
     if (state?.success) {
       toast.success(state.success);
       redirect(typeof to === "string" ? decodeURIComponent(to) : "/");
+    } else if (state?.error) {
+      toast.error(state.error);
     }
   }, [state]);
 
   return (
     <form action={formAction} className="space-y-4">
+      {typeof to === "string" && (
+        <input
+          type="hidden"
+          id="redirect"
+          name="redirect"
+          value={decodeURIComponent(to)}
+        />
+      )}
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input

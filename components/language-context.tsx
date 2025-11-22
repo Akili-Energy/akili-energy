@@ -49,7 +49,7 @@ const getNestedTranslation = (
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Locale>("fr"); // Default to French
   const [translations, setTranslations] = useState<Translations>({});
-const router = useRouter();
+  const router = useRouter();
 
   useEffect(() => {
     // On initial load, check for saved language preference in localStorage
@@ -82,7 +82,13 @@ const router = useRouter();
     localStorage.setItem(LOCALE_KEY, lang);
     // document.cookie = `${LOCALE_KEY}=${lang}; path=/; max-age=31536000; SameSite=Lax`;
     Cookies.remove(LOCALE_KEY);
-    Cookies.set(LOCALE_KEY, lang, { expires: 365 });
+    Cookies.set(LOCALE_KEY, lang, {
+      expires: 365,
+      secure: process.env.NEXT_PUBLIC_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      httpOnly: true,
+    });
     router.refresh();
   };
 

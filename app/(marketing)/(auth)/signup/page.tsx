@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { GoogleAuth } from "@/components/google-auth"
+import { GoogleAuth } from "../_components/google-auth"
 import Link from "next/link"
 import { Suspense } from "react"
 import SignUpForm from "./_components/sign-up-form"

@@ -2009,18 +2009,25 @@ export const ppaDealsBySubtype = pgMaterializedView("ppa_deals_by_subtype").as(
   }
 );
 
-// View for: PPA Deals categorized by contract duration
-export const ppaDealsByDuration = pgMaterializedView(
-  "ppa_deals_by_duration"
-).as((qb) => {
+export const ppaDealsByDuration = pgMaterializedView('ppa_deals_by_duration').as((qb) => {
   return qb
     .select({
-      duration: powerPurchaseAgreements.duration,
+      durationRange: sql<string>`
+        CASE
+          WHEN ${powerPurchaseAgreements.duration} IS NULL THEN 'Unknown'
+          ELSE CONCAT((${powerPurchaseAgreements.duration} / 10) * 10, '-', (${powerPurchaseAgreements.duration} / 10) * 10 + 10)
+        END
+      `.as("duration_range"),
+
       dealCount: countDistinct(powerPurchaseAgreements.dealId).as("deal_count"),
     })
     .from(powerPurchaseAgreements)
-    .groupBy(powerPurchaseAgreements.duration)
-    .orderBy(powerPurchaseAgreements.duration);
+    .groupBy(sql`1`) // Groups by the first column selected (durationRange)
+    .orderBy(
+      // Custom ordering: Unknown (NULLs) first, then numeric duration
+      sql`CASE WHEN MIN(${powerPurchaseAgreements.duration}) IS NULL THEN 1 ELSE 0 END`,
+      sql`MIN(${powerPurchaseAgreements.duration})`
+    );
 });
 
 // View for: Combo chart of project investment and capacity, stacked by sector, over time

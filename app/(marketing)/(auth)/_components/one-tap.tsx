@@ -6,6 +6,10 @@ import type { accounts, CredentialResponse } from "google-one-tap";
 import { useRouter } from "next/navigation";
 import { generateNonce } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { useLanguage } from "@/components/language-context";
+import { useWindowSize } from "@/hooks/use-window-size";
+
 
 declare const google: { accounts: accounts };
 
@@ -13,6 +17,8 @@ const OneTapComponent = () => {
   const supabase = createClient();
   const router = useRouter();
   const pathName = usePathname();
+  const { width } = useWindowSize();
+  const { language } = useLanguage();
 
   const initializeGoogleOneTap = async () => {
     console.log("Initializing Google One Tap");
@@ -56,7 +62,15 @@ const OneTapComponent = () => {
       use_fedcm_for_prompt: true,
     });
     console.log("pathName: ", pathName);
-    google.accounts.id.renderButton(document.getElementById("signinDiv")!, {
+    renderButton();
+    google.accounts.id.prompt(); // Display the One Tap UI
+  };
+
+  const renderButton = () => {
+    const button = document.getElementById("signinDiv");
+    if (!button || !google?.accounts?.id) return;
+
+    google.accounts.id.renderButton(button, {
       theme: "outline",
       size: "large",
       text:
@@ -66,10 +80,14 @@ const OneTapComponent = () => {
           ? "signin_with"
           : "continue_with",
       logo_alignment: "center",
-      width: 400,
+      width: width < 480 ? Math.ceil(width - 80) : 400,
+      locale: language,
     });
-    google.accounts.id.prompt(); // Display the One Tap UI
   };
+
+  useEffect(() => {
+    if (google?.accounts?.id) renderButton();
+  }, [pathName, width, language]);
 
   return (
     <Script

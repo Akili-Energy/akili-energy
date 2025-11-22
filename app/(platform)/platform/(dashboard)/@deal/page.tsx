@@ -61,18 +61,21 @@ export default function DealAnalyticsPage() {
   }, []);
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-4 md:p-6 space-y-6 md:space-y-8 w-full max-w-[100vw] overflow-x-hidden">
       <section className="space-y-6">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-akili-green/10 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-akili-green/10 rounded-lg flex items-center justify-center shrink-0">
             <TrendingUp className="w-5 h-5 text-akili-green" />
           </div>
-          <h2 className="text-2xl font-bold text-akili-blue">Deal Analytics</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-akili-blue">
+            Deal Analytics
+          </h2>
         </div>
+
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-akili-blue" />
+            <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+              <BarChart3 className="w-5 h-5 text-akili-blue shrink-0" />
               Monthly Deal Volume by Type
             </CardTitle>
             <CardDescription>
@@ -89,67 +92,76 @@ export default function DealAnalyticsPage() {
                 project_update: { label: "Project Update", color: "#ef4444" },
               }}
             >
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={analytics?.dealsByMonthAndType
-                    .filter((d) => d?.month.startsWith("2025"))
-                    .map((d) => ({
-                      ...d,
-                      month: formatMonth(language, d?.month),
-                    }))}
-                >
-                  <CartesianGrid strokeDasharray="4 1 2" />
-                  <XAxis dataKey="month" />
-                  <YAxis
-                    yAxisId="left"
-                    dataKey="dealCount"
-                    label={{
-                      value: "Deal Count",
-                      angle: -90,
-                      position: "insideLeft",
-                    }}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Legend />
-                  <Bar
-                    dataKey="financing"
-                    stackId="a"
-                    fill="var(--color-financing)"
-                    name="Financing"
-                  />
-                  <Bar
-                    dataKey="merger_acquisition"
-                    stackId="a"
-                    fill="var(--color-merger_acquisition)"
-                    name="M&A"
-                  />
-                  <Bar
-                    dataKey="power_purchase_agreement"
-                    stackId="a"
-                    fill="var(--color-power_purchase_agreement)"
-                    name="PPA"
-                  />
-                  <Bar
-                    dataKey="project_update"
-                    stackId="a"
-                    fill="var(--color-project_update)"
-                    name="Project Update"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              {/* Added a scroll wrapper for very small screens if data points are many */}
+              <div className="w-full h-[300px] overflow-x-auto overflow-y-hidden">
+                <div className="min-w-[500px] h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={analytics?.dealsByMonthAndType
+                        .filter((d) => d?.month.startsWith("2025"))
+                        .map((d) => ({
+                          ...d,
+                          month: formatMonth(language, d?.month),
+                        }))}
+                      margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="4 1 2" />
+                      <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                      <YAxis
+                        yAxisId="left"
+                        dataKey="dealCount"
+                        tick={{ fontSize: 12 }}
+                        label={{
+                          value: "Deal Count",
+                          angle: -90,
+                          position: "insideLeft",
+                          style: { textAnchor: "middle" },
+                        }}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Legend
+                        wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }}
+                      />
+                      <Bar
+                        dataKey="financing"
+                        stackId="a"
+                        fill="var(--color-financing)"
+                        name="Financing"
+                      />
+                      <Bar
+                        dataKey="merger_acquisition"
+                        stackId="a"
+                        fill="var(--color-merger_acquisition)"
+                        name="M&A"
+                      />
+                      <Bar
+                        dataKey="power_purchase_agreement"
+                        stackId="a"
+                        fill="var(--color-power_purchase_agreement)"
+                        name="PPA"
+                      />
+                      <Bar
+                        dataKey="project_update"
+                        stackId="a"
+                        fill="var(--color-project_update)"
+                        name="Project Update"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </ChartContainer>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PieChartIcon className="w-5 h-5 text-akili-green" />
-              Financing Deals Volume by Type vs Value Trends
+            <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+              <PieChartIcon className="w-5 h-5 text-akili-green shrink-0" />
+              Financing Deals: Volume vs Value
             </CardTitle>
             <CardDescription>
-              Monthly financing deals volume (bars) categorized by financing
-              type vs amount (line)
+              Monthly financing deals volume (bars) vs amount (line)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -161,199 +173,174 @@ export default function DealAnalyticsPage() {
                 green_bond: { label: "Green Bond", color: "#ef4444" },
               }}
             >
-              <ResponsiveContainer width="100%" height={300}>
-                <ComposedChart
-                  data={analytics?.financingDealsByMonthAndType.map((d) => ({
-                    ...d,
-                    month: formatMonth(language, d?.month),
-                  }))}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis
-                    yAxisId="left"
-                    orientation="left"
-                    label={{
-                      value: "Deal Count",
-                      angle: -90,
-                      position: "insideLeft",
-                    }}
-                  />
-                  <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    label={{
-                      value: "Amount ($M)",
-                      angle: 90,
-                      position: "insideRight",
-                    }}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Legend />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="debt"
-                    stackId="a"
-                    fill="var(--color-debt)"
-                    name="Debt"
-                  />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="equity"
-                    stackId="a"
-                    fill="var(--color-equity)"
-                    name="Equity"
-                  />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="grant"
-                    stackId="a"
-                    fill="var(--color-grant)"
-                    name="Grant"
-                  />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="green_bond"
-                    stackId="a"
-                    fill="var(--color-green_bond)"
-                    name="Green Bond"
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="amount"
-                    stroke="#3b82f6"
-                    strokeWidth={3}
-                    name="Deal Value"
-                    dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
+              <div className="w-full h-[300px] overflow-x-auto overflow-y-hidden">
+                <div className="min-w-[500px] h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart
+                      data={analytics?.financingDealsByMonthAndType.map(
+                        (d) => ({
+                          ...d,
+                          month: formatMonth(language, d?.month),
+                        })
+                      )}
+                      margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                      <YAxis
+                        yAxisId="left"
+                        orientation="left"
+                        tick={{ fontSize: 12 }}
+                        label={{
+                          value: "Count",
+                          angle: -90,
+                          position: "insideLeft",
+                          offset: 10,
+                        }}
+                      />
+                      <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        tick={{ fontSize: 12 }}
+                        label={{
+                          value: "Amount ($M)",
+                          angle: 90,
+                          position: "insideRight",
+                          offset: 0,
+                        }}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Legend
+                        wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }}
+                      />
+                      <Bar
+                        yAxisId="left"
+                        dataKey="debt"
+                        stackId="a"
+                        fill="var(--color-debt)"
+                        name="Debt"
+                      />
+                      <Bar
+                        yAxisId="left"
+                        dataKey="equity"
+                        stackId="a"
+                        fill="var(--color-equity)"
+                        name="Equity"
+                      />
+                      <Bar
+                        yAxisId="left"
+                        dataKey="grant"
+                        stackId="a"
+                        fill="var(--color-grant)"
+                        name="Grant"
+                      />
+                      <Bar
+                        yAxisId="left"
+                        dataKey="green_bond"
+                        stackId="a"
+                        fill="var(--color-green_bond)"
+                        name="Green Bond"
+                      />
+                      <Line
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey="amount"
+                        stroke="#3b82f6"
+                        strokeWidth={3}
+                        name="Deal Value"
+                        dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </ChartContainer>
           </CardContent>
         </Card>
 
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-akili-blue" />
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <BarChart3 className="w-5 h-5 text-akili-blue shrink-0" />
                 PPA by Offtaker Sector
               </CardTitle>
-              <CardDescription>
-                PPA deal volume by offtaker company sector
-              </CardDescription>
+              <CardDescription>PPA deal volume by sector</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={analytics?.ppaDealsByOfftakerSector.map((d) => ({
-                    ...d,
-                    offtakerSector: t(`common.sectors.${d.offtakerSector}`),
-                  }))}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="offtakerSector" />
-                  <YAxis
-                    yAxisId="left"
-                    dataKey="dealCount"
-                    label={{
-                      value: "Deal Count",
-                      angle: -90,
-                      position: "insideLeft",
-                    }}
-                  />
-                  <Tooltip />
-                  <Bar dataKey="dealCount" fill="#f59e0b" name="Deal Count" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={analytics?.ppaDealsByOfftakerSector.map((d) => ({
+                      ...d,
+                      offtakerSector: t(`common.sectors.${d.offtakerSector}`),
+                    }))}
+                    margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="offtakerSector"
+                      tick={{ fontSize: 10 }}
+                      interval={0}
+                    />
+                    <YAxis
+                      yAxisId="left"
+                      dataKey="dealCount"
+                      tick={{ fontSize: 12 }}
+                    />
+                    <Tooltip />
+                    <Bar dataKey="dealCount" fill="#f59e0b" name="Deal Count" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
 
-          {/* <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-akili-blue" />
-                PPA by Subtype
-              </CardTitle>
-              <CardDescription>
-                PPA deal volume distribution by subtype
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={analytics?.ppaDealsBySubtype.map((d) => ({
-                    ...d,
-                    subtype: t(`deals.subtypes.${d.subtype}`),
-                  }))}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="subtype" />
-                  <YAxis
-                    yAxisId="left"
-                    dataKey="dealCount"
-                    label={{
-                      value: "Deal Count",
-                      angle: -90,
-                      position: "insideLeft",
-                    }}
-                  />
-                  <Tooltip />
-                  <Bar dataKey="dealCount" fill="#f59e0b" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card> */}
-
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-akili-blue" />
-                PPA by Offtaker Sector
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <BarChart3 className="w-5 h-5 text-akili-blue shrink-0" />
+                PPA by Duration
               </CardTitle>
-              <CardDescription>
-                PPA deal volume by offtaker company sector
-              </CardDescription>
+              <CardDescription>PPA deal volume by duration</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={analytics?.ppaDealsByDuration.map((ppa) =>
-                    ppa.duration ? ppa : { ...ppa, duration: "undisclosed" }
-                  )}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="duration"
-                    label={{
-                      value: "Duration",
-                      position: "insideBottom",
-                      offset: -5,
-                    }}
-                  />
-                  <YAxis
-                    yAxisId="left"
-                    dataKey="dealCount"
-                    label={{
-                      value: "Deal Count",
-                      angle: -90,
-                      position: "insideLeft",
-                    }}
-                  />
-                  <Tooltip />
-                  <Bar dataKey="dealCount" fill="#f59e0b" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={analytics?.ppaDealsByDuration}
+                    margin={{ top: 5, right: 5, left: -20, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="durationRange"
+                      tick={{ fontSize: 10 }}
+                      label={{
+                        value: "Duration (Years)",
+                        position: "insideBottom",
+                        offset: -10,
+                        fontSize: 12,
+                      }}
+                    />
+                    <YAxis
+                      yAxisId="left"
+                      dataKey="dealCount"
+                      tick={{ fontSize: 12 }}
+                    />
+                    <Tooltip />
+                    <Bar dataKey="dealCount" fill="#f59e0b" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-akili-blue" />
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <BarChart3 className="w-5 h-5 text-akili-blue shrink-0" />
                 PPA by Subtype
               </CardTitle>
               <CardDescription>
@@ -361,67 +348,31 @@ export default function DealAnalyticsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* <div className="grid grid-cols-2 gap-4"> */}
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={analytics?.ppaDealsBySubtype.map((d) => ({
-                      ...d,
-                      subtype: t(`deals.subtypes.${d.subtype}`),
-                    }))}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
-                    paddingAngle={2}
-                    dataKey="dealCount"
-                    nameKey="subtype"
-                  >
-                    {analytics?.ppaDealsBySubtype.map(({ color }, i) => {
-                      console.log(color);
-                      return <Cell key={`cell-${i}`} fill={color} />;
-                    })}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-              {/* <div className="space-y-6 flex justify-center flex-col">
-                  {analytics?.ppaDealsBySubtype.map(
-                    ({ subtype, color, dealCount }, i, arr) => (
-                      <div
-                        key={subtype}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: color }}
-                          />
-                          <span className="font-medium">
-                            {t(`deals.subtypes.${subtype}`)}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold">
-                            {(
-                              (dealCount /
-                                arr
-                                  .map((d) => d.dealCount)
-                                  .reduce((acc, val) => acc + val, 0)) *
-                              100
-                            ).toFixed(2)}
-                            %
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {dealCount} Deals
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  )}
-                </div>
-              </div> */}
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={analytics?.ppaDealsBySubtype.map((d) => ({
+                        ...d,
+                        subtype: t(`deals.subtypes.${d.subtype}`),
+                      }))}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="dealCount"
+                      nameKey="subtype"
+                    >
+                      {analytics?.ppaDealsBySubtype.map(({ color }, i) => {
+                        return <Cell key={`cell-${i}`} fill={color} />;
+                      })}
+                    </Pie>
+                    <Tooltip />
+                    <Legend wrapperStyle={{ fontSize: "12px" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -429,18 +380,18 @@ export default function DealAnalyticsPage() {
 
       <section className="space-y-6">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-akili-green/10 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-akili-green/10 rounded-lg flex items-center justify-center shrink-0">
             <Globe className="w-5 h-5 text-akili-green" />
           </div>
-          <h2 className="text-2xl font-bold text-akili-blue">
+          <h2 className="text-xl md:text-2xl font-bold text-akili-blue">
             Geographic Hotspots
           </h2>
         </div>
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="w-5 h-5 text-akili-orange" />
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <Award className="w-5 h-5 text-akili-orange shrink-0" />
                 Top Countries by Deal Value
               </CardTitle>
               <CardDescription>
@@ -459,18 +410,19 @@ export default function DealAnalyticsPage() {
                   }) => (
                     <div
                       key={countryCode}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                      // Stack on mobile, Row on desktop
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors gap-3 sm:gap-0"
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-akili-blue/10 rounded-full flex items-center justify-center text-sm font-medium">
+                        <div className="w-8 h-8 bg-akili-blue/10 rounded-full flex items-center justify-center text-sm font-medium shrink-0">
                           {rank}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-lg">
+                          <span className="text-lg shrink-0">
                             {getCountryFlag(countryCode)}
                           </span>
                           <div>
-                            <p className="font-medium">
+                            <p className="font-medium line-clamp-1">
                               {t(`common.countries.${countryCode}`)}
                             </p>
                             <p className="text-sm text-gray-500">
@@ -479,7 +431,7 @@ export default function DealAnalyticsPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="flex sm:block items-center justify-between sm:text-right w-full sm:w-auto pl-11 sm:pl-0">
                         <p className="font-semibold text-akili-green">
                           ${dealValue}M
                         </p>
@@ -498,8 +450,8 @@ export default function DealAnalyticsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="w-5 h-5 text-akili-orange" />
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <Award className="w-5 h-5 text-akili-orange shrink-0" />
                 Top Companies by Fundraising
               </CardTitle>
               <CardDescription>
@@ -515,32 +467,30 @@ export default function DealAnalyticsPage() {
                       companyName,
                       totalFundraising,
                       totalCapacity,
-                      logoUrl,
                       dealCount,
                     },
                     i
                   ) => (
                     <div
                       key={companyId}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors gap-3 sm:gap-0"
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-akili-blue/10 rounded-full flex items-center justify-center text-sm font-medium">
+                        <div className="w-8 h-8 bg-akili-blue/10 rounded-full flex items-center justify-center text-sm font-medium shrink-0">
                           {i + 1}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-lg">
-                            {/* {getCountryFlag(countryCode)} */}
-                          </span>
                           <div>
-                            <p className="font-medium">{companyName}</p>
+                            <p className="font-medium line-clamp-1 break-all">
+                              {companyName}
+                            </p>
                             <p className="text-sm text-gray-500">
                               {dealCount} deals
                             </p>
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="flex sm:block items-center justify-between sm:text-right w-full sm:w-auto pl-11 sm:pl-0">
                         <p className="font-semibold text-akili-green">
                           ${totalFundraising}M
                         </p>
@@ -558,16 +508,16 @@ export default function DealAnalyticsPage() {
       </section>
 
       <section className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-akili-orange/10 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-akili-orange/10 rounded-lg flex items-center justify-center shrink-0">
               <Briefcase className="w-5 h-5 text-akili-orange" />
             </div>
-            <h2 className="text-2xl font-bold text-akili-blue">
+            <h2 className="text-xl md:text-2xl font-bold text-akili-blue">
               Recent Market Activity
             </h2>
           </div>
-          <Button variant="outline" asChild>
+          <Button variant="outline" className="w-full sm:w-auto" asChild>
             <Link href="/platform/deals">
               View All Deals <ArrowUpRight className="w-4 h-4 ml-2" />
             </Link>
@@ -586,40 +536,46 @@ export default function DealAnalyticsPage() {
                 <Link
                   key={deal.id}
                   href={`/platform/deals/${deal.id}`}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group gap-4 sm:gap-0"
                 >
-                  <div className="space-y-1 flex-1">
-                    <div className="flex items-center space-x-2">
-                      <p className="font-medium text-sm text-akili-blue max-w-lg truncate group-hover:text-akili-blue/80 group-hover:underline">
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium text-sm text-akili-blue w-full sm:w-auto sm:max-w-xs lg:max-w-lg truncate group-hover:text-akili-blue/80 group-hover:underline">
                         {deal.update}
                       </p>
                       <Badge
                         variant="secondary"
-                        className={"text-xs bg-akili-blue/10 text-akili-blue"}
+                        className={
+                          "text-xs bg-akili-blue/10 text-akili-blue whitespace-nowrap"
+                        }
                       >
                         {t(`deals.types.${deal.type}`)}
                       </Badge>
                       <Badge
                         variant="outline"
-                        className={"text-xs border-akili-blue text-akili-blue"}
+                        className={
+                          "text-xs border-akili-blue text-akili-blue whitespace-nowrap"
+                        }
                       >
                         {t(`deals.subtypes.${deal.subtype}`)}
                       </Badge>
                     </div>
-                    <p className="text-sm text-gray-600">{deal.asset}</p>
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
-                      <span className="flex items-center space-x-1">
+                    <p className="text-sm text-gray-600 truncate">
+                      {deal.asset}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500">
+                      <span className="flex items-center space-x-1 shrink-0">
                         <MapPin className="w-3 h-3" />
                         <span>{deal.location}</span>
                       </span>
-                      <span className="flex items-center space-x-1">
+                      <span className="flex items-center space-x-1 shrink-0">
                         <Calendar className="w-3 h-3" />
                         <span>{deal.date.toLocaleDateString()}</span>
                       </span>
                       {deal.sectors.length > 0 && (
                         <Badge
                           variant="secondary"
-                          className="bg-gray-100 text-gray-600"
+                          className="bg-gray-100 text-gray-600 shrink-0"
                         >
                           {deal.sectors.length > 1
                             ? "Multiple"
@@ -627,19 +583,22 @@ export default function DealAnalyticsPage() {
                         </Badge>
                       )}
                       {deal.projectStage && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs shrink-0">
                           {t(`projects.stages.${deal.projectStage}`)}
                         </Badge>
                       )}
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center sm:text-right gap-2 sm:gap-0 border-t sm:border-t-0 pt-3 sm:pt-0 mt-1 sm:mt-0">
                     {deal.amount && (
-                      <p className="font-semibold text-akili-green">
+                      <p className="font-semibold text-akili-green whitespace-nowrap">
                         ${deal.amount}M
                       </p>
                     )}
-                    <ArrowUpRight className="w-4 h-4 text-gray-400 ml-auto group-hover:text-akili-blue transition-colors" />
+                    <ArrowUpRight className="w-4 h-4 text-gray-400 hidden sm:block group-hover:text-akili-blue transition-colors" />
+                    <span className="text-xs text-gray-400 sm:hidden flex items-center gap-1">
+                      View Details <ArrowUpRight className="w-3 h-3" />
+                    </span>
                   </div>
                 </Link>
               ))}

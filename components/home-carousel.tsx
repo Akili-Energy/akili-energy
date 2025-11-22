@@ -93,6 +93,12 @@ export default function HomeCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [cardsPerView, setCardsPerView] = useState(3);
+
+  // --- SWIPE STATE ---
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const minSwipeDistance = 50; // Minimum distance in px to count as a swipe
+
   const carouselRef = useRef(null);
 
   // Calculate cards per view based on screen size
@@ -148,6 +154,32 @@ export default function HomeCarousel() {
     setCurrentSlide(index);
   };
 
+  // --- SWIPE HANDLERS ---
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null); // Reset touch end
+    setTouchStart(e.targetTouches[0].clientX);
+    setIsAutoPlaying(false); // Stop autoplay on interaction
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      nextSlide();
+    }
+    if (isRightSwipe) {
+      prevSlide();
+    }
+  };
+
   const translatePercentage = (100 / cardsPerView) * currentSlide;
 
   return (
@@ -176,13 +208,16 @@ export default function HomeCarousel() {
       <div className="overflow-hidden py-6">
         <div
           ref={carouselRef}
-          className="flex transition-transform duration-500 ease-in-out"
+          className="flex transition-transform duration-500 ease-in-out cursor-grab active:cursor-grabbing"
           style={{
             transform: `translateX(-${translatePercentage}%)`,
           }}
           onMouseEnter={() => setIsAutoPlaying(false)}
           onMouseLeave={() => setIsAutoPlaying(true)}
-          onTouchStart={() => setIsAutoPlaying(false)}
+          // Attach Swipe Handlers Here
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
         >
           {userTypes.map((userType, index) => {
             const Icon = userType.icon;

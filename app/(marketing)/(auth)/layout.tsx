@@ -1,4 +1,4 @@
-import OneTapComponent from "@/components/one-tap";
+import OneTapComponent from "./_components/one-tap";
 import { Suspense, type ReactNode } from "react";
 import { Toaster } from "sonner";
 

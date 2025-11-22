@@ -38,6 +38,8 @@ export async function updateSession(request: NextRequest) {
       path: "/",
       maxAge: 60 * 60 * 24 * 365,
       sameSite: "lax",
+      httpOnly: true,
+      secure: process.env.VERCEL_ENV === "production",
     });
   }
 
@@ -74,19 +76,50 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (
-    !user &&
-    (request.nextUrl.pathname.startsWith("/platform") ||
-      request.nextUrl.pathname.startsWith("/admin"))
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
-    const url = request.nextUrl.clone();
-    const { pathname } = url;
-    url.pathname = "/login";
-    url.searchParams.set("redirect", encodeURIComponent(pathname));
-    return NextResponse.redirect(url);
-  }
+  const url = request.nextUrl.clone();
 
+  if (
+    user &&
+    (request.nextUrl.pathname.startsWith("/login") ||
+      request.nextUrl.pathname.startsWith("/signup"))
+  ) {
+    if (user.confirmed_at) {
+      const redirectTo = url.searchParams.get("redirect");
+      url.pathname = redirectTo ? decodeURIComponent(redirectTo) : "/";
+      return NextResponse.redirect(url);
+    } else {
+      url.pathname = "/email/verify";
+      return NextResponse.redirect(url);
+    }
+  } else if (
+    request.nextUrl.pathname.startsWith("/platform") ||
+    request.nextUrl.pathname.startsWith("/admin")
+  ) {
+    if (!user) {
+      // no user, potentially respond by redirecting the user to the login page
+      const { pathname } = url;
+      url.pathname = "/login";
+      url.searchParams.set("redirect", encodeURIComponent(pathname));
+      return NextResponse.redirect(url);
+    } else if (!user.confirmed_at) {
+      // user not confirmed, potentially respond by redirecting the user to the
+      // email verification page
+      const { pathname } = url;
+      url.pathname = "/email/verify";
+      url.searchParams.set("redirect", encodeURIComponent(pathname));
+      return NextResponse.redirect(url);
+    }
+  } else if (request.nextUrl.pathname.startsWith("/email/verify")) {
+    if (!user) {
+      // no user, potentially respond by redirecting the user to the login page
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    } else if (user.confirmed_at) {
+      const redirectTo = url.searchParams.get("redirect");
+      url.pathname = redirectTo ? decodeURIComponent(redirectTo) : "/";
+      return NextResponse.redirect(url);
+    }
+  }
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   // If you're creating a new response object with NextResponse.next() make sure to:
   // 1. Pass the request in it, like so:

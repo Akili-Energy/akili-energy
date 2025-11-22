@@ -17,12 +17,18 @@ export default function SignUpForm() {
     useEffect(() => {
       if (state?.success) {
         toast.success(state.success);
-        redirect(typeof to === "string" ? decodeURIComponent(to) : "/");
+        const params = new URLSearchParams(searchParams);
+        redirect(`email/verify?${params.toString()}`);
+      } else if (state?.error) {
+        toast.error(state.error);
       }
     }, [state]);
     
     return (
       <form action={formAction} className="space-y-4">
+        {typeof to === "string" && (
+          <input type="hidden" id="redirect" name="redirect" value={decodeURIComponent(to)} />
+        )}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="firstName">First name</Label>

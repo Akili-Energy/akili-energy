@@ -57,6 +57,7 @@ export const useUppyWithSupabase = ({
       } = await auth.getSession();
       uppy
         .use(Tus, {
+          id: Math.random().toString(36).substring(2),
           // Supabase TUS endpoint (with direct storage hostname)
           endpoint: `https://${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}.storage.supabase.co/storage/v1/upload/resumable`,
           retryDelays: [0, 3000, 5000, 10000, 20000], // Retry delays for resumable uploads

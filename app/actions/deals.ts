@@ -701,7 +701,7 @@ export async function upsertDeal(
         const [updatedDeal] = await tx
           .update(deals)
           .set(dealData)
-          .where(eq(deals.id, data.dealId))
+          .where(eq(deals.id, data.dealId!))
           .returning({ id: deals.id });
         if (!updatedDeal) throw new Error("Deal not found for update.");
         dealId = updatedDeal.id;
@@ -724,7 +724,7 @@ export async function upsertDeal(
           .where(eq(dealFinancials.dealId, dealId));
       }
 
-      if (d.assetId && d.assetId.length > 0) {
+      if (data.assetId && data.assetId.length > 0) {
         const assetsToInsert = d.assetId.map((id, i) => ({
           dealId: dealId,
           assetId: id,

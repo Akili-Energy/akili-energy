@@ -9,10 +9,12 @@ import { userRole, users } from "@/lib/db/schema";
 import { redirect } from "next/navigation";
 
 const authSchema = z.object({
-  email: z.string().email(),
+  email: z.email({ error: "Please enter a valid email." }).trim(),
   password: z
     .string()
-    .min(8, { message: "Password must be at least 8 characters" }),
+    .min(8, { message: "Password must be at least 8 characters" })
+    .trim(),
+  redirect: z.string().optional(),
 });
 
 export type AuthResult = {
@@ -27,12 +29,13 @@ export async function login(
   const validation = authSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    redirect: formData.get("redirect"),
   });
   if (!validation.success) {
     return { error: z.flattenError(validation.error).formErrors[0] };
   }
 
-  const { email, password } = validation.data;
+  const { email, password, redirect: redirectPath } = validation.data;
 
   const { auth } = await createClient();
   const {
@@ -46,7 +49,14 @@ export async function login(
   }
 
   if (!user?.confirmed_at) {
-    return { error: "Account not confirmed" };
+    redirect(
+      `/email/verify${
+        redirectPath
+          ? `?${new URLSearchParams({ redirect: redirectPath }).toString()}`
+          : ""
+      }`
+    );
+    return { error: "Account not confirmed. Please verify your email." };
   }
 
   revalidatePath("/", "layout");
@@ -61,8 +71,14 @@ export async function signup(
   const signupSchema = authSchema
     .extend({
       confirmPassword: z.string(),
-      firstName: z.string(),
-      lastName: z.string(),
+      firstName: z
+        .string()
+        .min(2, { error: "First name must be at least 2 characters long." })
+        .trim(),
+      lastName: z
+        .string()
+        .min(2, { error: "Last name must be at least 2 characters long." })
+        .trim(),
     })
     .refine((data) => data.password === data.confirmPassword, {
       message: "Passwords do not match",
@@ -74,12 +90,19 @@ export async function signup(
     confirmPassword: formData.get("confirmPassword"),
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
+    redirect: formData.get("redirect"),
   });
   if (!validation.success) {
     return { error: z.flattenError(validation.error).formErrors[0] };
   }
 
-  const { email, password, firstName, lastName } = validation.data;
+  const {
+    email,
+    password,
+    firstName,
+    lastName,
+    redirect: redirectPath,
+  } = validation.data;
 
   const { auth } = await createClient();
 
@@ -91,7 +114,11 @@ export async function signup(
     password,
     options: {
       data: { full_name: `${firstName} ${lastName}` },
-      emailRedirectTo: process.env.NEXT_PUBLIC_BASE_URL,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}${
+        redirectPath
+          ? `?${new URLSearchParams({ redirect: redirectPath }).toString()}`
+          : ""
+      }`,
     },
   });
 
@@ -117,7 +144,7 @@ export async function signup(
 }
 
 export async function logout() {
-  const {auth } = await createClient();
+  const { auth } = await createClient();
   const { error } = await auth.signOut();
 
   if (error) {
@@ -128,6 +155,46 @@ export async function logout() {
   // Revalidate the entire layout to ensure the header updates everywhere
   revalidatePath("/", "layout");
   redirect("/");
+}
+
+export async function resendVerificationEmail(
+  _: unknown,
+  formData: FormData
+): Promise<AuthResult> {
+  const { auth } = await createClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await auth.getUser();
+  if (userError) {
+    console.error("Get user error:", userError.message);
+    return { error: "User not found" };
+  }
+
+  const redirectPath = formData.get("redirect") as string | null;
+  const { data, error: emailError } = await auth.resend({
+    type: "signup",
+    email: user?.email ?? "",
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}${
+        redirectPath
+          ? `?${new URLSearchParams({ redirect: redirectPath }).toString()}`
+          : ""
+      }`,
+    },
+  });
+  if (emailError) {
+    console.error("Resend email error:", emailError.message);
+    return {
+      error: "Could not resend verification email. Please try again later.",
+    };
+  }
+  console.log("Resend verification email data:", data);
+  return {
+    success:
+      "Verification e-mail has successfully been sent. Please check your inbox.",
+  };
 }
 
 export async function getUserRole() {
