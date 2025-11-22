@@ -330,9 +330,7 @@ function MergerAcquisitionContent({
                 <p className="font-medium">
                   {deal.subSectors.length
                     ? deal.subSectors
-                        .map((s) => {
-                          t(`common.subSectors.${s}`);
-                        })
+                        .map((s) => t(`common.subSectors.${s}`))
                         .join(", ")
                     : "-"}
                 </p>
@@ -344,9 +342,7 @@ function MergerAcquisitionContent({
                 <p className="font-medium">
                   {deal.segments.length
                     ? deal.segments
-                        .map((s) => {
-                          t(`common.segments.${s}`);
-                        })
+                        .map((s) => t(`common.segments.${s}`))
                         .join(", ")
                     : "-"}
                 </p>
@@ -498,18 +494,11 @@ function MergerAcquisitionContent({
                   Co-located Storage Capacity (MWh)
                 </label>
                 <p className="font-medium">
-                  {deal.subtype === "asset" &&
-                  assets.every(({ colocatedStorageCapacity }) =>
-                    Boolean(colocatedStorageCapacity)
-                  )
-                    ? `${assets
-                        .map(({ colocatedStorageCapacity }) =>
-                          Number(colocatedStorageCapacity)
-                        )
-                        .filter(Boolean)
-                        .reduce((acc, val) => acc! + val!, 0)}
-                    `
-                    : "-"}
+                  {(deal.subtype === "asset" &&
+                    assets.filter(({ colocatedStorageCapacity }) =>
+                      Boolean(colocatedStorageCapacity)
+                    )?.[0]?.colocatedStorageCapacity) ??
+                    "-"}
                 </p>
               </div>
             </div>
@@ -945,9 +934,7 @@ function FinancingContent({
                 <p className="font-medium">
                   {deal.subSectors.length
                     ? deal.subSectors
-                        .map((s) => {
-                          t(`common.subSectors.${s}`);
-                        })
+                        .map((ss) => t(`common.subSectors.${ss}`))
                         .join(", ")
                     : "-"}
                 </p>
@@ -1038,7 +1025,7 @@ function FinancingContent({
                 <label className="text-sm font-medium text-gray-500">
                   Investment Vehicle
                 </label>
-                <p className="font-medium">{financing.vehicle}</p>
+                <p className="font-medium">{financing.vehicle ?? "-"}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">
