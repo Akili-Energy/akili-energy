@@ -156,6 +156,7 @@ export function extractValidUUID(
 ): string | null {
   if (!params || !params[key]) return null;
   const value = Array.isArray(params[key]) ? params[key][0] : params[key];
+  console.log("Extracted UUID:", value);
   return typeof value === "string" && isValidUUID(value) ? value : null;
 }
 
@@ -177,4 +178,10 @@ export function validateDatabaseUUID(
   }
 
   return id;
+}
+
+export function removeDuplicatesByProperty(arr: Array<Record<string, any>>, prop: string) {
+  return arr.filter(
+    (obj, index, self) => index === self.findIndex((t) => t[prop] === obj[prop])
+  );
 }

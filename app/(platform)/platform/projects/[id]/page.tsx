@@ -43,6 +43,7 @@ export default function ProjectDetailPage() {
 
   useEffect(() => {
     if (params?.id) {
+      console.log("Project ID from params:", params.id);
       const projectId = extractValidUUID(params, "id");
 
       if (!projectId) {
@@ -59,14 +60,14 @@ export default function ProjectDetailPage() {
 
   if (error) {
     return (
-      <Card className="border-destructive">
+      <Card className="border-destructive m-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-destructive">
             <AlertCircle className="w-5 h-5" />
             Error Loading Project
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <p>{error}</p>
           <Button asChild>
             <Link href="/platform/projects">Back to Projects</Link>

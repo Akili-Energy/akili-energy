@@ -72,7 +72,7 @@ export default function DealDetailPage() {
           dealDetail.type === "project_update" &&
           dealDetail.assets?.length
         ) {
-          router.push(`/platform/projects/${dealDetail.assets[0].id}`);
+          router.replace(`/platform/projects/${dealDetail.assets[0].id}`);
         }
       });
     }
@@ -80,14 +80,14 @@ export default function DealDetailPage() {
 
   if (error) {
     return (
-      <Card className="border-destructive">
+      <Card className="border-destructive m-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-destructive">
             <AlertCircle className="w-5 h-5" />
             Error Loading Deal
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <p>{error}</p>
           <Button asChild>
             <Link href="/platform/deals">Back to Deals</Link>
