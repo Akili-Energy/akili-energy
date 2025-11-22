@@ -33,13 +33,12 @@ import {
 import { useParams } from "next/navigation";
 import { SectorsIconsTooltip } from "@/components/sector-icon";
 import { useLanguage } from "@/components/language-context";
-import dynamicRender from "next/dynamic";
+import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import { extractValidUUID } from "@/lib/utils";
 
-export const dynamic = 'force-dynamic';
 
-const Map = dynamicRender(() => import("@/components/map"), {
+const Map = dynamic(() => import("@/components/map"), {
   ssr: false,
   loading: () => <p>Loading map...</p>,
 });
@@ -74,6 +73,11 @@ export default function DealDetailPage() {
           dealDetail.type === "project_update" &&
           dealDetail.assets?.length
         ) {
+          console.log(dealDetail.assets);
+          console.log(
+            "Redirecting to project page for asset ID:",
+            dealDetail.assets[0].id
+          );
           router.replace(`/platform/projects/${dealDetail.assets[0].id}`);
         }
       });
