@@ -427,9 +427,12 @@ export default function ProjectDetailPage() {
                     <h4 className="font-medium text-gray-900 mb-2">
                       SDG Impact
                     </h4>
-                    <p className="text-gray-700 leading-relaxed text-justify">
-                      {project.impacts}
-                    </p>
+                    <p
+                      className="text-gray-700 leading-relaxed text-justify"
+                      dangerouslySetInnerHTML={{
+                        __html: project.impacts.replaceAll("\n", "<br/>"),
+                      }}
+                    />
                   </div>
                   <Separator />
                 </>
@@ -437,9 +440,12 @@ export default function ProjectDetailPage() {
               {project.description && (
                 <div>
                   <h4 className="font-medium text-gray-900 mb-2">Summary</h4>
-                  <p className="text-gray-700 leading-relaxed text-justify">
-                    {project.description}
-                  </p>
+                  <p
+                    className="text-gray-700 leading-relaxed text-justify"
+                    dangerouslySetInnerHTML={{
+                      __html: project.description.replaceAll("\n", "<br/>"),
+                    }}
+                  />
                 </div>
               )}
               {project.insights && (
@@ -447,9 +453,12 @@ export default function ProjectDetailPage() {
                   <Separator />
                   <div>
                     <h4 className="font-medium text-gray-900 mb-2">Insights</h4>
-                    <p className="text-gray-700 leading-relaxed text-justify">
-                      {project.insights}
-                    </p>
+                    <p
+                      className="text-gray-700 leading-relaxed text-justify"
+                      dangerouslySetInnerHTML={{
+                        __html: project.insights.replaceAll("\n", "<br/>"),
+                      }}
+                    />
                   </div>
                 </>
               )}
