@@ -34,7 +34,6 @@ import { useLanguage } from "@/components/language-context";
 import { FetchEventsResults } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import Image from "next/image";
 
 export default function EventsPage() {
   const { t } = useLanguage();
@@ -193,11 +192,9 @@ export default function EventsPage() {
                 {/* Image Section */}
                 <div className="relative w-full h-48 bg-gray-100 dark:bg-gray-800">
                   {event.imageUrl ? (
-                    <Image
+                    <img
                       src={event.imageUrl}
                       alt={event.title}
-                      height={384}
-                      width={640}
                       className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                     />
                   ) : (
@@ -275,7 +272,7 @@ export default function EventsPage() {
                 {/* Image Section */}
                 <div className="relative w-full h-48 bg-gray-100 dark:bg-gray-800 grayscale">
                   {event.imageUrl ? (
-                    <Image
+                    <img
                       src={event.imageUrl}
                       alt={event.title}
                       height={384}

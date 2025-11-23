@@ -9,7 +9,6 @@ import { useLanguage } from "@/components/language-context";
 import { FetchEventResult } from "@/lib/types";
 import { useParams } from "next/navigation";
 import { useState, useTransition, useEffect } from "react";
-import Image from "next/image";
 
 export default function EventDetailPage() {
   const params = useParams<{ id: string }>();
