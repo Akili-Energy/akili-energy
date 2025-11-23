@@ -3078,7 +3078,7 @@ export default function BulkUploadPage() {
           // ),
           fundingSecured: row["Financing secured"]?.toLowerCase() === "yes",
           impacts: row.Impacts,
-          insights: row.Comments,
+          insights: row["Insights/Comments"],
           features: row.Features,
           constructionStart: row["Start Construction date"]
             ? parseDate(new Date(row["Start Construction date"]))
@@ -4573,7 +4573,7 @@ export default function BulkUploadPage() {
               "Grid connection approved",
               "Financing secured",
               "Impacts",
-              "Insights",
+              "Insights/Comments",
               "Longitude",
               "Latitude",
             ];
@@ -4606,7 +4606,7 @@ export default function BulkUploadPage() {
               "Winning bid price",
               "Funding secured?",
               "Financing strategy",
-              "Comments",
+              "Insights/Comments",
               "Longitude",
               "Latitude",
             ];

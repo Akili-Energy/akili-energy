@@ -1273,7 +1273,7 @@ CREATE UNIQUE INDEX ON deals_by_month_and_type (month, deal_type);
 CREATE UNIQUE INDEX ON financing_deals_by_month_and_type (month, financing_type);
 CREATE UNIQUE INDEX ON ppa_deals_by_offtaker_sector (offtaker_sector);
 CREATE UNIQUE INDEX ON ppa_deals_by_subtype (subtype);
-CREATE UNIQUE INDEX ON ppa_deals_by_duration (duration);
+CREATE UNIQUE INDEX ON ppa_deals_by_duration (duration_range);
 CREATE UNIQUE INDEX ON projects_by_month_and_sector (month, sector);
 CREATE UNIQUE INDEX ON projects_by_month_and_stage (month, project_stage);
 CREATE UNIQUE INDEX ON projects_by_sector (sector);
