@@ -225,7 +225,7 @@ export default function CreateEditDealPage({
         }
 
         setDeal(fetchedDeal);
-        console.log("Deal date :", formatDate(fetchedDeal.date));
+        console.log("Deal date :", formatDate(fetchedDeal?.date));
         setSelectedDealType(fetchedDeal?.type);
         setSelectedDealSubtype(fetchedDeal?.subtype ?? undefined);
         setRegions(fetchedDeal?.regions ?? []);
