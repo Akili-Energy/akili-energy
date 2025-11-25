@@ -7,6 +7,7 @@ import z from "zod";
 import { db } from "@/lib/db/drizzle";
 import { userRole, users } from "@/lib/db/schema";
 import { redirect } from "next/navigation";
+import { UserRole } from "@/lib/types";
 
 const authSchema = z.object({
   email: z.email({ error: "Please enter a valid email." }).trim(),
@@ -205,10 +206,10 @@ export async function getUserRole() {
     return null;
   }
   if (data?.claims?.user_role)
-    return data.claims.user_role as (typeof userRole.enumValues)[number];
+    return data.claims.user_role as UserRole;
   if (data) {
     const role = data.claims?.user_role;
-    if (role) return role as (typeof userRole.enumValues)[number];
+    if (role) return role as UserRole;
     return (await getCurrentUser())?.role;
   }
   return null;

@@ -40,6 +40,7 @@ import {
   contentStatus,
   contentCategory,
   contentType,
+  userRole,
 } from "./db/schema";
 import { getCompanies, getCompanyById } from "@/app/actions/companies";
 import { getContent, getContentBySlug } from "@/app/actions/content";
@@ -79,6 +80,8 @@ export type CompanyFilters = {
 export type RequiredKeys<T> = {
   [K in keyof T]-?: {} extends Pick<T, K> ? never : K;
 }[keyof T];
+
+export type UserRole = (typeof userRole.enumValues)[number]
 
 export type Region = (typeof geographicRegion.enumValues)[number];
 export type Country = (typeof countryCode.enumValues)[number];

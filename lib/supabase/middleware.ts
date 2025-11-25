@@ -6,6 +6,7 @@ import Negotiator from "negotiator";
 import { LOCALE_KEY } from "../constants";
 import { i18n } from "@/i18n-config";
 import { cookies } from "next/headers";
+import { UserRole } from "../types";
 
 function getLocale(request: NextRequest): string | undefined {
   // Negotiator expects plain object so we need to transform headers
@@ -108,6 +109,17 @@ export async function updateSession(request: NextRequest) {
       url.pathname = "/email/verify";
       url.searchParams.set("redirect", encodeURIComponent(pathname));
       return NextResponse.redirect(url);
+    } else if (request.nextUrl.pathname.startsWith("/admin")) {
+      const { data, error } = await supabase.auth.getClaims();
+      if (error) {
+        console.error("Get claims (user role) error:", error.message);
+      }
+      const userRole = data?.claims?.user_role as UserRole | undefined;
+      if (userRole !== "admin" && process.env.VERCEL_ENV !== "development") {
+        console;
+        url.pathname = "/";
+        return NextResponse.redirect(url);
+      }
     }
   } else if (request.nextUrl.pathname.startsWith("/email/verify")) {
     if (!user) {

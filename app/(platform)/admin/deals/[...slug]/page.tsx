@@ -157,6 +157,8 @@ export default function CreateEditDealPage({
 }: {
   params: Promise<{ slug: string[] }>;
 }) {
+  const endMonth = new Date(new Date().getFullYear() + 30, 11);
+
   const { slug } = use(params);
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(
@@ -440,12 +442,12 @@ export default function CreateEditDealPage({
         </Label>
         <DatePickerInput
           id={label}
+          endMonth={endMonth}
           value={
             mode === "edit"
               ? (selectedDealType === "power_purchase_agreement"
                   ? deal?.powerPurchaseAgreement?.assetOperationalDate
-                  : deal?.completionDate
-                ) ?? undefined
+                  : deal?.completionDate) ?? undefined
               : undefined
           }
         />
@@ -1706,6 +1708,7 @@ export default function CreateEditDealPage({
                           </Label>
                           <DatePickerInput
                             id="ppaSupplyStart"
+                            endMonth={endMonth}
                             value={
                               mode === "edit"
                                 ? deal?.powerPurchaseAgreement?.supplyStart ??
