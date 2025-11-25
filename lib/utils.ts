@@ -180,8 +180,17 @@ export function validateDatabaseUUID(
   return id;
 }
 
-export function removeDuplicatesByProperty(arr: Array<Record<string, any>>, prop: string) {
-  return arr.filter(
-    (obj, index, self) => index === self.findIndex((t) => t[prop] === obj[prop])
-  );
+export function removeDuplicates<T, K extends keyof T>(arr: T[], key: K): T[] {
+  const seen = new Map<T[K], boolean>();
+  const result: T[] = [];
+  
+  for (const item of arr) {
+    const value = item[key];
+    if (!seen.has(value)) {
+      seen.set(value, true);
+      result.push(item);
+    }
+  }
+  
+  return result;
 }

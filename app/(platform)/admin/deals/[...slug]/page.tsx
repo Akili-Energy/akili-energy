@@ -144,6 +144,13 @@ interface DealDetail {
   financingSubtype?: FinancingSubtype[];
 }
 
+export function formatDate(date: Date | null | undefined) {
+  if (!date) return "";
+  return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}/${date.getFullYear()}`;
+}
+
 export default function CreateEditDealPage({
   params,
 }: {
@@ -218,6 +225,7 @@ export default function CreateEditDealPage({
         }
 
         setDeal(fetchedDeal);
+        console.log("Deal date :", formatDate(fetchedDeal.date));
         setSelectedDealType(fetchedDeal?.type);
         setSelectedDealSubtype(fetchedDeal?.subtype ?? undefined);
         setRegions(fetchedDeal?.regions ?? []);
@@ -562,7 +570,7 @@ export default function CreateEditDealPage({
                       required
                       defaultValue={
                         mode === "edit"
-                          ? deal?.date?.toLocaleDateString() ?? undefined
+                          ? formatDate(deal?.date) ?? undefined
                           : undefined
                       }
                     />
@@ -1477,7 +1485,9 @@ export default function CreateEditDealPage({
                           <MultiSelect
                             options={dealFinancingType.enumValues.map(
                               (financingType) => ({
-                                label: t(`deals.financing.types.${financingType}`),
+                                label: t(
+                                  `deals.financing.types.${financingType}`
+                                ),
                                 value: financingType,
                               })
                             )}
@@ -1544,7 +1554,9 @@ export default function CreateEditDealPage({
                               {financingObjective.enumValues.map(
                                 (objective) => (
                                   <SelectItem key={objective} value={objective}>
-                                    {t(`deals.financing.objectives.${objective}`)}
+                                    {t(
+                                      `deals.financing.objectives.${objective}`
+                                    )}
                                   </SelectItem>
                                 )
                               )}
@@ -1614,7 +1626,7 @@ export default function CreateEditDealPage({
                               <SelectValue placeholder="Select PPA term length..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem key="false" value="">
+                              <SelectItem key="false" value="false">
                                 Short-term
                               </SelectItem>
                               <SelectItem key="true" value="true">
@@ -1686,7 +1698,7 @@ export default function CreateEditDealPage({
                               <SelectValue placeholder="Select PPA On-/Off-site..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem key="false" value="">
+                              <SelectItem key="false" value="false">
                                 Offsite
                               </SelectItem>
                               <SelectItem key="true" value="true">

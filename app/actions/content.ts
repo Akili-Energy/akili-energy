@@ -576,7 +576,7 @@ export async function saveContent(
             researchTransaction = researchTransaction.onConflictDoUpdate({
               target: researchReports.slug,
               set: {
-                content: data.content,
+                reportUrl: reportUrl as string,
               },
             });
           }

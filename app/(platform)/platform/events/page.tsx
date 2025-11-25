@@ -34,6 +34,7 @@ import { useLanguage } from "@/components/language-context";
 import { FetchEventsResults } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { removeDuplicates } from "@/lib/utils";
 
 export default function EventsPage() {
   const { t } = useLanguage();
@@ -70,7 +71,7 @@ export default function EventsPage() {
         search: searchTerm,
       }))!;
 
-      setEvents((prev) => [...prev, ...fetchedEvents]);
+      setEvents((prev) => removeDuplicates([...prev, ...fetchedEvents], "id"));
 
       setTotal(totalCount);
       setCursor(fetchedEvents[fetchedEvents.length - 1]?.start);

@@ -12,6 +12,7 @@ import { useDebounce } from "@/hooks/use-debounce"; // Assuming you have a debou
 import { toast } from "sonner";
 import type { Content, ContentStatus } from "@/lib/types";
 import Image from "next/image";
+import { removeDuplicates } from "@/lib/utils";
 
 export default function ResearchAdmin() {
   const [reports, setReports] = useState<Content[]>([]);
@@ -41,9 +42,9 @@ export default function ResearchAdmin() {
         });
 
         if (isResearchearch) {
-          setReports(result.content);
+          setReports(removeDuplicates(result.content, "slug"));
         } else {
-          setReports((prev) => [...prev, ...result.content]);
+          setReports((prev) => removeDuplicates([...prev, ...result.content], "slug"));
         }
 
         setHasMore(result.hasMore);
@@ -100,7 +101,7 @@ export default function ResearchAdmin() {
     const result = await deleteContent(slug, "research");
     if (result.success) {
       toast.success(result.message);
-      setReports(reports.filter((report) => report.slug !== slug));
+      setReports(removeDuplicates(reports.filter((report) => report.slug !== slug), "slug"));
     } else {
       toast.error(result.message);
     }

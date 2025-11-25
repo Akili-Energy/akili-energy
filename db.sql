@@ -173,7 +173,7 @@ CREATE TYPE deal_company_role AS ENUM (
 );
 
 CREATE TYPE deal_financing_type AS ENUM (
-    'debt', 'equity', 'grant', 'green_bond'
+    'debt', 'equity', 'grant', 'green_bond', 'guarantees'
 );
 
 CREATE TYPE m_a_structure AS ENUM (
@@ -335,7 +335,7 @@ CREATE TABLE IF NOT EXISTS companies (
     logo_url VARCHAR(255) UNIQUE,
     description TEXT, -- Company summary
     founding_date DATE,
-    hq_country country_code REFERENCES countries(code) ON DELETE SET NULL, -- NULL if outside Africa
+    hq_country country_code VARCHAR(2),
     hq_address VARCHAR(255),
     hq_location GEOGRAPHY(Point, 4326), -- Geographical coordinates (longitude, latitude)
     activities company_activity[] DEFAULT '{}',

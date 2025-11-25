@@ -6,6 +6,7 @@ import type {
   ActionState,
   AssetLifecycle,
   CompanySector,
+  DealCompanyRole,
   DealFilters,
   DealFinancingType,
   MASpecifics,
@@ -626,11 +627,11 @@ const upsertDealSchema = z
     financingSubtype: z.array(z.enum(financingSubtype.enumValues)).optional(),
 
     // PPA
-    ppaSpecific: z.coerce.boolean().optional(),
+    ppaSpecific: z.stringbool().optional(),
     ppaDuration: z.coerce.number().int().positive().optional(),
     ppaCapacity: z.coerce.number().positive().optional(),
     ppaGeneratedPower: z.coerce.number().positive().optional(),
-    onOffsite: z.coerce.boolean().optional(),
+    onOffsite: z.stringbool().optional(),
     ppaSupplyStart: z.coerce.date().optional(),
     assetOperationalDate: z.coerce.date().optional(),
   })
@@ -684,6 +685,8 @@ export async function upsertDeal(
     // 1. Reconstruct data from FormData for validation
     const rawData = Object.fromEntries(formData.entries());
     const validatedData = upsertDealSchema.safeParse(rawData);
+
+    console.log(rawData);
 
     if (!validatedData.success) {
       return {
@@ -740,109 +743,97 @@ export async function upsertDeal(
       }
 
       if (data.assetId && data.assetId.length > 0) {
-        const assetsToInsert = d.assetId.map((id, i) => ({
-          dealId: dealId,
+        const assetsToInsert = data.assetId.map((id, i) => ({
+          dealId,
           assetId: id,
-          maturity: d.assetMaturity?.[i] ? parseInt(d.assetMaturity[i]) : null,
-          equityTransactedPercentage: d.assetEquity?.[i]
-            ? parseFloat(d.assetEquity[i])
-            : null,
+          maturity: data.assetMaturity?.[i],
+          equityTransactedPercentage: data.assetEquity?.[i],
         }));
         await tx.insert(dealsAssets).values(assetsToInsert);
       }
 
-      if (d.companyId && d.companyId.length > 0) {
-        const companiesToInsert = d.companyId.map((id, i) => ({
-          dealId: dealId,
+      if (data.companyId && data.companyId.length > 0) {
+        const companiesToInsert = data.companyId.map((id, i) => ({
+          dealId,
           companyId: id,
-          role: d.companyRole?.[i] || "advisor",
-          commitment: d.companyCommitment?.[i]
-            ? parseFloat(d.companyCommitment[i])
-            : null,
-          investorType: d.companyInvestorType?.[i] || null,
-        }));
+          role: data.companyRole?.[i] as DealCompanyRole,
+          commitment: data.companyCommitment?.[i],
+          investorType: data.companyInvestorType?.[i] || null,
+        })).filter((c) => c.role !== undefined);
         await tx.insert(dealsCompanies).values(companiesToInsert);
       }
 
-      if (d.financialYear && d.financialYear.length > 0) {
-        const financialsToInsert = d.financialYear.map((year, i) => ({
-          dealId: dealId,
-          year: parseInt(year),
-          enterpriseValue: d.financialEnterpriseValue?.[i]
-            ? parseFloat(d.financialEnterpriseValue[i])
-            : null,
-          ebitda: d.financialEbitda?.[i]
-            ? parseFloat(d.financialEbitda[i])
-            : null,
-          debt: d.financialDebt?.[i] ? parseFloat(d.financialDebt[i]) : null,
+      if (data.financialYear && data.financialYear.length > 0) {
+        const financialsToInsert = data.financialYear.map((year, i) => ({
+          dealId,
+          year,
+          enterpriseValue: data.financialEnterpriseValue?.[i],
+          ebitda: data.financialEbitda?.[i],
+          debt: data.financialDebt?.[i],
         }));
         await tx.insert(dealFinancials).values(financialsToInsert);
       }
 
       // 4. Handle sub-deal tables
-      if (d.type === "merger_acquisition") {
+      if (data.type === "merger_acquisition") {
         await tx
           .insert(mergersAcquisitions)
           .values({
-            dealId: dealId,
-            structure: d.maStructure as any,
-            specifics: d.maSpecifics?.split(",") as any,
-            financingStrategy: d.maFinancingStrategy?.split(",") as any,
-            strategyRationale: d.maStrategyRationale,
+            dealId,
+            structure: data.maStructure,
+            specifics: data.maSpecifics,
+            financingStrategy: data.maFinancingStrategy,
+            strategyRationale: data.maStrategyRationale,
           })
           .onConflictDoUpdate({
             target: mergersAcquisitions.dealId,
             set: {
-              structure: d.maStructure as any,
-              specifics: d.maSpecifics?.split(",") as any,
-              financingStrategy: d.maFinancingStrategy?.split(",") as any,
-              strategyRationale: d.maStrategyRationale,
+              structure: data.maStructure,
+              specifics: data.maSpecifics,
+              financingStrategy: data.maFinancingStrategy,
+              strategyRationale: data.maStrategyRationale,
             },
           });
-      } else if (d.type === "financing") {
+      } else if (data.type === "financing") {
         await tx
           .insert(financing)
           .values({
-            dealId: dealId,
-            vehicle: d.financingVehicle,
-            objective: d.financingObjective as any,
-            financingType: d.financingType?.split(",") as any,
-            financingSubtype: d.financingSubtype?.split(",") as any,
+            dealId,
+            vehicle: data.financingVehicle,
+            objective: data.financingObjective,
+            financingType: data.financingType,
+            financingSubtype: data.financingSubtype,
           })
           .onConflictDoUpdate({
             target: financing.dealId,
             set: {
-              vehicle: d.financingVehicle,
-              objective: d.financingObjective as any,
-              financingType: d.financingType?.split(",") as any,
-              financingSubtype: d.financingSubtype?.split(",") as any,
+              vehicle: data.financingVehicle,
+              objective: data.financingObjective,
+              financingType: data.financingType,
+              financingSubtype: data.financingSubtype,
             },
           });
-      } else if (d.type === "power_purchase_agreement") {
+      } else if (data.type === "power_purchase_agreement") {
         await tx
           .insert(powerPurchaseAgreements)
           .values({
-            dealId: dealId,
-            details: d.ppaSpecific === "true",
-            duration: d.ppaDuration ? parseInt(d.ppaDuration) : null,
-            capacity: d.ppaCapacity ? parseFloat(d.ppaCapacity) : null,
-            generatedPower: d.ppaGeneratedPower
-              ? parseFloat(d.ppaGeneratedPower)
-              : null,
-            onOffSite: d.onOffsite === "true",
-            supplyStart: d.ppaSupplyStart || null,
+            dealId,
+            details: data.ppaSpecific,
+            duration: data.ppaDuration,
+            capacity: data.ppaCapacity,
+            generatedPower: data.ppaGeneratedPower,
+            onOffSite: data.onOffsite,
+            supplyStart: data.ppaSupplyStart,
           })
           .onConflictDoUpdate({
             target: powerPurchaseAgreements.dealId,
             set: {
-              details: d.ppaSpecific === "true",
-              duration: d.ppaDuration ? parseInt(d.ppaDuration) : null,
-              capacity: d.ppaCapacity ? parseFloat(d.ppaCapacity) : null,
-              generatedPower: d.ppaGeneratedPower
-                ? parseFloat(d.ppaGeneratedPower)
-                : null,
-              onOffSite: d.onOffsite === "true",
-              supplyStart: d.ppaSupplyStart || null,
+              details: data.ppaSpecific,
+              duration: data.ppaDuration,
+              capacity: data.ppaCapacity,
+              generatedPower: data.ppaGeneratedPower,
+              onOffSite: data.onOffsite,
+              supplyStart: data.ppaSupplyStart,
             },
           });
       }

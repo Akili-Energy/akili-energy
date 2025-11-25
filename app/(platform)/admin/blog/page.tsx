@@ -12,6 +12,7 @@ import { useDebounce } from "@/hooks/use-debounce"; // Assuming you have a debou
 import { toast } from "sonner";
 import type { Content, ContentStatus } from "@/lib/types";
 import Image from 'next/image';
+import { removeDuplicates } from "@/lib/utils";
 
 export default function BlogAdmin() {
   const [posts, setPosts] = useState<Content[]>([]);
@@ -41,9 +42,9 @@ export default function BlogAdmin() {
         });
 
         if (isNewSearch) {
-          setPosts(result.content);
+          setPosts(removeDuplicates(result.content, "slug"));
         } else {
-          setPosts((prev) => [...prev, ...result.content]);
+          setPosts((prev) => removeDuplicates([...prev, ...result.content], "slug"));
         }
 
         setHasMore(result.hasMore);
@@ -99,7 +100,7 @@ export default function BlogAdmin() {
     const result = await deleteContent(slug, "blog");
     if (result.success) {
       toast.success(result.message);
-      setPosts(posts.filter((post) => post.slug !== slug));
+      setPosts(removeDuplicates(posts.filter((post) => post.slug !== slug), "slug"));
     } else {
       toast.error(result.message);
     }

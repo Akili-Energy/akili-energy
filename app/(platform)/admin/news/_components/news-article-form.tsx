@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useActionState, useEffect, use } from "react";
+import { useState, useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,20 +34,14 @@ const initialState: ContentActionState = {
   message: "",
 };
 
-export default function CreateEditNewsPage({
-  params,
-}: {
-  params: Promise<{ segments: string[] }>;
-}) {
-  const { segments } = use(params);
+export default function NewsArticleForm({ mode, originalSlug }: { mode: "create" | "edit" ; originalSlug?: string }) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(
     saveContent,
     initialState
   );
 
-  const [mode, setMode] = useState<"create" | "edit" | null>(null);
-  const [slug, setSlug] = useState<string | null>(null);
+  const [slug, setSlug] = useState<string | null>(originalSlug || null);
 
   // State to hold the article data
   const [article, setArticle] = useState<Editorial | null>(null);
@@ -76,19 +70,14 @@ export default function CreateEditNewsPage({
       setLoading(false);
     };
 
-    console.log("Segments:", segments);
-    if (segments.length === 1 && segments[0] === "create") {
-      setMode("create");
+    if (mode === "create") {
       setLoading(false);
-    } else if (segments.length === 2 && segments[1] === "edit") {
-      setMode("edit");
-      const contentSlug = segments[0];
-      setSlug(contentSlug);
-      fetchArticle(contentSlug);
+    } else if (mode === "edit" && originalSlug) {
+      fetchArticle(originalSlug);
     } else {
       router.push("/admin/news");
     }
-  }, [segments, router]);
+  }, [router, mode, originalSlug]);
 
   // Handle form submission success/error
   useEffect(() => {
@@ -162,7 +151,7 @@ export default function CreateEditNewsPage({
                     id="title"
                     name="title"
                     required
-                    maxLength={72}
+                    maxLength={100}
                     defaultValue={article?.title}
                     onChange={({ target: { value } }) => {
                       if (mode === "create") {
@@ -248,7 +237,7 @@ export default function CreateEditNewsPage({
                     required
                     maxLength={200}
                     defaultValue={article?.slug}
-                    value={mode === "create" ? slug ?? undefined : undefined}
+                    value={slug ?? undefined}
                     onChange={({ target: { value } }) => {
                       const newSlug = generateSlug(value);
                       value = newSlug;

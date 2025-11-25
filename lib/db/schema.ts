@@ -454,6 +454,7 @@ export const dealFinancingType = pgEnum("deal_financing_type", [
   "equity",
   "grant",
   "green_bond",
+  "guarantees",
 ]);
 export const maStructure = pgEnum("m_a_structure", [
   "acquisition",
@@ -665,9 +666,7 @@ export const companies = pgTable(
     logoUrl: varchar("logo_url", { length: 255 }).unique(),
     description: text("description"),
     foundingDate: date("founding_date", { mode: "date" }),
-    hqCountry: countryCode("hq_country").references(() => countries.code, {
-      onDelete: "set null",
-    }),
+    hqCountry: varchar("hq_country", { length: 2 }),
     hqAddress: varchar("hq_address", { length: 255 }),
     hqLocation: geography("hq_location"),
     activities: companyActivity("activities")
@@ -2009,7 +2008,9 @@ export const ppaDealsBySubtype = pgMaterializedView("ppa_deals_by_subtype").as(
   }
 );
 
-export const ppaDealsByDuration = pgMaterializedView('ppa_deals_by_duration').as((qb) => {
+export const ppaDealsByDuration = pgMaterializedView(
+  "ppa_deals_by_duration"
+).as((qb) => {
   return qb
     .select({
       durationRange: sql<string>`

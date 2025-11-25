@@ -14,7 +14,7 @@ import { Calendar, User, Loader2, Download } from "lucide-react";
 import { getContent } from "@/app/actions/content";
 import type { Content, ContentCategory } from "@/lib/types";
 import { RESEARCH_PAGE_SIZE } from "@/lib/constants";
-import { formatDate } from "@/lib/utils";
+import { formatDate, removeDuplicates } from "@/lib/utils";
 import Link from "next/link";
 
 interface ResearchProps {
@@ -46,7 +46,7 @@ export default function Research({
         limit: RESEARCH_PAGE_SIZE,
       });
 
-      setReports((prevReports) => [...prevReports, ...newReports]);
+      setReports((prevReports) => removeDuplicates([...prevReports, ...newReports], "slug"));
       setHasMore(canLoad);
     });
   };

@@ -12,6 +12,8 @@ import { useDebounce } from "@/hooks/use-debounce"; // Assuming you have a debou
 import { toast } from "sonner";
 import type { Content, ContentStatus } from "@/lib/types";
 import Image from 'next/image'
+import { removeDuplicates } from "@/lib/utils";
+
 
 export default function NewsAdmin() {
   const [articles, setArticles] = useState<Content[]>([]);
@@ -41,9 +43,9 @@ export default function NewsAdmin() {
         });
 
         if (isNewSearch) {
-          setArticles(result.content);
+          setArticles(removeDuplicates(result.content, "slug"));
         } else {
-          setArticles((prev) => [...prev, ...result.content]);
+          setArticles((prev) => removeDuplicates([...prev, ...result.content], "slug"));
         }
 
         setHasMore(result.hasMore);
@@ -100,7 +102,9 @@ export default function NewsAdmin() {
     const result = await deleteContent(slug, "news");
     if (result.success) {
       toast.success(result.message);
-      setArticles(articles.filter((article) => article.slug !== slug));
+      setArticles(
+        removeDuplicates(articles.filter((article) => article.slug !== slug), "slug")
+      );
     } else {
       toast.error(result.message);
     }

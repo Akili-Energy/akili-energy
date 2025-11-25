@@ -38,20 +38,20 @@ const initialState: ContentActionState = {
   message: "",
 };
 
-export default function CreateEditResearchPage({
-  params,
+export default function ResearchReportForm({
+  mode,
+  originalSlug,
 }: {
-  params: Promise<{ segments: string[] }>;
+  mode: "create" | "edit";
+  originalSlug?: string;
 }) {
-  const { segments } = use(params);
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(
     saveContent,
     initialState
   );
 
-  const [mode, setMode] = useState<"create" | "edit" | null>(null);
-  const [slug, setSlug] = useState<string | null>(null);
+  const [slug, setSlug] = useState<string | null>(originalSlug || null);
 
   // State to hold the report data
   const [report, setReport] = useState<Editorial | null>(null);
@@ -61,7 +61,7 @@ export default function CreateEditResearchPage({
   const [tags, setTags] = useState<string[]>([]);
   const [imageUrl, setImageUrl] = useState("");
   const [fileUrl, setFileUrl] = useState("");
-  const [fileName, setFileName] = useState<string>();
+  // const [fileName, setFileName] = useState<string>();
 
   // Fetch initial report data on component mount
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function CreateEditResearchPage({
         setImageUrl(fetchedReport.imageUrl || "");
         const reportUrl = fetchedReport.researchReport?.reportUrl ?? "";
         setFileUrl(reportUrl);
-        setFileName(reportUrl.split("/").pop());
+        // setFileName(reportUrl.split("/").pop());
       } else {
         toast.error("Research report not found.");
         router.push("/admin/research");
@@ -86,19 +86,14 @@ export default function CreateEditResearchPage({
       setLoading(false);
     };
 
-    console.log("Segments:", segments);
-    if (segments.length === 1 && segments[0] === "create") {
-      setMode("create");
+    if (mode === "create") {
       setLoading(false);
-    } else if (segments.length === 2 && segments[1] === "edit") {
-      setMode("edit");
-      const contentSlug = segments[0];
-      setSlug(contentSlug);
-      fetchReport(contentSlug);
+    } else if (mode === "edit" && originalSlug) {
+      fetchReport(originalSlug);
     } else {
       router.push("/admin/research");
     }
-  }, [segments, router]);
+  }, [mode, originalSlug, router]);
 
   // Handle form submission success/error
   useEffect(() => {
@@ -127,20 +122,83 @@ export default function CreateEditResearchPage({
     },
   });
   useEffect(() => {
-    if (!isLoading || (report && mode === "edit")) {
+    if (!isLoading && (mode === "create" || (report && mode === "edit"))) {
       // Set up Uppy Dashboard to display as an inline component within a specified target
-      uppy.use(Dashboard, {
-        id: slug ?? Math.random().toString(36).substring(2),
-        inline: true, // Ensures the dashboard is rendered inline
-        limit: 1,
-        height: 200,
-        target: "#drag-drop-area", // HTML element where the dashboard renders
-        showProgressDetails: true, // Show progress details for file uploads
-        proudlyDisplayPoweredByUppy: false,
-        showRemoveButtonAfterComplete: true,
-      });
+      const dashboardId = slug ? `${slug}-dashboard` : "new-report-dashboard";
+
+      if (!uppy.getPlugin(dashboardId)) {
+        uppy.use(Dashboard, {
+          id: dashboardId,
+          inline: true, // Ensures the dashboard is rendered inline
+          limit: 1,
+          height: 200,
+          target: "#drag-drop-area", // HTML element where the dashboard renders
+          showProgressDetails: true, // Show progress details for file uploads
+          proudlyDisplayPoweredByUppy: false,
+          showRemoveButtonAfterComplete: true,
+        });
+      }
     }
-  }, [report, isLoading, mode]);
+  }, [report, isLoading, mode, uppy, slug]);
+
+  useEffect(() => {
+    if (!uppy || mode !== "edit" || !fileUrl) return;
+
+    const fileName = fileUrl.split("/").pop() || "document.pdf";
+    const existingFile = uppy.getFile(fileName);
+
+    // Only add if it's not already there
+    if (!existingFile) {
+      try {
+        // Fetch is usually blocked by CORS or unnecessary.
+        // We create a dummy blob to fool Uppy into displaying the file card.
+        const blob = new Blob([""], { type: "application/pdf" });
+
+        const fileId = uppy.addFile({
+          name: fileName,
+          type: "application/pdf",
+          data: blob,
+          meta: {
+            existingFileUrl: fileUrl,
+            // Important: prevents Uppy from trying to re-upload this
+            relativePath: null,
+          },
+          source: "Remote",
+          isRemote: true,
+        });
+
+        // Immediately set state to "Complete" so it shows the green checkmark/thumbnail
+        uppy.setFileState(fileId, {
+          progress: {
+            uploadComplete: true,
+            uploadStarted: Date.now(),
+            percentage: 100,
+            bytesTotal: blob.size,
+            bytesUploaded: blob.size,
+          },
+          uploadURL: fileUrl,
+        });
+      } catch (e) {
+        // Catch "File already exists" errors just in case
+        console.log("File sync:", e);
+      }
+    }
+
+    // Handle Removal: If user clicks "X", clear the fileUrl state
+    const handleFileRemoved = (file: any) => {
+      // If the removed file is the one we currently have saved
+      if (file.uploadURL === fileUrl || file.name === fileName) {
+        setFileUrl("");
+        toast.info("File removed. Upload a new one or save to clear.");
+      }
+    };
+
+    uppy.on("file-removed", handleFileRemoved);
+
+    return () => {
+      uppy.off("file-removed", handleFileRemoved);
+    };
+  }, [uppy, mode, fileUrl]);
 
   const generateSlug = (title: string) => {
     return title
@@ -226,14 +284,14 @@ export default function CreateEditResearchPage({
                     name="slug"
                     required
                     maxLength={254}
-                    defaultValue={report?.slug}
-                    value={mode === "create" ? slug ?? undefined : undefined}
+                    // defaultValue={report?.slug}
+                    value={slug ?? undefined}
                     onChange={({ target: { value } }) => {
                       const newSlug = generateSlug(value);
                       value = newSlug;
                       setSlug(newSlug);
                     }}
-                    disabled={mode === "edit"}
+                    readOnly={mode === "edit"}
                   />
                   {state.errors?.slug && (
                     <p className="text-sm text-destructive mt-1">

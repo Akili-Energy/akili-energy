@@ -19,6 +19,7 @@ import { FetchEventsResults } from "@/lib/types";
 import { useDebounce } from "@/hooks/use-debounce";
 import { deleteEvent, getEvents } from "@/app/actions/events";
 import { toast } from "sonner";
+import { removeDuplicates } from "@/lib/utils";
 
 export default function EventsAdmin() {
   const [events, setEvents] = useState<FetchEventsResults>([]);
@@ -47,9 +48,9 @@ export default function EventsAdmin() {
 
         const newEvents = result?.events ?? [];
         if (isNewSearch) {
-          setEvents(newEvents);
+          setEvents(removeDuplicates(newEvents, "id"));
         } else {
-          setEvents((prev) => [...prev, ...newEvents]);
+          setEvents((prev) => removeDuplicates([...prev, ...newEvents], "id"));
         }
 
         setHasMore(result?.hasMore ?? false);
@@ -102,7 +103,9 @@ export default function EventsAdmin() {
     const result = await deleteEvent(id);
     if (result.success) {
       toast.success(result.message);
-      setEvents((prev) => prev.filter((event) => event.id !== id));
+      setEvents((prev) =>
+        removeDuplicates(prev.filter((event) => event.id !== id), "id")
+      );
     } else {
       toast.error(result.message);
     }

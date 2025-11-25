@@ -25,7 +25,7 @@ export default async function RootLayout({
       <head>
         <script src="https://accounts.google.com/gsi/client" async></script>
       </head>
-      <body className={`${inter.className}`}>
+      <body className={`${inter.className}`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

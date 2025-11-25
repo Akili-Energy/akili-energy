@@ -51,6 +51,7 @@ import { SectorsIconsTooltip } from "@/components/sector-icon";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getUserRole } from "@/app/actions/auth";
+import { removeDuplicates } from "@/lib/utils";
 
 const PAGE_SIZE = 12; // divisible by 3 for card view
 
@@ -101,9 +102,9 @@ export default function CompaniesPage() {
 
         // Append new data or replace existing data
         if (append && order === "next") {
-          setCompanies((prev) => [...prev, ...fetchedCompanies]);
+          setCompanies((prev) => removeDuplicates([...prev, ...fetchedCompanies], "id"));
         } else {
-          setCompanies(fetchedCompanies);
+          setCompanies(removeDuplicates(fetchedCompanies, "id"));
         }
 
         setTotal(totalCount);

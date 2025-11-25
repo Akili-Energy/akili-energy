@@ -9,6 +9,12 @@ import { useLanguage } from "@/components/language-context";
 import { FetchEventResult } from "@/lib/types";
 import { useParams } from "next/navigation";
 import { useState, useTransition, useEffect } from "react";
+import dynamic from "next/dynamic";
+
+const Map = dynamic(() => import("@/components/map"), {
+  ssr: false,
+  loading: () => <div className="h-full bg-gray-200 animate-pulse" />,
+});
 
 export default function EventDetailPage() {
   const params = useParams<{ id: string }>();
@@ -183,6 +189,30 @@ export default function EventDetailPage() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Location */}
+          {event.location && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Location</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm">{event.address}</span>
+                  </div>
+                </div>
+                <div className="h-48 bg-gray-100 rounded-lg">
+                  <Map
+                    locations={[
+                      { name: event.title, position: event.location },
+                    ]}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
