@@ -98,6 +98,7 @@ import {
 import { MultiSelect } from "@/components/ui/multi-select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLanguage } from "@/components/language-context";
+import { DatePickerInput } from "@/components/ui/date-picker-input";
 
 const initialState: ActionState = {
   success: false,
@@ -437,16 +438,14 @@ export default function CreateEditDealPage({
             ? "Asset Operational Date"
             : "Completion Date"}
         </Label>
-        <Input
-          type="date"
-          name={label}
+        <DatePickerInput
           id={label}
-          defaultValue={
+          value={
             mode === "edit"
               ? (selectedDealType === "power_purchase_agreement"
                   ? deal?.powerPurchaseAgreement?.assetOperationalDate
                   : deal?.completionDate
-                )?.toLocaleDateString() ?? undefined
+                ) ?? undefined
               : undefined
           }
         />
@@ -563,15 +562,11 @@ export default function CreateEditDealPage({
                   {SelectDealSubtype}
                   <div className="space-y-2">
                     <Label htmlFor="dealDate">Deal Date</Label>
-                    <Input
-                      type="date"
-                      name="dealDate"
+                    <DatePickerInput
                       id="dealDate"
                       required
-                      defaultValue={
-                        mode === "edit"
-                          ? formatDate(deal?.date) ?? undefined
-                          : undefined
+                      value={
+                        mode === "edit" ? deal?.date ?? undefined : undefined
                       }
                     />
                   </div>
@@ -589,6 +584,7 @@ export default function CreateEditDealPage({
                       }
                       placeholder="e.g. 150.5"
                       step={0.01}
+                      min={0}
                       required={selectedDealType === "financing"}
                     />
                     {state.errors?.amount && (
@@ -1255,14 +1251,11 @@ export default function CreateEditDealPage({
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                   <div className="space-y-2">
                     <Label htmlFor="announcementDate">Announcement Date</Label>
-                    <Input
-                      type="date"
-                      name="announcementDate"
+                    <DatePickerInput
                       id="announcementDate"
-                      defaultValue={
+                      value={
                         mode === "edit"
-                          ? deal?.announcementDate?.toLocaleDateString() ??
-                            undefined
+                          ? deal?.announcementDate ?? undefined
                           : undefined
                       }
                     />
@@ -1711,13 +1704,11 @@ export default function CreateEditDealPage({
                           <Label htmlFor="ppaSupplyStart">
                             PPA Supply Start
                           </Label>
-                          <Input
-                            type="date"
-                            name="ppaSupplyStart"
+                          <DatePickerInput
                             id="ppaSupplyStart"
-                            defaultValue={
+                            value={
                               mode === "edit"
-                                ? deal?.powerPurchaseAgreement?.supplyStart?.toLocaleDateString() ??
+                                ? deal?.powerPurchaseAgreement?.supplyStart ??
                                   undefined
                                 : undefined
                             }

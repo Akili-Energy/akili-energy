@@ -565,11 +565,11 @@ const emptyStringToUndefined = z.literal("").transform(() => undefined);
 // Unified Zod schema for both creating and editing a deal
 const upsertDealSchema = z
   .object({
-    dealId: z.string().uuid().optional(),
+    dealId: z.uuid().optional(),
     update: z.string().min(1, "Deal update is required"),
     type: z.enum(dealType.enumValues),
     subtype: z.enum(dealSubtype.enumValues),
-    amount: z.coerce.number().positive().optional(),
+    amount: z.coerce.number().positive().or(emptyStringToUndefined).optional(),
     dealDate: z.coerce.date().optional(),
     announcementDate: z.coerce.date().optional(),
     completionDate: z.coerce.date().optional(),
@@ -587,18 +587,26 @@ const upsertDealSchema = z
 
     // Assets (multiple)
     assetId: z.array(z.uuid()).optional(),
-    assetMaturity: z.array(z.coerce.number().int().positive()).optional(),
-    assetEquity: z.array(z.coerce.number().min(0).max(100)).optional(),
+    assetMaturity: z
+      .array(z.coerce.number().int().positive().or(emptyStringToUndefined))
+      .optional(),
+    assetEquity: z
+      .array(z.coerce.number().positive().max(100).or(emptyStringToUndefined))
+      .optional(),
 
     // Companies (multiple)
     companyId: z.array(z.uuid()).optional(),
     companyRole: z.array(z.enum(dealCompanyRole.enumValues)).optional(),
-    companyCommitment: z.array(z.coerce.number().positive()).optional(),
+    companyCommitment: z
+      .array(z.coerce.number().positive().or(emptyStringToUndefined))
+      .optional(),
     companyInvestorType: z
-      .array(z.enum(financingInvestorType.enumValues))
+      .array(
+        z.enum(financingInvestorType.enumValues).or(emptyStringToUndefined)
+      )
       .optional(),
     companyEquityTransacted: z
-      .array(z.coerce.number().min(0).max(100))
+      .array(z.coerce.number().positive().max(100))
       .optional(),
     companyDetails: z.array(z.string()).optional(),
 
@@ -630,7 +638,11 @@ const upsertDealSchema = z
     ppaSpecific: z.stringbool().optional(),
     ppaDuration: z.coerce.number().int().positive().optional(),
     ppaCapacity: z.coerce.number().positive().optional(),
-    ppaGeneratedPower: z.coerce.number().positive().optional(),
+    ppaGeneratedPower: z.coerce
+      .number()
+      .positive()
+      .or(emptyStringToUndefined)
+      .optional(),
     onOffsite: z.stringbool().optional(),
     ppaSupplyStart: z.coerce.date().optional(),
     assetOperationalDate: z.coerce.date().optional(),
@@ -683,12 +695,42 @@ export async function upsertDeal(
 ): Promise<ActionState> {
   try {
     // 1. Reconstruct data from FormData for validation
-    const rawData = Object.fromEntries(formData.entries());
+    const rawData = {
+      ...Object.fromEntries(formData.entries()),
+
+      assetId: formData.getAll("assetId"),
+      assetMaturity: formData.getAll("assetMaturity"),
+      assetEquity: formData.getAll("assetEquity"),
+
+      companyId: formData.getAll("companyId"),
+      companyRole: formData.getAll("companyRole"),
+      companyCommitment: formData.getAll("companyCommitment"),
+      companyInvestorType: formData.getAll("companyInvestorType"),
+      companyEquityTransacted: formData.getAll("companyEquityTransacted"),
+      companyDetails: formData.getAll("companyDetails"),
+
+      financialYear: formData.getAll("financialYear"),
+      financialEnterpriseValue: formData.getAll("financialEnterpriseValue"),
+      financialEbitda: formData.getAll("financialEbitda"),
+      financialDebt: formData.getAll("financialDebt"),
+      financialRevenue: formData.getAll("financialRevenue"),
+      financialCash: formData.getAll("financialCash"),
+
+      maSpecifics: formData.getAll("maSpecifics"),
+      maFinancingStrategy: formData.getAll("maFinancingStrategy"),
+
+      financingType: formData.getAll("financingType"),
+      financingSubtype: formData.getAll("financingSubtype"),
+    };
     const validatedData = upsertDealSchema.safeParse(rawData);
 
     console.log(rawData);
 
     if (!validatedData.success) {
+      console.error(
+        "Validation errors:",
+        z.flattenError(validatedData.error).fieldErrors
+      );
       return {
         success: false,
         message: "Invalid form data.",
@@ -753,13 +795,15 @@ export async function upsertDeal(
       }
 
       if (data.companyId && data.companyId.length > 0) {
-        const companiesToInsert = data.companyId.map((id, i) => ({
-          dealId,
-          companyId: id,
-          role: data.companyRole?.[i] as DealCompanyRole,
-          commitment: data.companyCommitment?.[i],
-          investorType: data.companyInvestorType?.[i] || null,
-        })).filter((c) => c.role !== undefined);
+        const companiesToInsert = data.companyId
+          .map((id, i) => ({
+            dealId,
+            companyId: id,
+            role: data.companyRole?.[i] as DealCompanyRole,
+            commitment: data.companyCommitment?.[i],
+            investorType: data.companyInvestorType?.[i] || null,
+          }))
+          .filter((c) => c.role !== undefined);
         await tx.insert(dealsCompanies).values(companiesToInsert);
       }
 
@@ -843,7 +887,11 @@ export async function upsertDeal(
 
     // 5. Revalidate and redirect
     revalidatePath("/admin/deals");
-    redirect(`/admin/deals`);
+
+    return {
+      success: true,
+      message: `Successfully ${isEditMode ? "updated" : "created"} deal.`,
+    }
   } catch (error: any) {
     console.error("Failed to upsert deal:", error);
     return {
