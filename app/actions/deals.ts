@@ -612,11 +612,17 @@ const upsertDealSchema = z
 
     // Financials (multiple years)
     financialYear: z.array(z.coerce.number().int().min(2000)).optional(),
-    financialEnterpriseValue: z.array(z.coerce.number().positive()).optional(),
+    financialEnterpriseValue: z
+      .array(z.coerce.number().positive().or(emptyStringToUndefined))
+      .optional(),
     financialEbitda: z.array(z.coerce.number()).optional(),
-    financialDebt: z.array(z.coerce.number().positive()).optional(),
+    financialDebt: z
+      .array(z.coerce.number().positive().or(emptyStringToUndefined))
+      .optional(),
     financialRevenue: z.array(z.coerce.number()).optional(),
-    financialCash: z.array(z.coerce.number().positive()).optional(),
+    financialCash: z
+      .array(z.coerce.number().positive().or(emptyStringToUndefined))
+      .optional(),
 
     // M&A
     maStructure: z.enum(maStructure.enumValues).optional(),
@@ -625,7 +631,12 @@ const upsertDealSchema = z
       .array(z.enum(dealFinancingType.enumValues))
       .optional(),
     revenueModel: z.enum(revenueModel.enumValues).optional(),
-    revenueModelDuration: z.coerce.number().int().positive().optional(),
+    revenueModelDuration: z.coerce
+      .number()
+      .int()
+      .positive()
+      .or(emptyStringToUndefined)
+      .optional(),
     maStrategyRationale: z.string().optional(),
 
     // Financing
@@ -636,8 +647,17 @@ const upsertDealSchema = z
 
     // PPA
     ppaSpecific: z.stringbool().optional(),
-    ppaDuration: z.coerce.number().int().positive().optional(),
-    ppaCapacity: z.coerce.number().positive().optional(),
+    ppaDuration: z.coerce
+      .number()
+      .int()
+      .positive()
+      .or(emptyStringToUndefined)
+      .optional(),
+    ppaCapacity: z.coerce
+      .number()
+      .positive()
+      .or(emptyStringToUndefined)
+      .optional(),
     ppaGeneratedPower: z.coerce
       .number()
       .positive()
@@ -891,7 +911,7 @@ export async function upsertDeal(
     return {
       success: true,
       message: `Successfully ${isEditMode ? "updated" : "created"} deal.`,
-    }
+    };
   } catch (error: any) {
     console.error("Failed to upsert deal:", error);
     return {

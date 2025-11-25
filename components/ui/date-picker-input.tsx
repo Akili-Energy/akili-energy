@@ -71,7 +71,7 @@ export function DatePickerInput({
           name={id}
           value={value}
           required={required}
-          placeholder="January 01, 1970"
+          placeholder="YYY-MM-DD"
           className="bg-background pr-10"
           onChange={(e) => {
             const date = new Date(e.target.value);
