@@ -171,11 +171,6 @@ export async function getCompanyById(id: string) {
       where: (companies, { eq }) => eq(companies.id, id),
       columns: { hqLocation: false },
       with: {
-        hqCountry: {
-          columns: {
-            code: true,
-          },
-        },
         companiesOperatingCountries: {
           with: {
             country: {
@@ -297,7 +292,6 @@ export async function getCompanyById(id: string) {
       companiesOperatingCountries,
       companiesEmployees,
       companiesTechnologies,
-      hqCountry,
       location,
       ...company
     } = companyData;
@@ -306,7 +300,6 @@ export async function getCompanyById(id: string) {
     return {
       sectors: companiesSectors.map((s) => s.sector),
       technologies: companiesTechnologies.map((t) => t.technology),
-      hqCountry: hqCountry?.code,
       operatingCountries: companiesOperatingCountries.map(
         (c) => c.country.code
       ),

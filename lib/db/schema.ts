@@ -1461,10 +1461,10 @@ export const technologiesRelations = relations(
 
 // Companies
 export const companiesRelations = relations(companies, ({ one, many }) => ({
-  hqCountry: one(countries, {
-    fields: [companies.hqCountry],
-    references: [countries.code],
-  }),
+  // hqCountry: one(countries, {
+  //   fields: [companies.hqCountry],
+  //   references: [countries.code],
+  // }),
   companiesOperatingCountries: many(companiesOperatingCountries),
   companiesSectors: many(companiesSectors),
   companiesTechnologies: many(companiesTechnologies),
