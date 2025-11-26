@@ -622,6 +622,7 @@ export default function CreateEditDealPage({
                     />
                   </div>
                   <div className="space-y-2">
+                    <input type="hidden" name="countries" value={countries} />
                     <Label>Countries</Label>
                     <MultiSelect
                       selected={countries}
@@ -634,6 +635,7 @@ export default function CreateEditDealPage({
                     />
                   </div>
                   <div className="space-y-2">
+                    <input type="hidden" name="sectors" value={sectors} />
                     <Label>Sectors</Label>
                     <MultiSelect
                       selected={sectors}
@@ -646,6 +648,11 @@ export default function CreateEditDealPage({
                     />
                   </div>
                   <div className="space-y-2">
+                    <input
+                      type="hidden"
+                      name="technologies"
+                      value={technologies}
+                    />
                     <Label>Technologies</Label>
                     <MultiSelect
                       selected={technologies}
@@ -658,6 +665,7 @@ export default function CreateEditDealPage({
                     />
                   </div>
                   <div className="space-y-2">
+                    <input type="hidden" name="subSectors" value={subSectors} />
                     <Label>Sub-sectors</Label>
                     <MultiSelect
                       selected={subSectors}
@@ -672,6 +680,7 @@ export default function CreateEditDealPage({
                     />
                   </div>
                   <div className="space-y-2">
+                    <input type="hidden" name="segments" value={segments} />
                     <Label>Segments</Label>
                     <MultiSelect
                       selected={segments}

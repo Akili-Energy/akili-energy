@@ -38,6 +38,10 @@ import {
   revenueModel,
   financingObjective,
   financingSubtype,
+  dealsCountries,
+  projectsTechnologies,
+  projectsSectors,
+  projects,
 } from "@/lib/db/schema";
 import { PgSelectBase, PgSelectWithout } from "drizzle-orm/pg-core";
 import { parseLocation, validateDatabaseUUID } from "@/lib/utils";
@@ -562,6 +566,21 @@ export async function getDealById(id: string) {
 // Helper to transform empty strings from FormData into undefined for optional fields
 const emptyStringToUndefined = z.literal("").transform(() => undefined);
 
+const zodToArray = <T>(enumValues: T[]) =>
+  z.preprocess(
+    (val) =>
+      val === "" || val === null || val === undefined
+        ? []
+        : String(val).split(","),
+    z.array(z.enum(enumValues as any[])).optional()
+  );
+
+const zodToDate = z.iso
+  .date()
+  .or(emptyStringToUndefined)
+  .optional()
+  .pipe(z.transform((val) => (val ? new Date(val) : undefined)));
+
 // Unified Zod schema for both creating and editing a deal
 const upsertDealSchema = z
   .object({
@@ -570,20 +589,20 @@ const upsertDealSchema = z
     type: z.enum(dealType.enumValues),
     subtype: z.enum(dealSubtype.enumValues),
     amount: z.coerce.number().positive().or(emptyStringToUndefined).optional(),
-    dealDate: z.coerce.date().optional(),
-    announcementDate: z.coerce.date().optional(),
-    completionDate: z.coerce.date().optional(),
+    dealDate: z.iso.date().pipe(z.transform((val) => new Date(val))),
+    announcementDate: zodToDate.optional(),
+    completionDate: zodToDate.optional(),
     description: z.string().optional(),
     impacts: z.string().optional(),
     insights: z.string().optional(),
     pressReleaseUrl: z.url().optional().or(z.literal("")),
 
     // Arrays
-    countries: z.array(z.enum(countryCode.enumValues)).optional(),
-    sectors: z.array(z.enum(SECTORS)).optional(),
-    technologies: z.array(z.enum(technology.enumValues)).optional(),
-    subSectors: z.array(z.enum(SUB_SECTORS)).optional(),
-    segments: z.array(z.enum(segment.enumValues)).optional(),
+    countries: zodToArray(countryCode.enumValues),
+    sectors: zodToArray(SECTORS),
+    technologies: zodToArray(technology.enumValues),
+    subSectors: zodToArray(SUB_SECTORS),
+    segments: zodToArray(segment.enumValues),
 
     // Assets (multiple)
     assetId: z.array(z.uuid()).optional(),
@@ -626,10 +645,8 @@ const upsertDealSchema = z
 
     // M&A
     maStructure: z.enum(maStructure.enumValues).optional(),
-    maSpecifics: z.array(z.enum(maSpecifics.enumValues)).optional(),
-    maFinancingStrategy: z
-      .array(z.enum(dealFinancingType.enumValues))
-      .optional(),
+    maSpecifics: zodToArray(maSpecifics.enumValues),
+    maFinancingStrategy: zodToArray(dealFinancingType.enumValues),
     revenueModel: z.enum(revenueModel.enumValues).optional(),
     revenueModelDuration: z.coerce
       .number()
@@ -642,8 +659,8 @@ const upsertDealSchema = z
     // Financing
     financingVehicle: z.string().optional(),
     financingObjective: z.enum(financingObjective.enumValues).optional(),
-    financingType: z.array(z.enum(dealFinancingType.enumValues)).optional(),
-    financingSubtype: z.array(z.enum(financingSubtype.enumValues)).optional(),
+    financingType: zodToArray(dealFinancingType.enumValues),
+    financingSubtype: zodToArray(financingSubtype.enumValues),
 
     // PPA
     ppaSpecific: z.stringbool().optional(),
@@ -664,8 +681,8 @@ const upsertDealSchema = z
       .or(emptyStringToUndefined)
       .optional(),
     onOffsite: z.stringbool().optional(),
-    ppaSupplyStart: z.coerce.date().optional(),
-    assetOperationalDate: z.coerce.date().optional(),
+    ppaSupplyStart: zodToDate.optional(),
+    assetOperationalDate: zodToDate.optional(),
   })
   .superRefine((data, ctx) => {
     // Validate financing deals have amount
@@ -718,6 +735,12 @@ export async function upsertDeal(
     const rawData = {
       ...Object.fromEntries(formData.entries()),
 
+      // countries: formData.getAll("countries"),
+      // sectors: formData.getAll("sectors"),
+      // technologies: formData.getAll("technologies"),
+      // subSectors: formData.getAll("subSectors"),
+      // segments: formData.getAll("segments"),
+
       assetId: formData.getAll("assetId"),
       assetMaturity: formData.getAll("assetMaturity"),
       assetEquity: formData.getAll("assetEquity"),
@@ -735,12 +758,6 @@ export async function upsertDeal(
       financialDebt: formData.getAll("financialDebt"),
       financialRevenue: formData.getAll("financialRevenue"),
       financialCash: formData.getAll("financialCash"),
-
-      maSpecifics: formData.getAll("maSpecifics"),
-      maFinancingStrategy: formData.getAll("maFinancingStrategy"),
-
-      financingType: formData.getAll("financingType"),
-      financingSubtype: formData.getAll("financingSubtype"),
     };
     const validatedData = upsertDealSchema.safeParse(rawData);
 
@@ -802,6 +819,59 @@ export async function upsertDeal(
         await tx
           .delete(dealFinancials)
           .where(eq(dealFinancials.dealId, dealId));
+        await tx
+          .delete(dealsCountries)
+          .where(eq(dealsCountries.dealId, dealId));
+
+        if (data.assetId?.length === 1) {
+          await tx
+            .delete(projectsTechnologies)
+            .where(eq(projectsTechnologies.projectId, data.assetId[0]));
+          await tx
+            .delete(projectsSectors)
+            .where(eq(projectsSectors.projectId, data.assetId[0]));
+        }
+      }
+
+      if (data.countries && data.countries.length > 0) {
+        const countriesToInsert = data.countries.map((countryCode, i) => ({
+          dealId,
+          countryCode,
+        }));
+        await tx.insert(dealsCountries).values(countriesToInsert);
+      }
+
+      if (data.assetId?.length === 1) {
+        await tx
+          .update(projects)
+          .set({
+            segments: data.segments,
+            subSectors: data.subSectors,
+          })
+          .where(eq(projects.id, data.assetId[0]));
+
+        if (data.countries?.length === 1) {
+          await tx
+            .update(projects)
+            .set({ country: data.countries[0] })
+            .where(eq(projects.id, data.assetId[0]));
+        }
+
+        if (data.sectors && data.sectors.length > 0) {
+          const sectorsToInsert = data.sectors.map((sector) => ({
+            projectId: data.assetId![0],
+            sector,
+          }));
+          await tx.insert(projectsSectors).values(sectorsToInsert);
+        }
+
+        if (data.technologies && data.technologies.length > 0) {
+          const technologiesToInsert = data.technologies.map((technology) => ({
+            projectId: data.assetId![0],
+            technology,
+          }));
+          await tx.insert(projectsTechnologies).values(technologiesToInsert);
+        }
       }
 
       if (data.assetId && data.assetId.length > 0) {
@@ -888,6 +958,7 @@ export async function upsertDeal(
             generatedPower: data.ppaGeneratedPower,
             onOffSite: data.onOffsite,
             supplyStart: data.ppaSupplyStart,
+            assetOperationalDate: data.assetOperationalDate,
           })
           .onConflictDoUpdate({
             target: powerPurchaseAgreements.dealId,
@@ -897,7 +968,7 @@ export async function upsertDeal(
               capacity: data.ppaCapacity,
               generatedPower: data.ppaGeneratedPower,
               onOffSite: data.onOffsite,
-              supplyStart: data.ppaSupplyStart,
+              assetOperationalDate: data.assetOperationalDate,
             },
           });
       }
