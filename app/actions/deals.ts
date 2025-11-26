@@ -273,7 +273,7 @@ export async function getDeals({
               ],
               countries:
                 deal.type === "project_update"
-                  ? dealsAssets?.[0]?.asset?.country ?? dealCountries
+                  ? [dealsAssets?.[0]?.asset?.country ?? dealCountries]
                   : dealCountries,
               sectors:
                 sectors.length > 0
