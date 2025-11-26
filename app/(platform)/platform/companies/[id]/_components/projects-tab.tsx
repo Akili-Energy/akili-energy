@@ -69,7 +69,9 @@ export function ProjectsTab({ projects, portfolio }: Pick<Company, "projects" | 
             <p className="text-sm font-medium text-muted-foreground">
               In Development
             </p>
-            <p className="text-2xl font-bold">{portfolio?.inDevelopment ?? 0} MW</p>
+            <p className="text-2xl font-bold">
+              {portfolio?.inDevelopment ?? 0} MW
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -120,7 +122,7 @@ export function ProjectsTab({ projects, portfolio }: Pick<Company, "projects" | 
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {t(`projects.roles.${project.role}`)}
+                      {t(`companies.roles.projects.${project.role}`)}
                     </Badge>
                   </TableCell>
                   <TableCell>
