@@ -135,6 +135,7 @@ export async function getDeals({
                 columns: {
                   id: true,
                   name: true,
+                  country: true,
                 },
                 with: {
                   projectsSectors: {
@@ -258,6 +259,10 @@ export async function getDeals({
             ];
             if (deal.type === "financing" && technologies.length === 0)
               technologies.push(...companiesTechnologies);
+
+            const dealCountries = dealsCountries.map(
+              ({ country: { code } }) => code
+            );
             return {
               ...deal,
               date: new Date(date),
@@ -266,7 +271,10 @@ export async function getDeals({
                   dealsCountries.map(({ country: { region } }) => region)
                 ),
               ],
-              countries: dealsCountries.map(({ country: { code } }) => code),
+              countries:
+                deal.type === "project_update"
+                  ? dealsAssets[0].asset.country ?? dealCountries
+                  : dealCountries,
               sectors:
                 sectors.length > 0
                   ? sectors
