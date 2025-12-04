@@ -399,7 +399,8 @@
                 "debt": "Debt",
                 "equity": "Equity",
                 "grant": "Grant",
-                "green_bond": "Green Bond"
+                "green_bond": "Green Bond",
+                "guarantees": "Guarantees"
             },
             "subtypes": {
                 "project_finance": "Project Finance",

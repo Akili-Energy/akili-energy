@@ -2008,6 +2008,21 @@ export const ppaDealsBySubtype = pgMaterializedView("ppa_deals_by_subtype").as(
   }
 );
 
+// Materialized View for: M&A Deals categorized by subtype (Asset vs. Corporate)
+export const maDealsBySubtype = pgMaterializedView("ma_deals_by_subtype").as(
+  (qb) => {
+    return qb
+      .select({
+        subtype: deals.subtype,
+        dealCount: countDistinct(deals.id).as("deal_count"),
+      })
+      .from(deals)
+      .where(eq(deals.type, "merger_acquisition"))
+      .groupBy(deals.subtype)
+      .orderBy(sql<number>`deal_count`);
+  }
+);
+
 export const ppaDealsByDuration = pgMaterializedView(
   "ppa_deals_by_duration"
 ).as((qb) => {

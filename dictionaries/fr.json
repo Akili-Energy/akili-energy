@@ -398,7 +398,8 @@
                 "debt": "Dette",
                 "equity": "Fonds propres",
                 "grant": "Subvention",
-                "green_bond": "Obligation verte"
+                "green_bond": "Obligation verte",
+                "guarantees": "Garanties"
             },
             "subtypes": {
                 "project_finance": "Financement de projet",

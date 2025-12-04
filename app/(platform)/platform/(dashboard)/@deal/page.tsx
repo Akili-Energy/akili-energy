@@ -45,6 +45,7 @@ import Link from "next/link";
 import { getDealsAnalytics } from "@/app/actions/actions";
 import { useLanguage } from "@/components/language-context";
 import { formatMonth, getCountryFlag } from "@/lib/utils";
+import { dealFinancingType } from "@/lib/db/schema";
 
 export default function DealAnalyticsPage() {
   const { language, t } = useLanguage();
@@ -166,12 +167,17 @@ export default function DealAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <ChartContainer
-              config={{
-                debt: { label: "Debt", color: "#10b981" },
-                equity: { label: "Equity", color: "#3b82f6" },
-                grant: { label: "Grant", color: "#f59e0b" },
-                green_bond: { label: "Green Bond", color: "#ef4444" },
-              }}
+              config={Object.fromEntries(
+                dealFinancingType.enumValues.map((type) => [
+                  type,
+                  {
+                    label: t(`deals.financing.types.${type}`),
+                    color: `#${Math.floor(Math.random() * 16777215)
+                      .toString(16)
+                      .padStart(6, "0")}`,
+                  },
+                ])
+              )}
             >
               <div className="w-full h-[300px] overflow-x-auto overflow-y-hidden">
                 <div className="min-w-[500px] h-full">
@@ -213,34 +219,15 @@ export default function DealAnalyticsPage() {
                       <Legend
                         wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }}
                       />
-                      <Bar
-                        yAxisId="left"
-                        dataKey="debt"
-                        stackId="a"
-                        fill="var(--color-debt)"
-                        name="Debt"
-                      />
-                      <Bar
-                        yAxisId="left"
-                        dataKey="equity"
-                        stackId="a"
-                        fill="var(--color-equity)"
-                        name="Equity"
-                      />
-                      <Bar
-                        yAxisId="left"
-                        dataKey="grant"
-                        stackId="a"
-                        fill="var(--color-grant)"
-                        name="Grant"
-                      />
-                      <Bar
-                        yAxisId="left"
-                        dataKey="green_bond"
-                        stackId="a"
-                        fill="var(--color-green_bond)"
-                        name="Green Bond"
-                      />
+                      {...dealFinancingType.enumValues.map((type) => (
+                        <Bar
+                          yAxisId="left"
+                          dataKey={type}
+                          stackId="a"
+                          fill={`var(--color-${type})`}
+                          name={t(`deals.financing.types.${type}`)}
+                        />
+                      ))}
                       <Line
                         yAxisId="right"
                         type="monotone"
@@ -365,6 +352,44 @@ export default function DealAnalyticsPage() {
                       nameKey="subtype"
                     >
                       {analytics?.ppaDealsBySubtype.map(({ color }, i) => {
+                        return <Cell key={`cell-${i}`} fill={color} />;
+                      })}
+                    </Pie>
+                    <Tooltip />
+                    <Legend wrapperStyle={{ fontSize: "12px" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <BarChart3 className="w-5 h-5 text-akili-blue shrink-0" />
+                M&A by Category
+              </CardTitle>
+              <CardDescription>
+                M&A deal volume distribution by category
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={analytics?.maDealsBySubtype.map((d) => ({
+                        ...d,
+                        subtype: t(`deals.subtypes.${d.subtype}`),
+                      }))}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="dealCount"
+                      nameKey="subtype"
+                    >
+                      {analytics?.maDealsBySubtype.map(({ color }, i) => {
                         return <Cell key={`cell-${i}`} fill={color} />;
                       })}
                     </Pie>
@@ -535,7 +560,11 @@ export default function DealAnalyticsPage() {
               {analytics?.latestDeals.map((deal) => (
                 <Link
                   key={deal.id}
-                  href={deal.type === "project_update" && deal.assetIds.length > 0 ? `/platform/projects/${deal.assetIds[0]}` : `/platform/deals/${deal.id}`}
+                  href={
+                    deal.type === "project_update" && deal.assetIds.length > 0
+                      ? `/platform/projects/${deal.assetIds[0]}`
+                      : `/platform/deals/${deal.id}`
+                  }
                   className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group gap-4 sm:gap-0"
                 >
                   <div className="space-y-2 flex-1 min-w-0">

@@ -20,6 +20,7 @@ import {
   ppaDealsByDuration,
   ppaDealsByOfftakerSector,
   ppaDealsBySubtype,
+  maDealsBySubtype,
   projectDetails,
   projects,
   projectsByMonthAndSector,
@@ -613,6 +614,7 @@ export async function seedDatabase(payload: {
     await db.refreshMaterializedView(financingDealsByMonthAndType);
     await db.refreshMaterializedView(ppaDealsByOfftakerSector).concurrently();
     await db.refreshMaterializedView(ppaDealsBySubtype).concurrently();
+    await db.refreshMaterializedView(maDealsBySubtype).concurrently();
     await db.refreshMaterializedView(ppaDealsByDuration).concurrently();
     await db.refreshMaterializedView(projectsByMonthAndSector);
     await db.refreshMaterializedView(projectsBySector).concurrently();
@@ -813,6 +815,14 @@ export async function getDealsAnalytics() {
         .select()
         .from(ppaDealsByOfftakerSector),
       ppaDealsBySubtype: (await db.select().from(ppaDealsBySubtype)).map(
+        (data) => ({
+          ...data,
+          color: `#${Math.floor(Math.random() * 16777215)
+            .toString(16)
+            .padStart(6, "0")}`,
+        })
+      ),
+      maDealsBySubtype: (await db.select().from(maDealsBySubtype)).map(
         (data) => ({
           ...data,
           color: `#${Math.floor(Math.random() * 16777215)

@@ -911,6 +911,21 @@ ORDER BY
     CASE WHEN MIN(duration) IS NULL THEN 1 ELSE 0 END,
     MIN(duration);
 
+-- Materialized View for: M&A Deals categorized by subtype (Asset vs. Corporate)
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS ma_deals_by_subtype AS
+SELECT
+    subtype,
+    COUNT(DISTINCT id) AS deal_count
+FROM
+    deals
+WHERE
+    type = 'merger_acquisition'
+GROUP BY
+    subtype
+ORDER BY
+    deal_count DESC;
+
 -- View for: Combo chart of project investment and capacity, stacked by sector, over time
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS projects_by_month_and_sector AS
@@ -1273,6 +1288,7 @@ CREATE UNIQUE INDEX ON deals_by_month_and_type (month, deal_type);
 CREATE UNIQUE INDEX ON financing_deals_by_month_and_type (month, financing_type);
 CREATE UNIQUE INDEX ON ppa_deals_by_offtaker_sector (offtaker_sector);
 CREATE UNIQUE INDEX ON ppa_deals_by_subtype (subtype);
+CREATE UNIQUE INDEX ON ma_deals_by_subtype (subtype);
 CREATE UNIQUE INDEX ON ppa_deals_by_duration (duration_range);
 CREATE UNIQUE INDEX ON projects_by_month_and_sector (month, sector);
 CREATE UNIQUE INDEX ON projects_by_month_and_stage (month, project_stage);
@@ -1446,6 +1462,7 @@ SELECT cron.schedule(
         REFRESH MATERIALIZED VIEW CONCURRENTLY financing_deals_by_month_and_type;
         REFRESH MATERIALIZED VIEW CONCURRENTLY ppa_deals_by_offtaker_sector;
         REFRESH MATERIALIZED VIEW CONCURRENTLY ppa_deals_by_subtype;
+        REFRESH MATERIALIZED VIEW CONCURRENTLY ma_deals_by_subtype;
         REFRESH MATERIALIZED VIEW CONCURRENTLY ppa_deals_by_duration;
         REFRESH MATERIALIZED VIEW CONCURRENTLY projects_by_month_and_sector;
         REFRESH MATERIALIZED VIEW CONCURRENTLY projects_by_month_and_stage;
