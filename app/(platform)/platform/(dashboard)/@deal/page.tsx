@@ -73,7 +73,7 @@ export default function DealAnalyticsPage() {
           </h2>
         </div>
 
-        <Card>
+        <Card className="w-full shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
               <BarChart3 className="w-5 h-5 text-akili-blue shrink-0" />
@@ -85,18 +85,28 @@ export default function DealAnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer
-              config={{
-                financing: { label: "Financing", color: "#10b981" },
-                merger_acquisition: { label: "M&A", color: "#3b82f6" },
-                power_purchase_agreement: { label: "PPA", color: "#f59e0b" },
-                project_update: { label: "Project Update", color: "#ef4444" },
-              }}
-            >
-              {/* Added a scroll wrapper for very small screens if data points are many */}
-              <div className="w-full h-[300px] overflow-x-auto overflow-y-hidden">
-                <div className="min-w-[500px] h-full">
-                  <ResponsiveContainer width="100%" height="100%">
+            <div className="w-full overflow-x-auto pb-2">
+              <div className="min-w-[600px] h-[350px] md:h-[400px]">
+                <ChartContainer
+                  config={{
+                    financing: { label: "Financing", color: "#10b981" },
+                    merger_acquisition: { label: "M&A", color: "#3b82f6" },
+                    power_purchase_agreement: {
+                      label: "PPA",
+                      color: "#f59e0b",
+                    },
+                    project_update: {
+                      label: "Project Update",
+                      color: "#ef4444",
+                    },
+                  }}
+                  className="h-full w-full"
+                >
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                    minWidth={300}
+                  >
                     <BarChart
                       data={analytics?.dealsByMonthAndType
                         .filter((d) => d?.month.startsWith("2025"))
@@ -104,10 +114,11 @@ export default function DealAnalyticsPage() {
                           ...d,
                           month: formatMonth(language, d?.month),
                         }))}
-                      margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+                      margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                      // barCategoryGap="20%"
                     >
-                      <CartesianGrid strokeDasharray="4 1 2" />
-                      <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                      <CartesianGrid strokeDasharray="4 1 2" vertical={false} />
+                      <XAxis dataKey="month" tick={{ fontSize: 12 }} dy={10} />
                       <YAxis
                         yAxisId="left"
                         dataKey="dealCount"
@@ -116,46 +127,56 @@ export default function DealAnalyticsPage() {
                           value: "Deal Count",
                           angle: -90,
                           position: "insideLeft",
-                          style: { textAnchor: "middle" },
+                          style: {
+                            textAnchor: "middle",
+                            fill: "var(--muted-foreground)",
+                          },
                         }}
                       />
-                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <ChartTooltip
+                        cursor={{ fill: "transparent" }}
+                        content={<ChartTooltipContent />}
+                      />
                       <Legend
-                        wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }}
+                        wrapperStyle={{ fontSize: "12px", paddingTop: "20px" }}
                       />
                       <Bar
                         dataKey="financing"
                         stackId="a"
                         fill="var(--color-financing)"
                         name="Financing"
+                        radius={[0, 0, 4, 4]}
                       />
                       <Bar
                         dataKey="merger_acquisition"
                         stackId="a"
                         fill="var(--color-merger_acquisition)"
                         name="M&A"
+                        radius={[0, 0, 0, 0]}
                       />
                       <Bar
                         dataKey="power_purchase_agreement"
                         stackId="a"
                         fill="var(--color-power_purchase_agreement)"
                         name="PPA"
+                        radius={[0, 0, 0, 0]}
                       />
                       <Bar
                         dataKey="project_update"
                         stackId="a"
                         fill="var(--color-project_update)"
                         name="Project Update"
+                        radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
                   </ResponsiveContainer>
-                </div>
+                </ChartContainer>
               </div>
-            </ChartContainer>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="w-full shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
               <PieChartIcon className="w-5 h-5 text-akili-green shrink-0" />
@@ -166,22 +187,27 @@ export default function DealAnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer
-              config={Object.fromEntries(
-                dealFinancingType.enumValues.map((type) => [
-                  type,
-                  {
-                    label: t(`deals.financing.types.${type}`),
-                    color: `#${Math.floor(Math.random() * 16777215)
-                      .toString(16)
-                      .padStart(6, "0")}`,
-                  },
-                ])
-              )}
-            >
-              <div className="w-full h-[300px] overflow-x-auto overflow-y-hidden">
-                <div className="min-w-[500px] h-full">
-                  <ResponsiveContainer width="100%" height="100%">
+            <div className="w-full overflow-x-auto pb-2">
+              <div className="min-w-[600px] h-[350px] md:h-[400px]">
+                <ChartContainer
+                  config={Object.fromEntries(
+                    dealFinancingType.enumValues.map((type) => [
+                      type,
+                      {
+                        label: t(`deals.financing.types.${type}`),
+                        color: `#${Math.floor(Math.random() * 16777215)
+                          .toString(16)
+                          .padStart(6, "0")}`,
+                      },
+                    ])
+                  )}
+                  className="h-full w-full"
+                >
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                    minWidth={300}
+                  >
                     <ComposedChart
                       data={analytics?.financingDealsByMonthAndType.map(
                         (d) => ({
@@ -189,10 +215,11 @@ export default function DealAnalyticsPage() {
                           month: formatMonth(language, d?.month),
                         })
                       )}
-                      margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
+                      margin={{ top: 20, right: 20, left: 0, bottom: 5 }}
+                      // barCategoryGap="25%"
                     >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="month" tick={{ fontSize: 12 }} dy={10} />
                       <YAxis
                         yAxisId="left"
                         orientation="left"
@@ -202,6 +229,7 @@ export default function DealAnalyticsPage() {
                           angle: -90,
                           position: "insideLeft",
                           offset: 10,
+                          style: { fill: "var(--muted-foreground)" },
                         }}
                       />
                       <YAxis
@@ -213,14 +241,19 @@ export default function DealAnalyticsPage() {
                           angle: 90,
                           position: "insideRight",
                           offset: 0,
+                          style: { fill: "var(--muted-foreground)" },
                         }}
                       />
-                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <ChartTooltip
+                        cursor={{ fill: "rgba(0,0,0,0.05)" }}
+                        content={<ChartTooltipContent />}
+                      />
                       <Legend
-                        wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }}
+                        wrapperStyle={{ fontSize: "12px", paddingTop: "20px" }}
                       />
                       {...dealFinancingType.enumValues.map((type) => (
                         <Bar
+                          key={type}
                           yAxisId="left"
                           dataKey={type}
                           stackId="a"
@@ -236,12 +269,13 @@ export default function DealAnalyticsPage() {
                         strokeWidth={3}
                         name="Deal Value"
                         dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6 }}
                       />
                     </ComposedChart>
                   </ResponsiveContainer>
-                </div>
+                </ChartContainer>
               </div>
-            </ChartContainer>
+            </div>
           </CardContent>
         </Card>
 
