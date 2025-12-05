@@ -191,7 +191,7 @@ export default function DealAnalyticsPage() {
               <div className="min-w-[600px] h-[350px] md:h-[400px]">
                 <ChartContainer
                   config={Object.fromEntries(
-                    dealFinancingType.enumValues.map((type) => [
+                    dealFinancingType.enumValues.filter(t => t !== 'green_bond').map((type) => [
                       type,
                       {
                         label: t(`deals.financing.types.${type}`),
@@ -251,7 +251,7 @@ export default function DealAnalyticsPage() {
                       <Legend
                         wrapperStyle={{ fontSize: "12px", paddingTop: "20px" }}
                       />
-                      {...dealFinancingType.enumValues.map((type) => (
+                      {...dealFinancingType.enumValues.filter(t => t !== 'green_bond').map((type) => (
                         <Bar
                           key={type}
                           yAxisId="left"
