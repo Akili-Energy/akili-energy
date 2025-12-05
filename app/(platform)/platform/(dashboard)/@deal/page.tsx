@@ -191,15 +191,17 @@ export default function DealAnalyticsPage() {
               <div className="min-w-[600px] h-[350px] md:h-[400px]">
                 <ChartContainer
                   config={Object.fromEntries(
-                    dealFinancingType.enumValues.filter(t => t !== 'green_bond').map((type) => [
-                      type,
-                      {
-                        label: t(`deals.financing.types.${type}`),
-                        color: `#${Math.floor(Math.random() * 16777215)
-                          .toString(16)
-                          .padStart(6, "0")}`,
-                      },
-                    ])
+                    dealFinancingType.enumValues
+                      .filter((t) => t !== "green_bond")
+                      .map((type) => [
+                        type,
+                        {
+                          label: t(`deals.financing.types.${type}`),
+                          color: `#${Math.floor(Math.random() * 16777215)
+                            .toString(16)
+                            .padStart(6, "0")}`,
+                        },
+                      ])
                   )}
                   className="h-full w-full"
                 >
@@ -251,16 +253,18 @@ export default function DealAnalyticsPage() {
                       <Legend
                         wrapperStyle={{ fontSize: "12px", paddingTop: "20px" }}
                       />
-                      {...dealFinancingType.enumValues.filter(t => t !== 'green_bond').map((type) => (
-                        <Bar
-                          key={type}
-                          yAxisId="left"
-                          dataKey={type}
-                          stackId="a"
-                          fill={`var(--color-${type})`}
-                          name={t(`deals.financing.types.${type}`)}
-                        />
-                      ))}
+                      {...dealFinancingType.enumValues
+                        .filter((t) => t !== "green_bond")
+                        .map((type) => (
+                          <Bar
+                            key={type}
+                            yAxisId="left"
+                            dataKey={type}
+                            stackId="a"
+                            fill={`var(--color-${type})`}
+                            name={t(`deals.financing.types.${type}`)}
+                          />
+                        ))}
                       <Line
                         yAxisId="right"
                         type="monotone"
@@ -298,7 +302,7 @@ export default function DealAnalyticsPage() {
                     }))}
                     margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.33} />
                     <XAxis
                       dataKey="offtakerSector"
                       tick={{ fontSize: 10 }}
@@ -332,7 +336,7 @@ export default function DealAnalyticsPage() {
                     data={analytics?.ppaDealsByDuration}
                     margin={{ top: 5, right: 5, left: -20, bottom: 20 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.25} />
                     <XAxis
                       dataKey="durationRange"
                       tick={{ fontSize: 10 }}
