@@ -255,7 +255,7 @@ export default function DealAnalyticsPage() {
                       />
                       {...dealFinancingType.enumValues
                         .filter((t) => t !== "green_bond")
-                        .map((type) => (
+                        .map((type, i, arr) => (
                           <Bar
                             key={type}
                             yAxisId="left"
@@ -263,6 +263,13 @@ export default function DealAnalyticsPage() {
                             stackId="a"
                             fill={`var(--color-${type})`}
                             name={t(`deals.financing.types.${type}`)}
+                            radius={
+                              i === 0
+                                ? [0, 0, 4, 4]
+                                : i === arr.length - 1
+                                ? [4, 4, 0, 0]
+                                : [0, 0, 0, 0]
+                            }
                           />
                         ))}
                       <Line
@@ -314,7 +321,12 @@ export default function DealAnalyticsPage() {
                       tick={{ fontSize: 12 }}
                     />
                     <Tooltip />
-                    <Bar dataKey="dealCount" fill="#f59e0b" name="Deal Count" />
+                    <Bar
+                      dataKey="dealCount"
+                      fill="#f59e0b"
+                      name="Deal Count"
+                      radius={[4, 4, 4, 4]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -353,7 +365,11 @@ export default function DealAnalyticsPage() {
                       tick={{ fontSize: 12 }}
                     />
                     <Tooltip />
-                    <Bar dataKey="dealCount" fill="#f59e0b" />
+                    <Bar
+                      dataKey="dealCount"
+                      fill="#f59e0b"
+                      radius={[4, 4, 4, 4]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
