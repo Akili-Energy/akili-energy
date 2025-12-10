@@ -617,7 +617,7 @@ export async function seedDatabase(payload: {
     await db.refreshMaterializedView(maDealsBySubtype).concurrently();
     await db.refreshMaterializedView(ppaDealsByDuration).concurrently();
     await db.refreshMaterializedView(projectsByMonthAndSector);
-    await db.refreshMaterializedView(projectsBySector).concurrently();
+    await db.refreshMaterializedView(projectsBySector);
     await db.refreshMaterializedView(projectsByMonthAndStage);
     await db.refreshMaterializedView(topCountriesByDealValue).concurrently();
     await db
