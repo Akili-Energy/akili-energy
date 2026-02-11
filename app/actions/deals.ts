@@ -280,9 +280,9 @@ export async function getDeals({
               sectors:
                 sectors.length > 0
                   ? sectors
-                  : technologies
+                  : [...new Set(technologies
                       .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
-                      .filter(Boolean),
+                      .filter(Boolean))],
               assets: dealsAssets.map(({ asset: { id, name } }) => ({
                 id,
                 name,
@@ -508,30 +508,36 @@ export async function getDealById(id: string) {
             onOffGrid: onOffGrids?.every((v) => v === false)
               ? true
               : onOffGrids?.every((v) => v === false)
-              ? false
-              : onOffGrids != null && onOffGrids.length > 0
-              ? null
-              : undefined,
+                ? false
+                : onOffGrids != null && onOffGrids.length > 0
+                  ? null
+                  : undefined,
             regions: [
               ...new Set(
-                result?.dealsCountries.map(({ country: { region } }) => region)
+                result?.dealsCountries.map(({ country: { region } }) => region),
               ),
             ],
             countries: result.dealsCountries.map(
-              ({ country: { code } }) => code
+              ({ country: { code } }) => code,
             ),
             sectors:
               sectors.length > 0
                 ? sectors
-                : technologies
-                    .map((tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector)
-                    .filter(Boolean),
+                : [
+                    ...new Set(
+                      technologies
+                        .map(
+                          (tech) => TECHNOLOGIES_SECTORS[tech]?.projectSector,
+                        )
+                        .filter(Boolean),
+                    ),
+                  ],
             technologies,
             subSectors: [
               ...new Set(
                 isCorporate
                   ? result.dealsCompanies.flatMap((c) => c.company.subSectors)
-                  : result.dealsAssets.flatMap((a) => a.asset.subSectors)
+                  : result.dealsAssets.flatMap((a) => a.asset.subSectors),
               ),
             ],
             segments: [
@@ -545,7 +551,7 @@ export async function getDealById(id: string) {
               ({ company, ...dealCompany }) => ({
                 ...dealCompany,
                 ...company,
-              })
+              }),
             ),
             locations: (isCorporate
               ? result.dealsCompanies.map((c) => ({
@@ -558,7 +564,7 @@ export async function getDealById(id: string) {
                 }))
             ).filter(
               ({ position }) =>
-                position != null && !isNaN(position[0]) && !isNaN(position[1])
+                position != null && !isNaN(position[0]) && !isNaN(position[1]),
             ),
           }
         : null;
