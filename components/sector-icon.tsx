@@ -68,7 +68,9 @@ export function SectorsIconsTooltip({
 }) {
   const { t } = useLanguage();
 
-  if (sectors.length > maxLength) {
+  const uniqueSectors = Array.from(new Set(sectors));
+
+  if (uniqueSectors.length > maxLength) {
     return (
       <TooltipProvider>
         <Tooltip>
@@ -81,9 +83,13 @@ export function SectorsIconsTooltip({
           </TooltipTrigger>
           <TooltipContent>
             <div className="space-y-2">
-              {sectors.map((sector, index) => (
+              {uniqueSectors.map((sector, index) => (
                 <div key={index} className="flex items-center space-x-2">
-                  <SectorIcon sector={sector} iconClassName={iconClassName} textClassName={textClassName} />
+                  <SectorIcon
+                    sector={sector}
+                    iconClassName={iconClassName}
+                    textClassName={textClassName}
+                  />
                   <span>{t(`common.sectors.${sector}`)}</span>
                 </div>
               ))}
@@ -96,11 +102,15 @@ export function SectorsIconsTooltip({
 
   return (
     <div className="flex gap-2">
-      {sectors.map((sector, index) => (
+      {uniqueSectors.map((sector, index) => (
         <TooltipProvider key={index}>
           <Tooltip>
             <TooltipTrigger>
-              <SectorIcon sector={sector} iconClassName={iconClassName} textClassName={textClassName} />
+              <SectorIcon
+                sector={sector}
+                iconClassName={iconClassName}
+                textClassName={textClassName}
+              />
             </TooltipTrigger>
             <TooltipContent>
               <span>{t(`common.sectors.${sector}`)}</span>
