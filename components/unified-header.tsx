@@ -40,7 +40,9 @@ export function UnifiedHeader() {
     const getUser = async () => {
       const { data, error } = await auth.getUser();
       if (error) {
-        console.error("Error fetching user:", error.message);
+        if (error.message !== "Auth session missing!") {
+          console.error("Error fetching user:", error.message);
+        }
       } else {
         setUser(data.user);
       }

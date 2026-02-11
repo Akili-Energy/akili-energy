@@ -2362,7 +2362,7 @@ export const countriesByCapacityAndFinancing = pgMaterializedView(
   return qb
     .with(countryFinancing, countryProjects)
     .select({
-      countryCode: countryFinancing.countryCode,
+      countryCode: countryProjects.countryCode,
       financing:
         sql<number>`GREATEST(${countryFinancing.dealValue}, ${countryProjects.investments})`.as(
           "financing"
@@ -2370,10 +2370,10 @@ export const countriesByCapacityAndFinancing = pgMaterializedView(
       totalCapacity: countryProjects.totalCapacity,
       projectCount: countryProjects.projectCount,
     })
-    .from(countryFinancing)
+    .from(countryProjects)
     .leftJoin(
-      countryProjects,
-      eq(countryFinancing.countryCode, countryProjects.countryCode)
+      countryFinancing,
+      eq(countryProjects.countryCode, countryFinancing.countryCode)
     )
     .orderBy(
       desc(countryProjects.totalCapacity),

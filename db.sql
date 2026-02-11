@@ -1125,12 +1125,12 @@ country_projects AS (
     GROUP BY c.code
 )
 SELECT 
-    cf.country_code,
+    cp.country_code,
     GREATEST(cf.deal_value, cp.investments) AS financing,
     cp.project_count,
     cp.total_capacity AS total_capacity
-FROM country_financing cf
-LEFT JOIN country_projects cp ON cf.country_code = cp.country_code
+FROM country_projects cp
+LEFT JOIN country_financing cf ON cp.country_code = cf.country_code
 ORDER BY COALESCE(total_capacity, 0) DESC, COALESCE(GREATEST(cf.deal_value, cp.investments), 0) DESC;
 
 -- ########################################
@@ -1469,5 +1469,6 @@ SELECT cron.schedule(
         REFRESH MATERIALIZED VIEW CONCURRENTLY projects_by_sector;
         REFRESH MATERIALIZED VIEW CONCURRENTLY top_countries_by_deal_value;
         REFRESH MATERIALIZED VIEW CONCURRENTLY top_companies_by_financing_and_capacity;
+        REFRESH MATERIALIZED VIEW CONCURRENTLY countries_by_capacity_and_financing;
     $$
 );

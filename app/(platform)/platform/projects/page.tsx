@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition, useMemo } from "react";
+import { useEffect, useState, useTransition, useMemo, useId } from "react";
 import { getProjects } from "@/app/actions/projects";
 import {
   Card,
@@ -79,6 +79,7 @@ export default function ProjectsPage() {
   const { t } = useLanguage();
 
   const [projects, setProjects] = useState<FetchProjectsResults>([]);
+  const [mapProjects, setMapProjects] = useState<FetchProjectsResults>([]);
   const [count, setCount] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -86,9 +87,10 @@ export default function ProjectsPage() {
   const [viewMode, setViewMode] = useState<"table" | "map">("table");
   const [isPending, startTransition] = useTransition();
   const [cursors, setCursors] = useState<{ next?: Cursor; previous?: Cursor }>(
-    {}
+    {},
   );
   const [isGuestUser, setIsGuestUser] = useState(true);
+  const mapId = useId();
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -100,33 +102,44 @@ export default function ProjectsPage() {
       setIsGuestUser(userRole === "guest");
     };
     fetchUserRole();
+
+    return () => {
+      setViewMode("table");
+      setMapProjects([]);
+    };
   }, []);
 
   const fetchAndSetProjects = (
     newFilter?: ProjectFilters,
     order?: Pagination,
-    search?: string
+    search?: string,
   ) => {
     startTransition(async () => {
       const currentFilters = { ...filters, ...newFilter };
-      const { projects: fetchedProjects, total, nextCursor, prevCursor } = await getProjects(
+      const {
+        projects: fetchedProjects,
+        total,
+        nextCursor,
+        prevCursor,
+      } = (await getProjects(
         currentFilters,
         order,
-        projects.length > 0 && order
-          ? cursors[order]
-          : undefined,
-        search
-      );
+        projects.length > 0 && order ? cursors[order] : undefined,
+        search,
+      ))!;
 
       setProjects(fetchedProjects);
+      setMapProjects((previous) => [
+        ...new Set([...previous, ...fetchedProjects]),
+      ]);
       setCursors({ next: nextCursor, previous: prevCursor });
       setCount(total);
       setFilters(currentFilters);
 
       if (order === "previous") {
-        setCurrentPage(p => Math.max(1, p - 1));
+        setCurrentPage((p) => Math.max(1, p - 1));
       } else if (order === "next") {
-        setCurrentPage(p => Math.min(Math.ceil(total / PAGE_SIZE), p + 1));
+        setCurrentPage((p) => Math.min(Math.ceil(total / PAGE_SIZE), p + 1));
       } else {
         setCurrentPage(1); // Reset to first page on new filter/search
       }
@@ -186,7 +199,7 @@ export default function ProjectsPage() {
         stage: undefined,
       },
       undefined,
-      ""
+      "",
     );
   };
 
@@ -473,11 +486,8 @@ export default function ProjectsPage() {
             </>
           ) : (
             <ProjectsMap
-              projectsByCountry={projectDataByCountry}
-              onCountryClick={(countryCode) => {
-                onCountryChange(countryCode);
-                setViewMode("table");
-              }}
+              key={mapId} // Force remount when mapProjects changes to reset internal state
+              projects={mapProjects}
             />
           )}
         </CardContent>

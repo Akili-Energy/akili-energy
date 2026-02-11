@@ -64,6 +64,9 @@ export async function getProjects(
         investmentCosts: true,
         createdAt: true,
       },
+      extras: (projects, { sql }) => ({
+        location: sql<string>`ST_AsText(${projects.location})`.as("location"),
+      }),
       with: {
         country: {
           columns: {
@@ -112,14 +115,14 @@ export async function getProjects(
                 ? or(
                     (order === "previous" ? gt : lt)(
                       projects.createdAt,
-                      cursor.createdAt
+                      cursor.createdAt,
                     ),
                     and(
                       eq(projects.createdAt, cursor.createdAt),
-                      (order === "previous" ? gt : lt)(projects.id, cursor.id)
-                    )
+                      (order === "previous" ? gt : lt)(projects.id, cursor.id),
+                    ),
                   )
-                : undefined
+                : undefined,
             ),
       orderBy: (projects, { asc, desc }) =>
         order === "previous"
@@ -165,6 +168,7 @@ export async function getProjects(
             projectsSectors,
             projectsCompanies,
             details,
+            location,
             ...project
           }) => {
             return {
@@ -174,6 +178,7 @@ export async function getProjects(
               region: country?.region,
               date: details?.operationalDate,
               sectors: projectsSectors.map(({ sector }) => sector),
+              location: parseLocation(location),
             };
           }
         ),
