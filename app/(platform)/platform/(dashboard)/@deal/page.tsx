@@ -345,7 +345,7 @@ export default function DealAnalyticsPage() {
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={analytics?.ppaDealsByDuration}
+                    data={analytics?.ppaDealsByDuration.toSorted((a, b) => a.durationRange.localeCompare(b.durationRange))}
                     margin={{ top: 5, right: 5, left: -20, bottom: 20 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.25} />
