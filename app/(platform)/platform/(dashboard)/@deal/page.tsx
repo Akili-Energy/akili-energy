@@ -109,7 +109,6 @@ export default function DealAnalyticsPage() {
                   >
                     <BarChart
                       data={analytics?.dealsByMonthAndType
-                        .filter((d) => d?.month.startsWith("2025"))
                         .map((d) => ({
                           ...d,
                           month: formatMonth(language, d?.month),
