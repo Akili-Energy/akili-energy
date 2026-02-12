@@ -1023,11 +1023,10 @@ WITH country_deals AS (
         SUM(d.amount) AS deal_value,
         COUNT(DISTINCT d.id) AS deal_count
     FROM countries c
-    JOIN deals_countries dc ON c.code = dc.country_code
-    JOIN deals d ON dc.deal_id = d.id
-    WHERE d.type = 'financing'
-    AND EXTRACT(YEAR FROM d.date) = EXTRACT(YEAR FROM CURRENT_DATE)
-    AND EXTRACT(MONTH FROM d.date) = EXTRACT(MONTH FROM CURRENT_DATE)
+    LEFT JOIN deals_countries dc ON c.code = dc.country_code
+    LEFT JOIN deals d ON dc.deal_id = d.id AND d.type = 'financing'
+    WHERE EXTRACT(YEAR FROM d.date) = EXTRACT(YEAR FROM CURRENT_DATE)
+    -- AND EXTRACT(MONTH FROM d.date) = EXTRACT(MONTH FROM CURRENT_DATE)
     GROUP BY c.code
 ),
 country_capacity AS (
@@ -1035,7 +1034,11 @@ country_capacity AS (
         c.code as country_code,
         SUM(p.plant_capacity) AS total_capacity
     FROM countries c
-    JOIN projects p ON p.country = c.code
+    LEFT JOIN projects p ON p.country = c.code
+    LEFT JOIN deals_assets da ON p.id = da.asset_id
+    LEFT JOIN deals d ON da.deal_id = d.id AND d.type = 'project_update'
+    WHERE EXTRACT(YEAR FROM d.date) = EXTRACT(YEAR FROM CURRENT_DATE)
+    -- AND EXTRACT(MONTH FROM d.date) = EXTRACT(MONTH FROM CURRENT_DATE)
     GROUP BY c.code
 )
 SELECT 
@@ -1058,11 +1061,10 @@ WITH company_fundraising AS (
     FROM
         deals_companies dc
     JOIN
-        deals d ON dc.deal_id = d.id
+        deals d ON dc.deal_id = d.id AND d.type = 'financing'
     WHERE
-        d.type = 'financing'
-        AND EXTRACT(YEAR FROM d.date) = EXTRACT(YEAR FROM CURRENT_DATE)
-        AND EXTRACT(MONTH FROM d.date) = EXTRACT(MONTH FROM CURRENT_DATE)
+        EXTRACT(YEAR FROM d.date) = EXTRACT(YEAR FROM CURRENT_DATE)
+        -- AND EXTRACT(MONTH FROM d.date) = EXTRACT(MONTH FROM CURRENT_DATE)
     GROUP BY
         dc.company_id
 ),
@@ -1070,26 +1072,24 @@ project_dates AS (
     SELECT 
         p.id AS project_id,
         COALESCE(
-            MAX(d.date) FILTER (WHERE d.type = 'project_update'),
+            MAX(d.date),
             p.created_at::date
         ) AS effective_date
     FROM projects p
     LEFT JOIN deals_assets da ON p.id = da.asset_id
-    LEFT JOIN deals d ON da.deal_id = d.id
+    LEFT JOIN deals d ON da.deal_id = d.id AND d.type = 'project_update'
     GROUP BY p.id
 ),
 company_portfolio AS (
     SELECT
         pc.company_id,
         SUM(p.plant_capacity) AS total_capacity
-    FROM
-        projects_companies pc
-    JOIN
-        projects p ON pc.project_id = p.id
+    FROM projects_companies pc
+    JOIN projects p ON pc.project_id = p.id
     JOIN project_dates pd ON p.id = pd.project_id
     WHERE pc.role = 'sponsor'
-    GROUP BY
-        pc.company_id
+        AND EXTRACT(YEAR FROM pd.effective_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+    GROUP BY pc.company_id
 )
 SELECT
     c.id,

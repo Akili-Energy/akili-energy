@@ -433,6 +433,22 @@
             "revived": "Revived",
             "suspended": "Suspended",
             "cancelled": "Cancelled"
+        },
+        "statuses": {
+            "active": "Active",
+            "ongoing": "Ongoing",
+            "cancelled": "Cancelled"
+        },
+        "contractTypes": {
+            "operate": "Operate",
+            "build": "Build",
+            "own": "Own",
+            "transfer": "Transfer",
+            "maintain": "Maintain",
+            "design": "Design",
+            "finance": "Finance",
+            "lease": "Lease",
+            "rehabilitate": "Rehabilitate"
         }
     },
     "companies": {

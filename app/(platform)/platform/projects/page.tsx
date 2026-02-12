@@ -102,11 +102,6 @@ export default function ProjectsPage() {
       setIsGuestUser(userRole === "guest");
     };
     fetchUserRole();
-
-    return () => {
-      setViewMode("table");
-      setMapProjects([]);
-    };
   }, []);
 
   const fetchAndSetProjects = (
@@ -129,9 +124,6 @@ export default function ProjectsPage() {
       ))!;
 
       setProjects(fetchedProjects);
-      setMapProjects((previous) => [
-        ...new Set([...previous, ...fetchedProjects]),
-      ]);
       setCursors({ next: nextCursor, previous: prevCursor });
       setCount(total);
       setFilters(currentFilters);
@@ -149,6 +141,26 @@ export default function ProjectsPage() {
   useEffect(() => {
     fetchAndSetProjects();
   }, []);
+
+  useEffect(() => {
+    const getProjectsForMap = async () => {
+      const { projects: fetchedProjects } = (await getProjects(
+        filters,
+        undefined,
+        undefined,
+        searchTerm,
+        2000,
+      ))!;
+
+      setMapProjects(fetchedProjects);
+    };
+    getProjectsForMap();
+
+    return () => {
+      setViewMode("table");
+      setMapProjects([]);
+    };
+  }, [filters]);
 
   const handleSearch = () => {
     fetchAndSetProjects(undefined, undefined, searchTerm);
@@ -487,7 +499,7 @@ export default function ProjectsPage() {
           ) : (
             <ProjectsMap
               key={mapId} // Force remount when mapProjects changes to reset internal state
-              projects={mapProjects}
+              projects={isGuestUser ? projects : mapProjects}
             />
           )}
         </CardContent>

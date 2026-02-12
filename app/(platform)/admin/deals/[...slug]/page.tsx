@@ -470,7 +470,7 @@ export default function CreateEditDealPage({
   if (!deal && mode === "edit") return null; // Or a "Not Found" component
 
   return (
-    <div>
+    <div key={slug.join("/")}>
       <div className="flex items-center space-x-4 mb-8">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/admin/deals">

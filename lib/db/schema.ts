@@ -2190,18 +2190,20 @@ export const topCountriesByDealValue = pgMaterializedView(
         month: sql<string>`TO_CHAR(${deals.date}, 'YYYY-MM')`.as("month"),
       })
       .from(countries)
-      .innerJoin(dealsCountries, eq(countries.code, dealsCountries.countryCode))
-      .innerJoin(
+      .leftJoin(dealsCountries, eq(countries.code, dealsCountries.countryCode))
+      .leftJoin(
         deals,
-        and(eq(dealsCountries.dealId, deals.id), eq(deals.type, "financing"))
+        and(eq(dealsCountries.dealId, deals.id), eq(deals.type, "financing")),
       )
       .where(
-        and(
           sql`EXTRACT(YEAR FROM ${deals.date}) = EXTRACT(YEAR FROM CURRENT_DATE)`,
-          sql`EXTRACT(MONTH FROM ${deals.date}) = EXTRACT(MONTH FROM CURRENT_DATE)`
-        )
+
+        // and(
+        //   sql`EXTRACT(YEAR FROM ${deals.date}) = EXTRACT(YEAR FROM CURRENT_DATE)`,
+        //   sql`EXTRACT(MONTH FROM ${deals.date}) = EXTRACT(MONTH FROM CURRENT_DATE)`,
+        // ),
       )
-      .groupBy(countries.code, sql`month`)
+      .groupBy(countries.code, sql`month`),
   );
 
   const countryCapacity = qb.$with("country_capacity").as(
@@ -2213,8 +2215,21 @@ export const topCountriesByDealValue = pgMaterializedView(
           .as("total_capacity"),
       })
       .from(countries)
-      .innerJoin(projects, eq(projects.country, countries.code))
-      .groupBy(countries.code)
+      .leftJoin(projects, eq(projects.country, countries.code))
+      .leftJoin(dealsAssets, eq(projects.id, dealsAssets.assetId))
+      .leftJoin(
+        deals,
+        and(eq(dealsAssets.dealId, deals.id), eq(deals.type, "project_update")),
+      )
+      .where(
+        sql`EXTRACT(YEAR FROM ${deals.date}) = EXTRACT(YEAR FROM CURRENT_DATE)`,
+
+        // and(
+        //   sql`EXTRACT(YEAR FROM ${deals.date}) = EXTRACT(YEAR FROM CURRENT_DATE)`,
+        //   sql`EXTRACT(MONTH FROM ${deals.date}) = EXTRACT(MONTH FROM CURRENT_DATE)`,
+        // ),
+      )
+      .groupBy(countries.code),
   );
 
   return qb
@@ -2252,15 +2267,16 @@ export const topCompaniesByFinancingAndCapacity = pgMaterializedView(
       .from(dealsCompanies)
       .innerJoin(
         deals,
-        and(eq(dealsCompanies.dealId, deals.id), eq(deals.type, "financing"))
+        and(eq(dealsCompanies.dealId, deals.id), eq(deals.type, "financing")),
       )
       .where(
-        and(
-          sql`EXTRACT(YEAR FROM ${deals.date}) = EXTRACT(YEAR FROM CURRENT_DATE)`,
-          sql`EXTRACT(MONTH FROM ${deals.date}) = EXTRACT(MONTH FROM CURRENT_DATE)`
-        )
+        sql`EXTRACT(YEAR FROM ${deals.date}) = EXTRACT(YEAR FROM CURRENT_DATE)`,
+        // and(
+        //   sql`EXTRACT(YEAR FROM ${deals.date}) = EXTRACT(YEAR FROM CURRENT_DATE)`,
+        //   sql`EXTRACT(MONTH FROM ${deals.date}) = EXTRACT(MONTH FROM CURRENT_DATE)`,
+        // ),
       )
-      .groupBy(dealsCompanies.companyId)
+      .groupBy(dealsCompanies.companyId),
   );
 
   const projectDates = qb.$with("project_dates").as(
@@ -2269,14 +2285,14 @@ export const topCompaniesByFinancingAndCapacity = pgMaterializedView(
         projectId: projects.id,
         effectiveDate: sql`
           COALESCE(
-            MAX(${deals.date}) FILTER (WHERE ${deals.type} = 'project_update'),
+            MAX(${deals.date}),
             ${projects.createdAt}::date
           )
         `.as("effective_date"),
       })
       .from(projects)
       .leftJoin(dealsAssets, eq(projects.id, dealsAssets.assetId))
-      .leftJoin(deals, eq(dealsAssets.dealId, deals.id))
+      .leftJoin(deals, and(eq(dealsAssets.dealId, deals.id), eq(deals.type, "project_update")))
       .groupBy(projects.id)
   );
 
@@ -2295,7 +2311,7 @@ export const topCompaniesByFinancingAndCapacity = pgMaterializedView(
         and(
           eq(projectsCompanies.role, "sponsor"),
           sql`EXTRACT(YEAR FROM ${projectDates.effectiveDate}) = EXTRACT(YEAR FROM CURRENT_DATE)`,
-          sql`EXTRACT(MONTH FROM ${projectDates.effectiveDate}) = EXTRACT(MONTH FROM CURRENT_DATE)`
+          // sql`EXTRACT(MONTH FROM ${projectDates.effectiveDate}) = EXTRACT(MONTH FROM CURRENT_DATE)`
         )
       )
       .groupBy(projectsCompanies.companyId)

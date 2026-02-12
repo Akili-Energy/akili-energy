@@ -41,6 +41,7 @@ import {
   contentCategory,
   contentType,
   userRole,
+  projectContractType,
 } from "./db/schema";
 import { getCompanies, getCompanyById } from "@/app/actions/companies";
 import { getContent, getContentBySlug } from "@/app/actions/content";
@@ -99,6 +100,7 @@ export type DealType = (typeof dealType.enumValues)[number];
 export type DealSubtype = (typeof dealSubtype.enumValues)[number];
 
 export type ProjectStage = (typeof projectStage.enumValues)[number];
+export type ProjectContractType = (typeof projectContractType.enumValues)[number];
 
 const ASSET_LIFECYCLE = [
   "proposal",

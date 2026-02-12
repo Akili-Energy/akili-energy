@@ -1021,10 +1021,10 @@ export async function deleteDeal(id: string): Promise<ActionState> {
 
   // Optional: Check if the user has an 'admin' or 'analyst_editor' role
   // This depends on your user role management setup
-  // const userRole = ... ;
-  // if (userRole !== 'admin' && userRole !== 'analyst_editor') {
-  //   return { success: false, message: "Permission denied." };
-  // }
+  const userRole = await getUserRole();
+  if (userRole !== "admin") {
+    return { success: false, message: "Permission denied." };
+  }
 
   try {
     const deleted = await db

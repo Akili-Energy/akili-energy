@@ -432,6 +432,22 @@
             "revived": "Relancé",
             "suspended": "Suspendu",
             "cancelled": "Annulé"
+        },
+        "statuses": {
+            "active": "Actif",
+            "ongoing": "En cours",
+            "cancelled": "Annulé"
+        },
+        "contractTypes": {
+            "operate": "Exploiter",
+            "build": "Construire",
+            "own": "Posséder",
+            "transfer": "Transférer",
+            "maintain": "Maintenir",
+            "design": "Concevoir",
+            "finance": "Financer",
+            "lease": "Louer",
+            "rehabilitate": "Réhabiliter"
         }
     },
     "companies": {
